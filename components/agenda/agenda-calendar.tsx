@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, MapPin } from 'lucide-react';
 import { AgendaEvent, AgendaView } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
@@ -32,7 +32,7 @@ export function AgendaCalendar({ events, currentDate, viewMode, onEventClick }: 
       const day = startOfWeek.getDay(); // 0 for Sunday, 1 for Monday, etc.
       startOfWeek.setDate(startOfWeek.getDate() - day);
       
-      // Generate array of 7 days starting from the start of the week
+      // Generate array of 7 days starting from the start of the week 
       const days = Array.from({ length: 7 }, (_, i) => {
         const date = new Date(startOfWeek);
         date.setDate(date.getDate() + i);
