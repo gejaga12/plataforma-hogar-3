@@ -1,5 +1,6 @@
 import { BASE_URL } from "@/utils/baseURL";
-import { SystemUser, User, UserRole } from "../utils/types";
+import { SystemUser, User, UserRole } from "../../utils/types";
+import { getAuthToken } from "@/utils/authToken";
 
 // Mock users for demonstration
 const mockUsers = [
@@ -155,7 +156,7 @@ export class AuthService {
     sucursalHogar: string;
     tipoDeContrato: string;
   }): Promise<User> {
-    const token = localStorage.getItem("auth-token");
+    const token = getAuthToken();
 
     try {
       const response = await fetch(`${BASE_URL}/auth/register`, {
@@ -193,7 +194,7 @@ export class AuthService {
   }
 
   static async getUsers(limit = 10, offset = 0): Promise<SystemUser[]> {
-    const token = localStorage.getItem("auth-token");
+    const token = getAuthToken();
 
     const response = await fetch(
       `${BASE_URL}/auth?limit=${limit}&offset=${offset}`,
@@ -220,7 +221,7 @@ export class AuthService {
       area: user.area,
       puesto: user.puesto,
       fechaIngreso: user.fechaIngreso,
-      mail: user.email, 
+      mail: user.email,
       direccion: user.address,
       telefono: user.phoneNumber,
       certificacionesTitulo: "",

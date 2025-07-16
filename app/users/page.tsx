@@ -24,22 +24,7 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { SystemUser, CreateUserData } from "@/utils/types";
 import { cn } from "@/lib/utils";
 import { createUserReal } from "@/lib/api/createUserReal";
-import { AuthService } from "@/lib/auth";
-
-// const updateUser = async (
-//   id: string,
-//   userData: Partial<CreateUserData>
-// ): Promise<SystemUser> => {
-//   await new Promise((resolve) => setTimeout(resolve, 1000));
-//   const existingUser = mockUsers.find((u) => u.id === id);
-//   if (!existingUser) throw new Error("Usuario no encontrado");
-
-//   return {
-//     ...existingUser,
-//     ...userData,
-//     updatedAt: new Date().toISOString(),
-//   };
-// };
+import { AuthService } from "@/lib/api/apiAuth";
 
 const deleteUser = async (id: string): Promise<void> => {
   await new Promise((resolve) => setTimeout(resolve, 500));
@@ -83,14 +68,6 @@ function UserModal({ isOpen, onClose, user, mode }: UserModalProps) {
       onClose();
     },
   });
-
-  // const updateMutation = useMutation({
-  //   mutationFn: (data: Partial<CreateUserData>) => updateUser(user!.id, data),
-  //   onSuccess: () => {
-  //     queryClient.invalidateQueries({ queryKey: ["users"] });
-  //     onClose();
-  //   },
-  // });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

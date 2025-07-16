@@ -1,5 +1,5 @@
 import { CreateUserData } from "@/utils/types";
-import { AuthService } from "../auth";
+import { AuthService } from "./apiAuth";
 
 
 export const createUserReal = async (userData: CreateUserData): Promise<any> => {
@@ -12,7 +12,7 @@ export const createUserReal = async (userData: CreateUserData): Promise<any> => 
     puesto: userData.puesto,
     relacionLaboral: userData.periodoPruebaContratado,
     zona: userData.zona.toLowerCase(),
-    sucursalHogar: userData.sucursalHogar || "", // Reemplazá por el ID real de la sucursal
+    sucursalHogar: userData.sucursalHogar || "",
     tipoDeContrato: userData.tipoContrato,
     roles: userData.roles.map(role => mapRoleToBackendId(role))
   };
