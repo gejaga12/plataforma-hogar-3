@@ -4,7 +4,7 @@ import { ReactNode, useState } from 'react';
 import { Bell, X, ThumbsUp, Heart, Eye } from 'lucide-react';
 import { NovedadCard } from './novedad-card';
 import { NovedadModal } from './novedad-modal';
-import { Novedad } from '@/lib/types';
+import { Novedad } from '@/utils/types';
 
 interface DashboardHeaderProps {
   nombreUsuario: string;

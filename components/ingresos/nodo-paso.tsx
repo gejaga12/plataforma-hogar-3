@@ -12,7 +12,7 @@ import {
   Paperclip,
   Building
 } from 'lucide-react';
-import { PasoIngreso, EstadoPaso } from '@/lib/types';
+import { PasoIngreso, EstadoPaso } from '@/utils/types';
 import { cn } from '@/lib/utils';
 
 interface NodoPasoProps {

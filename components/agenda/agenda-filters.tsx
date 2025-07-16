@@ -1,7 +1,7 @@
 'use client';
 
 import { Calendar, ChevronLeft, ChevronRight, Filter, Search } from 'lucide-react';
-import { AgendaView, AgendaEventType } from '@/lib/types';
+import { AgendaView, AgendaEventType } from '@/utils/types';
 import { cn } from '@/lib/utils';
 
 interface AgendaFiltersProps {

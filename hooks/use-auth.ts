@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { User } from '@/lib/types';
+import { User } from '@/utils/types';
 import { AuthService } from '@/lib/auth';
 
 export function useAuth() {
@@ -18,11 +18,11 @@ export function useAuth() {
     return () => unsubscribe();
   }, []);
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = async (fullName: string, password: string) => {
     try {
       setError(null);
       setLoading(true);
-      const userData = await AuthService.signInWithEmail(email, password);
+      const userData = await AuthService.signInWithEmail(fullName, password);
       setUser(userData);
       return userData;
     } catch (err: any) {

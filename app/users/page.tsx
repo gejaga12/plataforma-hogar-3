@@ -1,13 +1,13 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { 
-  Plus, 
-  Search, 
-  Filter, 
-  Edit, 
-  Trash2, 
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  Plus,
+  Search,
+  Filter,
+  Edit,
+  Trash2,
   Eye,
   MoreHorizontal,
   UserCheck,
@@ -17,120 +17,32 @@ import {
   MapPin,
   Calendar,
   Building,
-  Shield
-} from 'lucide-react';
-import { ProtectedLayout } from '@/components/layout/protected-layout';
-import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { SystemUser, CreateUserData } from '@/lib/types';
-import { cn } from '@/lib/utils';
+  Shield,
+} from "lucide-react";
+import { ProtectedLayout } from "@/components/layout/protected-layout";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { SystemUser, CreateUserData } from "@/utils/types";
+import { cn } from "@/lib/utils";
+import { createUserReal } from "@/lib/api/createUserReal";
+import { AuthService } from "@/lib/auth";
 
-// Mock data - replace with actual API calls
-const mockUsers: SystemUser[] = [
-  {
-    id: '1',
-    nombreCompleto: 'Gerardo García',
-    zona: 'NEA',
-    fechaIngreso: '2022-06-21',
-    mail: 'g.garcia@hogar.com',
-    direccion: 'Av. Prueba 123',
-    telefono: '555555',
-    roles: ['admin', 'coordinador'],
-    certificacionesTitulo: 'Programación Web',
-    notificaciones: {
-      mail: true,
-      push: true
-    },
-    puesto: 'Líder IT',
-    area: 'IT',
-    periodoPruebaContratado: 'Contratado',
-    tipoContrato: 'Relación de Dependencia',
-    documentos: ['legajo.pdf'],
-    sucursalHogar: 'Sede Central',
-    activo: true,
-    createdAt: '2022-06-21T10:00:00Z',
-    updatedAt: '2024-01-15T14:30:00Z'
-  },
-  {
-    id: '2',
-    nombreCompleto: 'María González',
-    zona: 'CABA',
-    fechaIngreso: '2023-03-15',
-    mail: 'm.gonzalez@hogar.com',
-    direccion: 'Calle Falsa 456',
-    telefono: '666666',
-    roles: ['supervisor'],
-    certificacionesTitulo: 'Gestión de Equipos',
-    notificaciones: {
-      mail: true,
-      push: false
-    },
-    puesto: 'Supervisora de Campo',
-    area: 'Operaciones',
-    periodoPruebaContratado: 'Contratado',
-    tipoContrato: 'Relación de Dependencia',
-    documentos: ['cv.pdf', 'certificados.pdf'],
-    sucursalHogar: 'Sucursal Norte',
-    activo: true,
-    createdAt: '2023-03-15T09:00:00Z',
-    updatedAt: '2024-01-10T11:20:00Z'
-  },
-  {
-    id: '3',
-    nombreCompleto: 'Carlos Rodríguez',
-    zona: 'GBA',
-    fechaIngreso: '2023-08-10',
-    mail: 'c.rodriguez@hogar.com',
-    direccion: 'Av. Libertador 789',
-    telefono: '777777',
-    roles: ['tecnico'],
-    certificacionesTitulo: 'Técnico en Electrónica',
-    notificaciones: {
-      mail: false,
-      push: true
-    },
-    puesto: 'Técnico Senior',
-    area: 'Mantenimiento',
-    periodoPruebaContratado: 'Periodo de Prueba',
-    tipoContrato: 'Relación de Dependencia',
-    documentos: ['legajo.pdf'],
-    sucursalHogar: 'Sucursal Sur',
-    activo: true,
-    createdAt: '2023-08-10T08:30:00Z',
-    updatedAt: '2024-01-12T16:45:00Z'
-  }
-];
+// const updateUser = async (
+//   id: string,
+//   userData: Partial<CreateUserData>
+// ): Promise<SystemUser> => {
+//   await new Promise((resolve) => setTimeout(resolve, 1000));
+//   const existingUser = mockUsers.find((u) => u.id === id);
+//   if (!existingUser) throw new Error("Usuario no encontrado");
 
-const fetchUsers = async (): Promise<SystemUser[]> => {
-  await new Promise(resolve => setTimeout(resolve, 800));
-  return mockUsers;
-};
-
-const createUser = async (userData: CreateUserData): Promise<SystemUser> => {
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  const newUser: SystemUser = {
-    id: Date.now().toString(),
-    ...userData,
-    documentos: [],
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  };
-  return newUser;
-};
-
-const updateUser = async (id: string, userData: Partial<CreateUserData>): Promise<SystemUser> => {
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  const existingUser = mockUsers.find(u => u.id === id);
-  if (!existingUser) throw new Error('Usuario no encontrado');
-  
-  return {
-    ...existingUser,
-    ...userData,
-    updatedAt: new Date().toISOString()
-  };
-};
+//   return {
+//     ...existingUser,
+//     ...userData,
+//     updatedAt: new Date().toISOString(),
+//   };
+// };
 
 const deleteUser = async (id: string): Promise<void> => {
-  await new Promise(resolve => setTimeout(resolve, 500));
+  await new Promise((resolve) => setTimeout(resolve, 500));
   // In real implementation, make API call to delete user
 };
 
@@ -138,67 +50,70 @@ interface UserModalProps {
   isOpen: boolean;
   onClose: () => void;
   user?: SystemUser;
-  mode: 'create' | 'edit' | 'view';
+  mode: "create" | "edit" | "view";
 }
 
 function UserModal({ isOpen, onClose, user, mode }: UserModalProps) {
+
   const queryClient = useQueryClient();
+
   const [formData, setFormData] = useState<CreateUserData>({
-    nombreCompleto: user?.nombreCompleto || '',
-    zona: user?.zona || '',
-    fechaIngreso: user?.fechaIngreso || '',
-    mail: user?.mail || '',
-    direccion: user?.direccion || '',
-    telefono: user?.telefono || '',
+    nombreCompleto: user?.nombreCompleto || "",
+    zona: user?.zona || "",
+    fechaIngreso: user?.fechaIngreso || "",
+    mail: user?.mail || "",
+    direccion: user?.direccion || "",
+    telefono: user?.telefono || "",
     roles: user?.roles || [],
-    certificacionesTitulo: user?.certificacionesTitulo || '',
+    certificacionesTitulo: user?.certificacionesTitulo || "",
     notificaciones: user?.notificaciones || { mail: true, push: true },
-    puesto: user?.puesto || '',
-    area: user?.area || '',
-    periodoPruebaContratado: user?.periodoPruebaContratado || 'Periodo de Prueba',
-    tipoContrato: user?.tipoContrato || 'Relación de Dependencia',
-    sucursalHogar: user?.sucursalHogar || '',
-    activo: user?.activo ?? true
+    puesto: user?.puesto || "",
+    area: user?.area || "",
+    periodoPruebaContratado:
+      user?.periodoPruebaContratado || "Periodo de Prueba",
+    tipoContrato: user?.tipoContrato || "Relación de Dependencia",
+    sucursalHogar: user?.sucursalHogar || "",
+    activo: user?.activo ?? true,
   });
 
   const createMutation = useMutation({
-    mutationFn: createUser,
+    mutationFn: createUserReal,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['users'] });
+      queryClient.invalidateQueries({ queryKey: ["users"] });
       onClose();
-    }
+    },
   });
 
-  const updateMutation = useMutation({
-    mutationFn: (data: Partial<CreateUserData>) => updateUser(user!.id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['users'] });
-      onClose();
-    }
-  });
+  // const updateMutation = useMutation({
+  //   mutationFn: (data: Partial<CreateUserData>) => updateUser(user!.id, data),
+  //   onSuccess: () => {
+  //     queryClient.invalidateQueries({ queryKey: ["users"] });
+  //     onClose();
+  //   },
+  // });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (mode === 'create') {
+    if (mode === "create") {
       createMutation.mutate(formData);
-    } else if (mode === 'edit') {
-      updateMutation.mutate(formData);
+    } else if (mode === "edit") {
+      // updateMutation.mutate(formData);
     }
   };
 
   const handleRoleChange = (role: string, checked: boolean) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      roles: checked 
+      roles: checked
         ? [...prev.roles, role]
-        : prev.roles.filter(r => r !== role)
+        : prev.roles.filter((r) => r !== role),
     }));
   };
 
   if (!isOpen) return null;
 
-  const isReadOnly = mode === 'view';
-  const isLoading = createMutation.isPending || updateMutation.isPending;
+  const isReadOnly = mode === "view";
+  const isLoading = createMutation.isPending;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -206,9 +121,9 @@ function UserModal({ isOpen, onClose, user, mode }: UserModalProps) {
         <div className="p-6 border-b border-gray-200">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold text-gray-900">
-              {mode === 'create' && 'Crear Nuevo Usuario'}
-              {mode === 'edit' && 'Editar Usuario'}
-              {mode === 'view' && 'Detalles del Usuario'}
+              {mode === "create" && "Crear Nuevo Usuario"}
+              {mode === "edit" && "Editar Usuario"}
+              {mode === "view" && "Detalles del Usuario"}
             </h2>
             <button
               onClick={onClose}
@@ -223,8 +138,10 @@ function UserModal({ isOpen, onClose, user, mode }: UserModalProps) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Información Personal */}
             <div className="space-y-4">
-              <h3 className="text-lg font-medium text-gray-900">Información Personal</h3>
-              
+              <h3 className="text-lg font-medium text-gray-900">
+                Información Personal
+              </h3>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Nombre Completo *
@@ -232,7 +149,12 @@ function UserModal({ isOpen, onClose, user, mode }: UserModalProps) {
                 <input
                   type="text"
                   value={formData.nombreCompleto}
-                  onChange={(e) => setFormData(prev => ({ ...prev, nombreCompleto: e.target.value }))}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      nombreCompleto: e.target.value,
+                    }))
+                  }
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                   required
                   disabled={isReadOnly}
@@ -246,7 +168,9 @@ function UserModal({ isOpen, onClose, user, mode }: UserModalProps) {
                 <input
                   type="email"
                   value={formData.mail}
-                  onChange={(e) => setFormData(prev => ({ ...prev, mail: e.target.value }))}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, mail: e.target.value }))
+                  }
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                   required
                   disabled={isReadOnly}
@@ -260,7 +184,12 @@ function UserModal({ isOpen, onClose, user, mode }: UserModalProps) {
                 <input
                   type="tel"
                   value={formData.telefono}
-                  onChange={(e) => setFormData(prev => ({ ...prev, telefono: e.target.value }))}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      telefono: e.target.value,
+                    }))
+                  }
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                   disabled={isReadOnly}
                 />
@@ -273,7 +202,12 @@ function UserModal({ isOpen, onClose, user, mode }: UserModalProps) {
                 <input
                   type="text"
                   value={formData.direccion}
-                  onChange={(e) => setFormData(prev => ({ ...prev, direccion: e.target.value }))}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      direccion: e.target.value,
+                    }))
+                  }
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                   disabled={isReadOnly}
                 />
@@ -282,8 +216,10 @@ function UserModal({ isOpen, onClose, user, mode }: UserModalProps) {
 
             {/* Información Laboral */}
             <div className="space-y-4">
-              <h3 className="text-lg font-medium text-gray-900">Información Laboral</h3>
-              
+              <h3 className="text-lg font-medium text-gray-900">
+                Información Laboral
+              </h3>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Puesto *
@@ -291,7 +227,9 @@ function UserModal({ isOpen, onClose, user, mode }: UserModalProps) {
                 <input
                   type="text"
                   value={formData.puesto}
-                  onChange={(e) => setFormData(prev => ({ ...prev, puesto: e.target.value }))}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, puesto: e.target.value }))
+                  }
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                   required
                   disabled={isReadOnly}
@@ -304,7 +242,9 @@ function UserModal({ isOpen, onClose, user, mode }: UserModalProps) {
                 </label>
                 <select
                   value={formData.area}
-                  onChange={(e) => setFormData(prev => ({ ...prev, area: e.target.value }))}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, area: e.target.value }))
+                  }
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                   required
                   disabled={isReadOnly}
@@ -324,7 +264,9 @@ function UserModal({ isOpen, onClose, user, mode }: UserModalProps) {
                 </label>
                 <select
                   value={formData.zona}
-                  onChange={(e) => setFormData(prev => ({ ...prev, zona: e.target.value }))}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, zona: e.target.value }))
+                  }
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                   required
                   disabled={isReadOnly}
@@ -345,7 +287,12 @@ function UserModal({ isOpen, onClose, user, mode }: UserModalProps) {
                 </label>
                 <select
                   value={formData.sucursalHogar}
-                  onChange={(e) => setFormData(prev => ({ ...prev, sucursalHogar: e.target.value }))}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      sucursalHogar: e.target.value,
+                    }))
+                  }
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                   required
                   disabled={isReadOnly}
@@ -364,8 +311,10 @@ function UserModal({ isOpen, onClose, user, mode }: UserModalProps) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Contrato y Fechas */}
             <div className="space-y-4">
-              <h3 className="text-lg font-medium text-gray-900">Información Contractual</h3>
-              
+              <h3 className="text-lg font-medium text-gray-900">
+                Información Contractual
+              </h3>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Fecha de Ingreso *
@@ -373,7 +322,12 @@ function UserModal({ isOpen, onClose, user, mode }: UserModalProps) {
                 <input
                   type="date"
                   value={formData.fechaIngreso}
-                  onChange={(e) => setFormData(prev => ({ ...prev, fechaIngreso: e.target.value }))}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      fechaIngreso: e.target.value,
+                    }))
+                  }
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                   required
                   disabled={isReadOnly}
@@ -386,12 +340,19 @@ function UserModal({ isOpen, onClose, user, mode }: UserModalProps) {
                 </label>
                 <select
                   value={formData.tipoContrato}
-                  onChange={(e) => setFormData(prev => ({ ...prev, tipoContrato: e.target.value as any }))}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      tipoContrato: e.target.value as any,
+                    }))
+                  }
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                   required
                   disabled={isReadOnly}
                 >
-                  <option value="Relación de Dependencia">Relación de Dependencia</option>
+                  <option value="Relación de Dependencia">
+                    Relación de Dependencia
+                  </option>
                   <option value="Freelance">Freelance</option>
                   <option value="Contratista">Contratista</option>
                 </select>
@@ -403,7 +364,12 @@ function UserModal({ isOpen, onClose, user, mode }: UserModalProps) {
                 </label>
                 <select
                   value={formData.periodoPruebaContratado}
-                  onChange={(e) => setFormData(prev => ({ ...prev, periodoPruebaContratado: e.target.value as any }))}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      periodoPruebaContratado: e.target.value as any,
+                    }))
+                  }
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                   required
                   disabled={isReadOnly}
@@ -420,7 +386,12 @@ function UserModal({ isOpen, onClose, user, mode }: UserModalProps) {
                 <input
                   type="text"
                   value={formData.certificacionesTitulo}
-                  onChange={(e) => setFormData(prev => ({ ...prev, certificacionesTitulo: e.target.value }))}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      certificacionesTitulo: e.target.value,
+                    }))
+                  }
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                   disabled={isReadOnly}
                 />
@@ -429,25 +400,33 @@ function UserModal({ isOpen, onClose, user, mode }: UserModalProps) {
 
             {/* Roles y Configuraciones */}
             <div className="space-y-4">
-              <h3 className="text-lg font-medium text-gray-900">Roles y Configuraciones</h3>
-              
+              <h3 className="text-lg font-medium text-gray-900">
+                Roles y Configuraciones
+              </h3>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Roles *
                 </label>
                 <div className="space-y-2">
-                  {['admin', 'coordinador', 'supervisor', 'tecnico'].map((role) => (
-                    <label key={role} className="flex items-center">
-                      <input
-                        type="checkbox"
-                        checked={formData.roles.includes(role)}
-                        onChange={(e) => handleRoleChange(role, e.target.checked)}
-                        className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
-                        disabled={isReadOnly}
-                      />
-                      <span className="ml-2 text-sm text-gray-700 capitalize">{role}</span>
-                    </label>
-                  ))}
+                  {["admin", "coordinador", "supervisor", "tecnico"].map(
+                    (role) => (
+                      <label key={role} className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={formData.roles.includes(role)}
+                          onChange={(e) =>
+                            handleRoleChange(role, e.target.checked)
+                          }
+                          className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+                          disabled={isReadOnly}
+                        />
+                        <span className="ml-2 text-sm text-gray-700 capitalize">
+                          {role}
+                        </span>
+                      </label>
+                    )
+                  )}
                 </div>
               </div>
 
@@ -460,27 +439,41 @@ function UserModal({ isOpen, onClose, user, mode }: UserModalProps) {
                     <input
                       type="checkbox"
                       checked={formData.notificaciones.mail}
-                      onChange={(e) => setFormData(prev => ({
-                        ...prev,
-                        notificaciones: { ...prev.notificaciones, mail: e.target.checked }
-                      }))}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          notificaciones: {
+                            ...prev.notificaciones,
+                            mail: e.target.checked,
+                          },
+                        }))
+                      }
                       className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
                       disabled={isReadOnly}
                     />
-                    <span className="ml-2 text-sm text-gray-700">Notificaciones por Email</span>
+                    <span className="ml-2 text-sm text-gray-700">
+                      Notificaciones por Email
+                    </span>
                   </label>
                   <label className="flex items-center">
                     <input
                       type="checkbox"
                       checked={formData.notificaciones.push}
-                      onChange={(e) => setFormData(prev => ({
-                        ...prev,
-                        notificaciones: { ...prev.notificaciones, push: e.target.checked }
-                      }))}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          notificaciones: {
+                            ...prev.notificaciones,
+                            push: e.target.checked,
+                          },
+                        }))
+                      }
                       className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
                       disabled={isReadOnly}
                     />
-                    <span className="ml-2 text-sm text-gray-700">Notificaciones Push</span>
+                    <span className="ml-2 text-sm text-gray-700">
+                      Notificaciones Push
+                    </span>
                   </label>
                 </div>
               </div>
@@ -490,11 +483,18 @@ function UserModal({ isOpen, onClose, user, mode }: UserModalProps) {
                   <input
                     type="checkbox"
                     checked={formData.activo}
-                    onChange={(e) => setFormData(prev => ({ ...prev, activo: e.target.checked }))}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        activo: e.target.checked,
+                      }))
+                    }
                     className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
                     disabled={isReadOnly}
                   />
-                  <span className="ml-2 text-sm font-medium text-gray-700">Usuario Activo</span>
+                  <span className="ml-2 text-sm font-medium text-gray-700">
+                    Usuario Activo
+                  </span>
                 </label>
               </div>
             </div>
@@ -519,11 +519,13 @@ function UserModal({ isOpen, onClose, user, mode }: UserModalProps) {
                   <>
                     <LoadingSpinner size="sm" />
                     <span className="ml-2">
-                      {mode === 'create' ? 'Creando...' : 'Guardando...'}
+                      {mode === "create" ? "Creando..." : "Guardando..."}
                     </span>
                   </>
+                ) : mode === "create" ? (
+                  "Crear Usuario"
                 ) : (
-                  mode === 'create' ? 'Crear Usuario' : 'Guardar Cambios'
+                  "Guardar Cambios"
                 )}
               </button>
             </div>
@@ -542,7 +544,13 @@ interface DeleteConfirmModalProps {
   isLoading: boolean;
 }
 
-function DeleteConfirmModal({ isOpen, onClose, onConfirm, userName, isLoading }: DeleteConfirmModalProps) {
+function DeleteConfirmModal({
+  isOpen,
+  onClose,
+  onConfirm,
+  userName,
+  isLoading,
+}: DeleteConfirmModalProps) {
   if (!isOpen) return null;
 
   return (
@@ -550,12 +558,14 @@ function DeleteConfirmModal({ isOpen, onClose, onConfirm, userName, isLoading }:
       <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
         <div className="flex items-center space-x-2 mb-4">
           <Trash2 className="text-red-500" size={24} />
-          <h3 className="text-lg font-semibold text-gray-900">Confirmar Eliminación</h3>
+          <h3 className="text-lg font-semibold text-gray-900">
+            Confirmar Eliminación
+          </h3>
         </div>
-        
+
         <p className="text-gray-600 mb-6">
-          ¿Estás seguro de que deseas eliminar al usuario <strong>{userName}</strong>? 
-          Esta acción no se puede deshacer.
+          ¿Estás seguro de que deseas eliminar al usuario{" "}
+          <strong>{userName}</strong>? Esta acción no se puede deshacer.
         </p>
 
         <div className="flex space-x-4">
@@ -571,7 +581,7 @@ function DeleteConfirmModal({ isOpen, onClose, onConfirm, userName, isLoading }:
             disabled={isLoading}
             className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center"
           >
-            {isLoading ? <LoadingSpinner size="sm" /> : 'Eliminar'}
+            {isLoading ? <LoadingSpinner size="sm" /> : "Eliminar"}
           </button>
         </div>
       </div>
@@ -580,48 +590,53 @@ function DeleteConfirmModal({ isOpen, onClose, onConfirm, userName, isLoading }:
 }
 
 function UsersContent() {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("");
   const [modalState, setModalState] = useState<{
     isOpen: boolean;
-    mode: 'create' | 'edit' | 'view';
+    mode: "create" | "edit" | "view";
     user?: SystemUser;
   }>({
     isOpen: false,
-    mode: 'create'
+    mode: "create",
   });
   const [deleteModal, setDeleteModal] = useState<{
     isOpen: boolean;
     user?: SystemUser;
   }>({
-    isOpen: false
+    isOpen: false,
   });
 
   const queryClient = useQueryClient();
 
   const { data: users, isLoading } = useQuery({
-    queryKey: ['users'],
-    queryFn: fetchUsers,
+    queryKey: ["users"],
+    queryFn: () => AuthService.getUsers(100, 0),
   });
 
   const deleteMutation = useMutation({
     mutationFn: deleteUser,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['users'] });
+      queryClient.invalidateQueries({ queryKey: ["users"] });
       setDeleteModal({ isOpen: false });
-    }
+    },
   });
 
-  const filteredUsers = users?.filter(user => {
-    const matchesSearch = user.nombreCompleto.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.mail.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.puesto.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = !statusFilter || 
-                         (statusFilter === 'activo' && user.activo) ||
-                         (statusFilter === 'inactivo' && !user.activo);
-    
-    return matchesSearch && matchesStatus;
-  }) || [];
+  const filteredUsers =
+    users?.filter((user) => {
+      const search = searchTerm.toLowerCase();
+      const matchesSearch =
+        user.nombreCompleto.toLowerCase().includes(search) ||
+        user.mail?.toLowerCase().includes(search) || // ← protegido con ?
+        user.puesto?.toLowerCase().includes(search);
+
+      const matchesStatus =
+        !statusFilter ||
+        (statusFilter === "activo" && user.activo) ||
+        (statusFilter === "inactivo" && !user.activo);
+
+      return matchesSearch && matchesStatus;
+    }) || [];
 
   const handleDeleteUser = (user: SystemUser) => {
     setDeleteModal({ isOpen: true, user });
@@ -649,14 +664,16 @@ function UsersContent() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Gestión de Usuarios</h1>
+          <h1 className="text-2xl font-bold text-gray-900">
+            Gestión de Usuarios
+          </h1>
           <p className="text-gray-600 mt-1">
             Administra los usuarios del sistema
           </p>
         </div>
-        
-        <button 
-          onClick={() => setModalState({ isOpen: true, mode: 'create' })}
+
+        <button
+          onClick={() => setModalState({ isOpen: true, mode: "create" })}
           className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
         >
           <Plus size={20} />
@@ -669,7 +686,10 @@ function UsersContent() {
         <div className="flex flex-col md:flex-row md:items-center space-y-4 md:space-y-0 md:space-x-4">
           <div className="flex-1">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+              <Search
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                size={20}
+              />
               <input
                 type="text"
                 placeholder="Buscar usuarios por nombre, email o puesto..."
@@ -732,7 +752,11 @@ function UsersContent() {
                     <div className="flex items-center">
                       <div className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center">
                         <span className="text-sm font-medium text-white">
-                          {user.nombreCompleto.split(' ').map(n => n[0]).join('').toUpperCase()}
+                          {user.nombreCompleto
+                            .split(" ")
+                            .map((n) => n[0])
+                            .join("")
+                            .toUpperCase()}
                         </span>
                       </div>
                       <div className="ml-4">
@@ -752,7 +776,9 @@ function UsersContent() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900">{user.zona}</div>
-                    <div className="text-sm text-gray-500">{user.sucursalHogar}</div>
+                    <div className="text-sm text-gray-500">
+                      {user.sucursalHogar}
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex flex-wrap gap-1">
@@ -767,26 +793,32 @@ function UsersContent() {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={cn(
-                      'px-2 py-1 text-xs font-medium rounded-full',
-                      user.activo
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-red-100 text-red-800'
-                    )}>
-                      {user.activo ? 'Activo' : 'Inactivo'}
+                    <span
+                      className={cn(
+                        "px-2 py-1 text-xs font-medium rounded-full",
+                        user.activo
+                          ? "bg-green-100 text-green-800"
+                          : "bg-red-100 text-red-800"
+                      )}
+                    >
+                      {user.activo ? "Activo" : "Inactivo"}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex items-center space-x-2">
                       <button
-                        onClick={() => setModalState({ isOpen: true, mode: 'view', user })}
+                        onClick={() =>
+                          setModalState({ isOpen: true, mode: "view", user })
+                        }
                         className="text-gray-600 hover:text-gray-900 transition-colors"
                         title="Ver detalles"
                       >
                         <Eye size={16} />
                       </button>
                       <button
-                        onClick={() => setModalState({ isOpen: true, mode: 'edit', user })}
+                        onClick={() =>
+                          setModalState({ isOpen: true, mode: "edit", user })
+                        }
                         className="text-orange-600 hover:text-orange-900 transition-colors"
                         title="Editar"
                       >
@@ -810,12 +842,13 @@ function UsersContent() {
         {filteredUsers.length === 0 && (
           <div className="text-center py-12">
             <Shield className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="mt-2 text-sm font-medium text-gray-900">No hay usuarios</h3>
+            <h3 className="mt-2 text-sm font-medium text-gray-900">
+              No hay usuarios
+            </h3>
             <p className="mt-1 text-sm text-gray-500">
-              {searchTerm || statusFilter 
-                ? 'No se encontraron usuarios con los filtros aplicados.'
-                : 'Comienza creando un nuevo usuario.'
-              }
+              {searchTerm || statusFilter
+                ? "No se encontraron usuarios con los filtros aplicados."
+                : "Comienza creando un nuevo usuario."}
             </p>
           </div>
         )}
@@ -824,7 +857,7 @@ function UsersContent() {
       {/* Modals */}
       <UserModal
         isOpen={modalState.isOpen}
-        onClose={() => setModalState({ isOpen: false, mode: 'create' })}
+        onClose={() => setModalState({ isOpen: false, mode: "create" })}
         user={modalState.user}
         mode={modalState.mode}
       />
@@ -833,7 +866,7 @@ function UsersContent() {
         isOpen={deleteModal.isOpen}
         onClose={() => setDeleteModal({ isOpen: false })}
         onConfirm={confirmDelete}
-        userName={deleteModal.user?.nombreCompleto || ''}
+        userName={deleteModal.user?.nombreCompleto || ""}
         isLoading={deleteMutation.isPending}
       />
     </div>

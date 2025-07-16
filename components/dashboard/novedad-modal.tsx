@@ -1,7 +1,7 @@
 'use client';
 
 import { X, ThumbsUp, Heart, Eye, Calendar, Users, Pin } from 'lucide-react';
-import { Novedad } from '@/lib/types';
+import { Novedad } from '@/utils/types';
 import { cn } from '@/lib/utils';
 
 interface NovedadModalProps {

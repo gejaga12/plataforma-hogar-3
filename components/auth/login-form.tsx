@@ -5,12 +5,12 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Eye, EyeOff, Mail, Lock } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, User } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 const loginSchema = z.object({
-  email: z.string().email('Email inválido'),
+  fullName: z.string(),
   password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres'),
 });
 
@@ -34,7 +34,10 @@ export function LoginForm() {
   const onSubmit = async (data: LoginFormData) => {
     try {
       setLoading(true);
-      await signIn(data.email, data.password);
+      const user = await signIn(data.fullName, data.password);
+
+      console.log("Usuario logueado:", user);
+
       router.push('/dashboard');
     } catch (error: any) {
       setError('root', { message: error.message });
@@ -73,21 +76,20 @@ export function LoginForm() {
         <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
           <div className="space-y-4">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Email
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Usuario
               </label>
               <div className="mt-1 relative">
                 <input
-                  {...register('email')}
-                  type="email"
-                  autoComplete="email"
+                  {...register('fullName')}
+                  type="text"
                   className="appearance-none relative block w-full px-3 py-2 pl-10 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 rounded-lg focus:outline-none focus:ring-orange-500 focus:border-orange-500 focus:z-10 sm:text-sm transition-colors"
-                  placeholder="tu@email.com"
+                  placeholder="Tu usuario..."
                 />
-                <Mail className="absolute left-3 top-2.5 h-4 w-4 text-gray-400 dark:text-gray-500" />
+                <User className="absolute left-3 top-2.5 h-4 w-4 text-gray-400 dark:text-gray-500" />
               </div>
-              {errors.email && (
-                <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.email.message}</p>
+              {errors.fullName && (
+                <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.fullName.message}</p>
               )}
             </div>
 

@@ -14,7 +14,7 @@ import {
   RefreshCw,
   FileText
 } from 'lucide-react';
-import { AgendaEvent } from '@/lib/types';
+import { AgendaEvent } from '@/utils/types';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { cn } from '@/lib/utils';
 

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, MapPin } from 'lucide-react';
-import { AgendaEvent, AgendaView } from '@/lib/types';
+import { AgendaEvent, AgendaView } from '@/utils/types';
 import { cn } from '@/lib/utils';
 
 interface AgendaCalendarProps {

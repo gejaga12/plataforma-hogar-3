@@ -15,7 +15,7 @@ import {
   Filter,
   ChevronDown
 } from 'lucide-react';
-import { AgendaEvent, AgendaEventType } from '@/lib/types';
+import { AgendaEvent, AgendaEventType } from '@/utils/types';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { cn } from '@/lib/utils';
 

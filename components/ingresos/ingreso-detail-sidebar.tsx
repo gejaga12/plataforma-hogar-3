@@ -13,7 +13,7 @@ import {
   ChevronRight,
   ChevronDown
 } from 'lucide-react';
-import { ProcesoIngreso } from '@/lib/types';
+import { ProcesoIngreso } from '@/utils/types';
 import { cn } from '@/lib/utils';
 
 interface IngresoDetailSidebarProps {

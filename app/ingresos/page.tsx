@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 import { ProtectedLayout } from '@/components/layout/protected-layout';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { ProcesoIngreso, EstadoPaso } from '@/lib/types';
+import { ProcesoIngreso, EstadoPaso } from '@/utils/types';
 import { cn } from '@/lib/utils';
 
 // Mock data

@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { ProtectedLayout } from '@/components/layout/protected-layout';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { News } from '@/lib/types';
+import { News } from '@/utils/types';
 import { cn } from '@/lib/utils';
 
 // Mock data - replace with actual API calls

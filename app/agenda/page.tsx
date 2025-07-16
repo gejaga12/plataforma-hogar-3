@@ -26,7 +26,7 @@ import {
 import { ProtectedLayout } from '@/components/layout/protected-layout';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { cn } from '@/lib/utils';
-import { AgendaEvent, AgendaEventType, AgendaView } from '@/lib/types';
+import { AgendaEvent, AgendaEventType, AgendaView } from '@/utils/types';
 import { AgendaCalendar } from '@/components/agenda/agenda-calendar';
 import { EventModal } from '@/components/agenda/event-modal';
 import { EventDetailModal } from '@/components/agenda/event-detail-modal';

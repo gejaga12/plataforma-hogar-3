@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { X, Calendar, Users, Pin } from 'lucide-react';
-import { Novedad } from '@/lib/types';
+import { Novedad } from '@/utils/types';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 interface NovedadFormModalProps {

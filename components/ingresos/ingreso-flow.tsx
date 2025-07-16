@@ -18,7 +18,7 @@ import ReactFlow, {
   Panel
 } from 'reactflow';
 import 'reactflow/dist/style.css';
-import { PasoIngreso, EstadoPaso, Archivo } from '@/lib/types';
+import { PasoIngreso, EstadoPaso, Archivo } from '@/utils/types';
 import { NodoPaso } from './nodo-paso';
 import { ComentarioModal } from './comentario-modal';
 import { ArchivoModal } from './archivo-modal';

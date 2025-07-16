@@ -11,7 +11,7 @@ import {
   AlertCircle,
   CheckCircle
 } from 'lucide-react';
-import { AgendaEvent } from '@/lib/types';
+import { AgendaEvent } from '@/utils/types';
 import { cn } from '@/lib/utils';
 
 interface AgendaListProps {

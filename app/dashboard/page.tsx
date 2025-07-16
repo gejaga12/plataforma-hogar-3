@@ -14,7 +14,7 @@ import { ProtectedLayout } from '@/components/layout/protected-layout';
 import { StatsCard } from '@/components/dashboard/stats-card';
 import { DashboardHeader } from '@/components/dashboard/dashboard-header';
 import { useAuth } from '@/hooks/use-auth';
-import { DashboardStats, Novedad } from '@/lib/types';
+import { DashboardStats, Novedad } from '@/utils/types';
 
 // Mock function - replace with actual API call
 const fetchDashboardStats = async (): Promise<DashboardStats> => {

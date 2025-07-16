@@ -20,7 +20,7 @@ import { ProtectedLayout } from '@/components/layout/protected-layout';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { IngresoFlow } from '@/components/ingresos/ingreso-flow';
 import { IngresoDetailSidebar } from '@/components/ingresos/ingreso-detail-sidebar';
-import { ProcesoIngreso, PasoIngreso, EstadoPaso, Archivo } from '@/lib/types';
+import { ProcesoIngreso, PasoIngreso, EstadoPaso, Archivo } from '@/utils/types';
 import { cn } from '@/lib/utils';
 
 // Mock data para un proceso de ingreso completo

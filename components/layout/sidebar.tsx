@@ -1,319 +1,352 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { 
-  Home, ClipboardList, Newspaper, Settings, Users, BarChart3, 
-  Menu, X, LogOut, Calendar, AlertTriangle, FileText, Zap, 
-  ShoppingCart, Bug, Info, FolderOpen, Trophy, Trash2, UserCheck, 
-  Clock, UserPlus, MapPin, Building, Globe, Map, UserCog, Building2, 
-  Wrench, FileCheck, Layers, Type, ChevronDown, ChevronRight, Shield, 
-  Sigma as Sitemap, Cog, MessageSquare, Bell
-} from 'lucide-react';
-import { useAuth } from '@/hooks/use-auth';
-import { UserRole, MenuItem } from '@/lib/types';
-import { cn } from '@/lib/utils';
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import {
+  Home,
+  ClipboardList,
+  Newspaper,
+  Settings,
+  Users,
+  BarChart3,
+  Menu,
+  X,
+  LogOut,
+  Calendar,
+  AlertTriangle,
+  FileText,
+  Zap,
+  ShoppingCart,
+  Bug,
+  Info,
+  FolderOpen,
+  Trophy,
+  Trash2,
+  UserCheck,
+  Clock,
+  UserPlus,
+  MapPin,
+  Building,
+  Globe,
+  Map,
+  UserCog,
+  Building2,
+  Wrench,
+  FileCheck,
+  Layers,
+  Type,
+  ChevronDown,
+  ChevronRight,
+  Shield,
+  Sigma as Sitemap,
+  Cog,
+  MessageSquare,
+  Bell,
+} from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
+import { UserRole, MenuItem } from "@/utils/types";
+import { cn } from "@/lib/utils";
 
 const menuItems: MenuItem[] = [
   // Operaciones Principales
   {
-    id: 'dashboard',
-    label: 'Dashboard',
-    icon: 'Home',
-    href: '/dashboard',
-    roles: ['TÉCNICO', 'SUPERVISOR', 'ADMINISTRADOR']
+    id: "dashboard",
+    label: "Dashboard",
+    icon: "Home",
+    href: "/dashboard",
+    roles: ["TÉCNICO", "SUPERVISOR", "ADMIN"],
   },
   {
-    id: 'agenda',
-    label: 'Agenda de Trabajo',
-    icon: 'Calendar',
-    href: '/agenda',
-    roles: ['TÉCNICO', 'SUPERVISOR', 'ADMINISTRADOR']
+    id: "agenda",
+    label: "Agenda de Trabajo",
+    icon: "Calendar",
+    href: "/agenda",
+    roles: ["TÉCNICO", "SUPERVISOR", "ADMIN"],
   },
   {
-    id: 'incidencias',
-    label: 'Incidencias',
-    icon: 'AlertTriangle',
-    href: '/incidencias',
-    roles: ['TÉCNICO', 'SUPERVISOR', 'ADMINISTRADOR'],
-    badge: '3'
+    id: "incidencias",
+    label: "Incidencias",
+    icon: "AlertTriangle",
+    href: "/incidencias",
+    roles: ["TÉCNICO", "SUPERVISOR", "ADMIN"],
+    badge: "3",
   },
   {
-    id: 'orders',
-    label: 'Órdenes de Trabajo',
-    icon: 'ClipboardList',
-    href: '/orders',
-    roles: ['TÉCNICO', 'SUPERVISOR', 'ADMINISTRADOR']
+    id: "orders",
+    label: "Órdenes de Trabajo",
+    icon: "ClipboardList",
+    href: "/orders",
+    roles: ["TÉCNICO", "SUPERVISOR", "ADMIN"],
   },
   {
-    id: 'equipos',
-    label: 'Gestión de Equipos',
-    icon: 'Cog',
-    href: '/equipos',
-    roles: ['TÉCNICO', 'SUPERVISOR', 'ADMINISTRADOR']
+    id: "equipos",
+    label: "Gestión de Equipos",
+    icon: "Cog",
+    href: "/equipos",
+    roles: ["TÉCNICO", "SUPERVISOR", "ADMIN"],
   },
   {
-    id: 'panoramica',
-    label: 'Mapa Panorámico',
-    icon: 'MapPin',
-    href: '/panoramica',
-    roles: ['TÉCNICO', 'SUPERVISOR', 'ADMINISTRADOR'],
-    isNew: true
+    id: "panoramica",
+    label: "Mapa Panorámico",
+    icon: "MapPin",
+    href: "/panoramica",
+    roles: ["TÉCNICO", "SUPERVISOR", "ADMIN"],
+    isNew: true,
   },
   {
-    id: 'solicitudes',
-    label: 'Solicitudes',
-    icon: 'FileText',
-    href: '/solicitudes',
-    roles: ['TÉCNICO', 'SUPERVISOR', 'ADMINISTRADOR']
+    id: "solicitudes",
+    label: "Solicitudes",
+    icon: "FileText",
+    href: "/solicitudes",
+    roles: ["TÉCNICO", "SUPERVISOR", "ADMIN"],
   },
   {
-    id: 'formularios-express',
-    label: 'Formularios Express',
-    icon: 'Zap',
-    href: '/formularios-express',
-    roles: ['TÉCNICO', 'SUPERVISOR', 'ADMINISTRADOR']
+    id: "formularios-express",
+    label: "Formularios Express",
+    icon: "Zap",
+    href: "/formularios-express",
+    roles: ["TÉCNICO", "SUPERVISOR", "ADMIN"],
   },
   {
-    id: 'compra-materiales',
-    label: 'Compra de Materiales',
-    icon: 'ShoppingCart',
-    href: '/compra-materiales',
-    roles: ['TÉCNICO', 'SUPERVISOR', 'ADMINISTRADOR']
+    id: "compra-materiales",
+    label: "Compra de Materiales",
+    icon: "ShoppingCart",
+    href: "/compra-materiales",
+    roles: ["TÉCNICO", "SUPERVISOR", "ADMIN"],
   },
   {
-    id: 'reportes-errores',
-    label: 'Reportes de Errores',
-    icon: 'Bug',
-    href: '/reportes-errores',
-    roles: ['TÉCNICO', 'SUPERVISOR', 'ADMINISTRADOR']
+    id: "reportes-errores",
+    label: "Reportes de Errores",
+    icon: "Bug",
+    href: "/reportes-errores",
+    roles: ["TÉCNICO", "SUPERVISOR", "ADMIN"],
   },
   {
-    id: 'news',
-    label: 'Información',
-    icon: 'Info',
-    href: '/news',
-    roles: ['TÉCNICO', 'SUPERVISOR', 'ADMINISTRADOR']
+    id: "news",
+    label: "Información",
+    icon: "Info",
+    href: "/news",
+    roles: ["TÉCNICO", "SUPERVISOR", "ADMIN"],
   },
   {
-    id: 'documentos',
-    label: 'Documentos',
-    icon: 'FolderOpen',
-    href: '/documentos',
-    roles: ['TÉCNICO', 'SUPERVISOR', 'ADMINISTRADOR']
+    id: "documentos",
+    label: "Documentos",
+    icon: "FolderOpen",
+    href: "/documentos",
+    roles: ["TÉCNICO", "SUPERVISOR", "ADMIN"],
   },
   {
-    id: 'ranking-tecnicos',
-    label: 'Ranking de Técnicos',
-    icon: 'Trophy',
-    href: '/ranking-tecnicos',
-    roles: ['SUPERVISOR', 'ADMINISTRADOR']
+    id: "ranking-tecnicos",
+    label: "Ranking de Técnicos",
+    icon: "Trophy",
+    href: "/ranking-tecnicos",
+    roles: ["SUPERVISOR", "ADMIN"],
   },
   {
-    id: 'papelera',
-    label: 'Papelera',
-    icon: 'Trash2',
-    href: '/papelera',
-    roles: ['SUPERVISOR', 'ADMINISTRADOR']
+    id: "papelera",
+    label: "Papelera",
+    icon: "Trash2",
+    href: "/papelera",
+    roles: ["SUPERVISOR", "ADMIN"],
   },
   {
-    id: 'chat',
-    label: 'Chat',
-    icon: 'MessageSquare',
-    href: '/chat',
-    roles: ['TÉCNICO', 'SUPERVISOR', 'ADMINISTRADOR'],
-    badge: '7',
-    isNew: true
+    id: "chat",
+    label: "Chat",
+    icon: "MessageSquare",
+    href: "/chat",
+    roles: ["TÉCNICO", "SUPERVISOR", "ADMIN"],
+    badge: "7",
+    isNew: true,
   },
   {
-    id: 'novedades',
-    label: 'Novedades',
-    icon: 'Bell',
-    href: '/novedades',
-    roles: ['ADMINISTRADOR', 'SUPERVISOR'],
-    isNew: true
+    id: "novedades",
+    label: "Novedades",
+    icon: "Bell",
+    href: "/novedades",
+    roles: ["ADMIN", "SUPERVISOR"],
+    isNew: true,
   },
 
   // Gestión de Personal
   {
-    id: 'users',
-    label: 'Usuarios',
-    icon: 'Users',
-    href: '/users',
-    roles: ['SUPERVISOR', 'ADMINISTRADOR']
+    id: "users",
+    label: "Usuarios",
+    icon: "Users",
+    href: "/users",
+    roles: ["SUPERVISOR", "ADMIN"],
   },
   {
-    id: 'roles',
-    label: 'Roles',
-    icon: 'Shield',
-    href: '/roles',
-    roles: ['ADMINISTRADOR']
+    id: "roles",
+    label: "Roles",
+    icon: "Shield",
+    href: "/roles",
+    roles: ["ADMIN"],
   },
   {
-    id: 'organigrama',
-    label: 'Organigrama Empresarial',
-    icon: 'Sitemap',
-    href: '/organigrama',
-    roles: ['SUPERVISOR', 'ADMINISTRADOR']
+    id: "organigrama",
+    label: "Organigrama Empresarial",
+    icon: "Sitemap",
+    href: "/organigrama",
+    roles: ["SUPERVISOR", "ADMIN"],
   },
   {
-    id: 'tecnicos',
-    label: 'Técnicos',
-    icon: 'UserCheck',
-    href: '/tecnicos',
-    roles: ['SUPERVISOR', 'ADMINISTRADOR']
+    id: "tecnicos",
+    label: "Técnicos",
+    icon: "UserCheck",
+    href: "/tecnicos",
+    roles: ["SUPERVISOR", "ADMIN"],
   },
   {
-    id: 'ingreso-egreso',
-    label: 'Ingreso-Egreso',
-    icon: 'Clock',
-    href: '/ingreso-egreso',
-    roles: ['SUPERVISOR', 'ADMINISTRADOR']
+    id: "ingreso-egreso",
+    label: "Ingreso-Egreso",
+    icon: "Clock",
+    href: "/ingreso-egreso",
+    roles: ["SUPERVISOR", "ADMIN"],
   },
   {
-    id: 'horas-extras',
-    label: 'Horas Extras',
-    icon: 'UserPlus',
-    href: '/horas-extras',
-    roles: ['SUPERVISOR', 'ADMINISTRADOR']
+    id: "horas-extras",
+    label: "Horas Extras",
+    icon: "UserPlus",
+    href: "/horas-extras",
+    roles: ["SUPERVISOR", "ADMIN"],
   },
   {
-    id: 'ingresos',
-    label: 'Procesos de Ingreso',
-    icon: 'UserPlus',
-    href: '/ingresos',
-    roles: ['SUPERVISOR', 'ADMINISTRADOR'],
-    isNew: true
+    id: "ingresos",
+    label: "Procesos de Ingreso",
+    icon: "UserPlus",
+    href: "/ingresos",
+    roles: ["SUPERVISOR", "ADMIN"],
+    isNew: true,
   },
 
   // Gestión de Clientes y Ubicaciones
   {
-    id: 'clientes',
-    label: 'Clientes',
-    icon: 'Building',
-    href: '/clientes',
-    roles: ['SUPERVISOR', 'ADMINISTRADOR']
+    id: "clientes",
+    label: "Clientes",
+    icon: "Building",
+    href: "/clientes",
+    roles: ["SUPERVISOR", "ADMIN"],
   },
   {
-    id: 'depositos',
-    label: 'Depósitos',
-    icon: 'Warehouse',
-    href: '/depositos',
-    roles: ['SUPERVISOR', 'ADMINISTRADOR'],
-    isNew: true
+    id: "depositos",
+    label: "Depósitos",
+    icon: "Warehouse",
+    href: "/depositos",
+    roles: ["SUPERVISOR", "ADMIN"],
+    isNew: true,
   },
   {
-    id: 'grupos',
-    label: 'Grupos',
-    icon: 'Users',
-    href: '/grupos',
-    roles: ['SUPERVISOR', 'ADMINISTRADOR']
+    id: "grupos",
+    label: "Grupos",
+    icon: "Users",
+    href: "/grupos",
+    roles: ["SUPERVISOR", "ADMIN"],
   },
   {
-    id: 'servicios',
-    label: 'Servicios',
-    icon: 'Wrench',
-    href: '/servicios',
-    roles: ['SUPERVISOR', 'ADMINISTRADOR']
+    id: "servicios",
+    label: "Servicios",
+    icon: "Wrench",
+    href: "/servicios",
+    roles: ["SUPERVISOR", "ADMIN"],
   },
   {
-    id: 'sucursales',
-    label: 'Sucursales',
-    icon: 'Building2',
-    href: '/sucursales',
-    roles: ['SUPERVISOR', 'ADMINISTRADOR']
+    id: "sucursales",
+    label: "Sucursales",
+    icon: "Building2",
+    href: "/sucursales",
+    roles: ["SUPERVISOR", "ADMIN"],
   },
   {
-    id: 'paises',
-    label: 'Países',
-    icon: 'Globe',
-    href: '/paises',
-    roles: ['ADMINISTRADOR']
+    id: "paises",
+    label: "Países",
+    icon: "Globe",
+    href: "/paises",
+    roles: ["ADMIN"],
   },
   {
-    id: 'provincias',
-    label: 'Provincias',
-    icon: 'Map',
-    href: '/provincias',
-    roles: ['ADMINISTRADOR']
+    id: "provincias",
+    label: "Provincias",
+    icon: "Map",
+    href: "/provincias",
+    roles: ["ADMIN"],
   },
   {
-    id: 'ciudades',
-    label: 'Ciudades',
-    icon: 'MapPin',
-    href: '/ciudades',
-    roles: ['ADMINISTRADOR']
+    id: "ciudades",
+    label: "Ciudades",
+    icon: "MapPin",
+    href: "/ciudades",
+    roles: ["ADMIN"],
   },
   {
-    id: 'facility',
-    label: 'Facility',
-    icon: 'UserCog',
-    href: '/facility',
-    roles: ['SUPERVISOR', 'ADMINISTRADOR']
+    id: "facility",
+    label: "Facility",
+    icon: "UserCog",
+    href: "/facility",
+    roles: ["SUPERVISOR", "ADMIN"],
   },
 
   // Configuración y Datos
   {
-    id: 'datos-usuario',
-    label: 'Datos de Usuario',
-    icon: 'UserCog',
-    href: '/datos-usuario',
-    roles: ['TÉCNICO', 'SUPERVISOR', 'ADMINISTRADOR']
+    id: "datos-usuario",
+    label: "Datos de Usuario",
+    icon: "UserCog",
+    href: "/datos-usuario",
+    roles: ["TÉCNICO", "SUPERVISOR", "ADMIN"],
   },
   {
-    id: 'datos-sucursal',
-    label: 'Datos de Sucursal',
-    icon: 'Building2',
-    href: '/datos-sucursal',
-    roles: ['SUPERVISOR', 'ADMINISTRADOR']
+    id: "datos-sucursal",
+    label: "Datos de Sucursal",
+    icon: "Building2",
+    href: "/datos-sucursal",
+    roles: ["SUPERVISOR", "ADMIN"],
   },
   {
-    id: 'opciones-clientes',
-    label: 'Opciones de Clientes',
-    icon: 'Settings',
-    href: '/opciones-clientes',
-    roles: ['SUPERVISOR', 'ADMINISTRADOR']
+    id: "opciones-clientes",
+    label: "Opciones de Clientes",
+    icon: "Settings",
+    href: "/opciones-clientes",
+    roles: ["SUPERVISOR", "ADMIN"],
   },
 
   // Formularios y Campos
   {
-    id: 'formularios',
-    label: 'Formularios',
-    icon: 'FileCheck',
-    href: '/formularios',
-    roles: ['SUPERVISOR', 'ADMINISTRADOR']
+    id: "formularios",
+    label: "Formularios",
+    icon: "FileCheck",
+    href: "/formularios",
+    roles: ["SUPERVISOR", "ADMIN"],
   },
   {
-    id: 'modulos',
-    label: 'Módulos',
-    icon: 'Layers',
-    href: '/modulos',
-    roles: ['SUPERVISOR', 'ADMINISTRADOR']
+    id: "modulos",
+    label: "Módulos",
+    icon: "Layers",
+    href: "/modulos",
+    roles: ["SUPERVISOR", "ADMIN"],
   },
   {
-    id: 'campos',
-    label: 'Campos',
-    icon: 'Type',
-    href: '/campos',
-    roles: ['SUPERVISOR', 'ADMINISTRADOR']
+    id: "campos",
+    label: "Campos",
+    icon: "Type",
+    href: "/campos",
+    roles: ["SUPERVISOR", "ADMIN"],
   },
 
   // Reportes y Configuración
   {
-    id: 'reports',
-    label: 'Reportes',
-    icon: 'BarChart3',
-    href: '/reports',
-    roles: ['SUPERVISOR', 'ADMINISTRADOR']
+    id: "reports",
+    label: "Reportes",
+    icon: "BarChart3",
+    href: "/reports",
+    roles: ["SUPERVISOR", "ADMIN"],
   },
   {
-    id: 'settings',
-    label: 'Configuración',
-    icon: 'Settings',
-    href: '/settings',
-    roles: ['TÉCNICO', 'SUPERVISOR', 'ADMINISTRADOR']
-  }
+    id: "settings",
+    label: "Configuración",
+    icon: "Settings",
+    href: "/settings",
+    roles: ["TÉCNICO", "SUPERVISOR", "ADMIN"],
+  },
 ];
 
 const iconMap = {
@@ -357,75 +390,71 @@ const iconMap = {
 // Organizar menú por categorías
 const menuCategories = [
   {
-    id: 'operations',
-    label: 'Operaciones',
+    id: "operations",
+    label: "Operaciones",
     items: [
-      'dashboard',
-      'agenda',
-      'incidencias',
-      'orders',
-      'equipos',
-      'panoramica',
-      'solicitudes',
-      'formularios-express',
-      'compra-materiales',
-      'reportes-errores',
-      'news',
-      'documentos',
-      'ranking-tecnicos',
-      'papelera',
-      'chat'
-    ]
+      "dashboard",
+      "agenda",
+      "incidencias",
+      "orders",
+      "equipos",
+      "panoramica",
+      "solicitudes",
+      "formularios-express",
+      "compra-materiales",
+      "reportes-errores",
+      "news",
+      "documentos",
+      "ranking-tecnicos",
+      "papelera",
+      "chat",
+    ],
   },
   {
-    id: 'personnel',
-    label: 'Personal',
+    id: "personnel",
+    label: "Personal",
     items: [
-      'users',
-      'roles',
-      'organigrama',
-      'tecnicos',
-      'ingreso-egreso',
-      'horas-extras',
-      'ingresos'
-    ]
+      "users",
+      "roles",
+      "organigrama",
+      "tecnicos",
+      "ingreso-egreso",
+      "horas-extras",
+      "ingresos",
+    ],
   },
   {
-    id: 'clients',
-    label: 'Clientes y Ubicaciones',
+    id: "clients",
+    label: "Clientes y Ubicaciones",
     items: [
-      'clientes',
-      'depositos',
-      'grupos',
-      'servicios',
-      'sucursales',
-      'paises',
-      'provincias',
-      'ciudades',
-      'facility'
-    ]
+      "clientes",
+      "depositos",
+      "grupos",
+      "servicios",
+      "sucursales",
+      "paises",
+      "provincias",
+      "ciudades",
+      "facility",
+    ],
   },
   {
-    id: 'forms',
-    label: 'Formularios',
-    items: [
-      'formularios',
-      'modulos',
-      'campos'
-    ]
+    id: "forms",
+    label: "Formularios",
+    items: ["formularios", "modulos", "campos"],
   },
   {
-    id: 'config',
-    label: 'Configuración',
+    id: "config",
+    label: "Configuración",
     items: [
-      'datos-usuario',
-      'datos-sucursal',
-      'opciones-clientes',
-      'reports',
-      'settings',
-      'novedades'
-    ]
-  }
+      "datos-usuario",
+      "datos-sucursal",
+      "opciones-clientes",
+      "reports",
+      "settings",
+      "novedades",
+    ],
+  },
 ];
 
 interface SidebarProps {
@@ -434,17 +463,19 @@ interface SidebarProps {
 
 export function Sidebar({ className }: SidebarProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [expandedCategories, setExpandedCategories] = useState<string[]>(['operations']);
+  const [expandedCategories, setExpandedCategories] = useState<string[]>([
+    "operations",
+  ]);
   const pathname = usePathname();
   const { user, signOut } = useAuth();
-  
-  const filteredMenuItems = menuItems.filter(item => 
+
+  const filteredMenuItems = menuItems.filter((item) =>
     user ? item.roles.includes(user.role) : []
   );
 
   const getItemsByCategory = (categoryItems: string[]) => {
     return categoryItems
-      .map(itemId => filteredMenuItems.find(item => item.id === itemId))
+      .map((itemId) => filteredMenuItems.find((item) => item.id === itemId))
       .filter(Boolean) as MenuItem[];
   };
 
@@ -452,7 +483,7 @@ export function Sidebar({ className }: SidebarProps) {
   const findCategoryForPath = (path: string): string | null => {
     for (const category of menuCategories) {
       const items = getItemsByCategory(category.items);
-      if (items.some(item => item.href === path)) {
+      if (items.some((item) => item.href === path)) {
         return category.id;
       }
     }
@@ -464,22 +495,22 @@ export function Sidebar({ className }: SidebarProps) {
     const checkIfMobile = () => {
       setIsOpen(window.innerWidth >= 1024);
     };
-    
+
     // Set initial state
     checkIfMobile();
-    
+
     // Add event listener for window resize
-    window.addEventListener('resize', checkIfMobile);
-    
+    window.addEventListener("resize", checkIfMobile);
+
     // Cleanup
-    return () => window.removeEventListener('resize', checkIfMobile);
+    return () => window.removeEventListener("resize", checkIfMobile);
   }, []);
 
   // Auto-expand category containing active page on initial load
   useEffect(() => {
     const activeCategory = findCategoryForPath(pathname);
     if (activeCategory && !expandedCategories.includes(activeCategory)) {
-      setExpandedCategories(prev => [...prev, activeCategory]);
+      setExpandedCategories((prev) => [...prev, activeCategory]);
     }
   }, [pathname, expandedCategories]);
 
@@ -488,9 +519,9 @@ export function Sidebar({ className }: SidebarProps) {
   const toggleCategory = (categoryId: string) => {
     // Allow collapsing any category, including the one with active page
     if (expandedCategories.includes(categoryId)) {
-      setExpandedCategories(prev => prev.filter(id => id !== categoryId));
+      setExpandedCategories((prev) => prev.filter((id) => id !== categoryId));
     } else {
-      setExpandedCategories(prev => [...prev, categoryId]);
+      setExpandedCategories((prev) => [...prev, categoryId]);
     }
   };
 
@@ -498,7 +529,7 @@ export function Sidebar({ className }: SidebarProps) {
     try {
       await signOut();
     } catch (error) {
-      console.error('Error signing out:', error);
+      console.error("Error signing out:", error);
     }
   };
 
@@ -527,10 +558,10 @@ export function Sidebar({ className }: SidebarProps) {
       {/* Sidebar */}
       <aside
         className={cn(
-          'fixed top-0 left-0 z-40 h-screen bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 shadow-lg transition-all duration-300 ease-in-out',
-          'lg:translate-x-0',
-          isOpen ? 'translate-x-0' : '-translate-x-full',
-          'w-64',
+          "fixed top-0 left-0 z-40 h-screen bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 shadow-lg transition-all duration-300 ease-in-out",
+          "lg:translate-x-0",
+          isOpen ? "translate-x-0" : "-translate-x-full",
+          "w-64",
           className
         )}
       >
@@ -542,8 +573,12 @@ export function Sidebar({ className }: SidebarProps) {
                 <Home className="text-white" size={20} />
               </div>
               <div>
-                <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">HogarApp</h2>
-                <p className="text-sm text-gray-500 dark:text-gray-400">{user.role}</p>
+                <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
+                  HogarApp
+                </h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  {user.role}
+                </p>
               </div>
             </div>
           </div>
@@ -568,7 +603,9 @@ export function Sidebar({ className }: SidebarProps) {
                 <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
                   {user.displayName || user.email}
                 </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user.email}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                  {user.email}
+                </p>
               </div>
             </div>
           </div>
@@ -580,8 +617,10 @@ export function Sidebar({ className }: SidebarProps) {
               if (categoryItems.length === 0) return null;
 
               // Check if this category contains the active page
-              const hasActivePage = categoryItems.some(item => item.href === pathname);
-              
+              const hasActivePage = categoryItems.some(
+                (item) => item.href === pathname
+              );
+
               // Determine if this category should be expanded
               const isExpanded = expandedCategories.includes(category.id);
 
@@ -609,7 +648,9 @@ export function Sidebar({ className }: SidebarProps) {
                           <Link
                             key={item.id}
                             href={item.href}
-                            onClick={() => window.innerWidth < 1024 && setIsOpen(false)}
+                            onClick={() =>
+                              window.innerWidth < 1024 && setIsOpen(false)
+                            }
                             className={cn(
                               "flex items-center justify-between rounded-lg text-sm font-medium transition-colors px-3 py-2",
                               isActive
