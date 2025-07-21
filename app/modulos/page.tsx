@@ -825,7 +825,7 @@ function ModuleFormModal({ isOpen, onClose, modulo, mode }: ModuleFormModalProps
                         )}
 
                         <div className="mt-3 text-xs text-blue-600">
-                          <strong>Ejemplo:</strong> Este campo se mostrará solo cuando "{camposPadreDisponibles.find(cp => cp.id === campo.dependencia?.campoPadreId)?.titulo || 'Campo Padre'}" {campo.dependencia.operador} "{campo.dependencia.valor}"
+                          <strong>Ejemplo:</strong> Este campo se mostrará solo cuando &quot;{camposPadreDisponibles.find(cp => cp.id === campo.dependencia?.campoPadreId)?.titulo || 'Campo Padre'}&quot; {campo.dependencia.operador} &quot;{campo.dependencia.valor}&quot;
                         </div>
                       </div>
                     )}
@@ -835,7 +835,7 @@ function ModuleFormModal({ isOpen, onClose, modulo, mode }: ModuleFormModalProps
 
               {formData.campos.length === 0 && (
                 <p className="text-sm text-gray-500 text-center py-8">
-                  No hay campos definidos. Haz clic en "Añadir campo" para agregar.
+                  No hay campos definidos. Haz clic en &quot;Añadir campo&quot; para agregar.
                 </p>
               )}
             </div>

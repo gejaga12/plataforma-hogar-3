@@ -1,99 +1,62 @@
+import axios from "axios";
 import { BASE_URL } from "@/utils/baseURL";
-import { SystemUser, User, UserRole } from "../../utils/types";
-import { getAuthToken } from "@/utils/authToken";
 
-// Mock users for demonstration
-const mockUsers = [
-  {
-    uid: "1",
-    email: "admin@hogarapp.com",
-    displayName: "Administrador",
-    photoURL: "",
-    role: "ADMIN" as UserRole,
-    permissions: [
-      "orders:*",
-      "news:*",
-      "users:*",
-      "reports:*",
-      "settings:*",
-      "analytics:view",
-    ],
-    createdAt: new Date().toISOString(),
-    lastLoginAt: new Date().toISOString(),
+import { getAuthToken } from "@/utils/authToken";
+import { UserAdapted, UserFromApi } from "@/utils/types";
+import { formatDateInput } from "@/components/users/UserModal";
+
+// Agregá este tipo en tu archivo de tipos
+export type UserLoginData = Pick<
+  UserFromApi,
+  "id" | "email" | "fullName" | "roles"
+>;
+
+const adaptUser = (user: UserFromApi): UserAdapted => ({
+  id: user.id,
+  email: user.email ?? "",
+  fullName: user.fullName ?? "",
+  roles: user.roles ?? [],
+  zona: user.zona?.name ?? "",
+  area: user.jerarquia?.area ?? "",
+  puesto: user.labor?.puestos?.[0] ?? "",
+  fechaIngreso: user.labor?.fechaIngreso
+    ? formatDateInput(user.labor.fechaIngreso)
+    : "",
+  fechaNacimiento: formatDateInput(user.fechaNacimiento),
+  direccion: user.address ?? "",
+  telefono: Array.isArray(user.phoneNumber) ? user.phoneNumber.join(", ") : "",
+  relacionLaboral: user.labor?.relacionLaboral ?? "Periodo de Prueba",
+  tipoContrato: user.labor?.tipoDeContrato ?? "Relación de Dependencia",
+  certificacionesTitulo: "",
+  sucursalHogar: user.sucursalHogar?.name ?? "",
+  activo: user.isActive ?? true,
+  notificaciones: {
+    mail: false,
+    push: false,
   },
-  {
-    uid: "2",
-    email: "supervisor@hogarapp.com",
-    displayName: "Supervisor",
-    photoURL: "",
-    role: "SUPERVISOR" as UserRole,
-    permissions: [
-      "orders:view",
-      "orders:create",
-      "orders:update",
-      "orders:assign",
-      "orders:complete",
-      "news:view",
-      "news:create",
-      "reports:view",
-      "team:view",
-      "profile:edit",
-    ],
-    createdAt: new Date().toISOString(),
-    lastLoginAt: new Date().toISOString(),
-  },
-  {
-    uid: "3",
-    email: "tecnico@hogarapp.com",
-    displayName: "Técnico",
-    photoURL: "",
-    role: "TÉCNICO" as UserRole,
-    permissions: [
-      "orders:view",
-      "orders:update",
-      "orders:complete",
-      "news:view",
-      "profile:edit",
-    ],
-    createdAt: new Date().toISOString(),
-    lastLoginAt: new Date().toISOString(),
-  },
-];
+});
 
 export class AuthService {
-  private static currentUser: User | null = null;
-  private static listeners: ((user: User | null) => void)[] = [];
+  private static currentUser: UserLoginData | null = null;
+  private static listeners: ((user: UserLoginData | null) => void)[] = [];
 
   static async signInWithEmail(
     fullName: string,
     password: string
-  ): Promise<User> {
+  ): Promise<UserLoginData> {
     try {
-      const response = await fetch(`${BASE_URL}/auth/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ fullName, password }),
+      const response = await axios.post(`${BASE_URL}/auth/login`, {
+        fullName,
+        password,
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Credenciales inválidas");
-      }
+      const { user, token } = response.data;
 
-      const { user, token } = await response.json();
-
-      // Adaptar el user al tipo User de tu app
-      const userData: User = {
-        uid: user.id,
+      const userData: UserLoginData = {
+        id: user.id,
         email: user.email,
-        displayName: user.fullName,
-        photoURL: "", // si no hay en el backend
-        role: user.roles[0]?.name.toUpperCase(), // ajustalo si el backend devuelve otra cosa
-        permissions: user.permissions || [],
-        createdAt: new Date().toISOString(),
-        lastLoginAt: new Date().toISOString(),
+        fullName: user.fullName,
+        roles: user.roles || [],
       };
 
       this.currentUser = userData;
@@ -101,43 +64,20 @@ export class AuthService {
       // Guardar token y usuario
       localStorage.setItem("auth-user", JSON.stringify(userData));
       localStorage.setItem("auth-token", token);
-
       // Notificar listeners
       this.listeners.forEach((listener) => listener(userData));
 
       return userData;
     } catch (error: any) {
-      throw new Error(error.message || "Error al iniciar sesión");
+      const message = error.response?.data?.message || "Credenciales inválidas";
+      throw new Error(message);
     }
-  }
-
-  static async signInWithGoogle(): Promise<User> {
-    // Simulate API delay
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-
-    // For demo, return the admin user
-    const userData = {
-      ...mockUsers[0],
-      lastLoginAt: new Date().toISOString(),
-      displayName: "Usuario Google",
-      photoURL:
-        "https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=100&h=100&fit=crop",
-    };
-
-    this.currentUser = userData;
-
-    // Store in localStorage for persistence
-    localStorage.setItem("auth-user", JSON.stringify(userData));
-
-    // Notify listeners
-    this.listeners.forEach((listener) => listener(userData));
-
-    return userData;
   }
 
   static async signOut(): Promise<void> {
     this.currentUser = null;
     localStorage.removeItem("auth-user");
+    localStorage.removeItem("auth-token");
 
     // Notify listeners
     this.listeners.forEach((listener) => listener(null));
@@ -155,90 +95,85 @@ export class AuthService {
     zona: string;
     sucursalHogar: string;
     tipoDeContrato: string;
-  }): Promise<User> {
+    fechaIngreso: Date;
+    fechaNacimiento: Date;
+  }): Promise<UserFromApi> {
     const token = getAuthToken();
 
     try {
-      const response = await fetch(`${BASE_URL}/auth/register`, {
-        method: "POST",
+      const response = await axios.post(`${BASE_URL}/auth/register`, data, {
         headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`, // sólo admins pueden registrar
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(data),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.log("error:", errorData);
-        throw new Error(errorData.message || "Error al registrar usuario");
-      }
+      const resData = response.data;
 
-      const resData = await response.json();
+      console.log(resData);
 
-      const newUser: User = {
-        uid: resData.id,
-        email: resData.email,
-        displayName: resData.fullName,
-        photoURL: "", // si no hay en backend
-        role: resData.roles[0]?.name.toUpperCase(),
-        permissions: resData.permissions || [],
-        createdAt: new Date().toISOString(),
-        lastLoginAt: new Date().toISOString(),
+      const newUser: UserFromApi = {
+        id: resData.id,
+        email: resData.email ?? "",
+        fullName: resData.fullName ?? "",
+        roles: resData.roles ?? [], // array de objetos { id, name }
+        photoURL: resData.photoURL || "",
+        phoneNumber: resData.phoneNumber || [],
+        address: resData.address || "",
+        jerarquia: resData.jerarquia ?? null,
+        sucursalHogar: resData.sucursalHogar ?? null,
+        zona: resData.zona ?? null,
+        createdAt: resData.createdAt ?? new Date().toISOString(),
+        deletedAt: resData.deletedAt ?? null,
+        fechaNacimiento: resData.fechaNacimiento ?? new Date(),
+        isActive: resData.isActive ?? true,
+        labor: resData.labor ?? null, // 👈 CORRECTO
       };
 
       return newUser;
     } catch (error: any) {
-      throw new Error(error.message || "Fallo el registro");
+      const message = error.response?.data?.message || "Fallo el registro";
+      throw new Error(message);
     }
   }
 
-  static async getUsers(limit = 10, offset = 0): Promise<SystemUser[]> {
+  static async DeleteUSerModal(id: string): Promise<void> {
     const token = getAuthToken();
 
-    const response = await fetch(
-      `${BASE_URL}/auth?limit=${limit}&offset=${offset}`,
-      {
+    try {
+      await axios.delete(`${BASE_URL}/auth/${id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      }
-    );
-
-    if (!response.ok) {
-      const error = await response.text();
-      throw new Error(error || "Error al obtener usuarios");
+      });
+    } catch (error: any) {
+      const message =
+        error.response?.data?.message || "Error al eliminar el usuario";
+      throw new Error(message);
     }
-
-    const data = await response.json();
-    console.log("📥 Usuarios del backend:", data);
-
-    const adapted: SystemUser[] = data.map((user: any) => ({
-      id: user.id,
-      nombreCompleto: user.fullName,
-      zona: user.zona,
-      sucursalHogar: user.sucursalHogar,
-      area: user.area,
-      puesto: user.puesto,
-      fechaIngreso: user.fechaIngreso,
-      mail: user.email,
-      direccion: user.address,
-      telefono: user.phoneNumber,
-      certificacionesTitulo: "",
-      notificaciones: { mail: false, push: false },
-      roles: user.roles.map((r: any) => r.name.toLowerCase()),
-      periodoPruebaContratado: "",
-      tipoContrato: user.tipoContrato,
-      documentos: [],
-      activo: true,
-      createdAt: user.createdAt,
-      updatedAt: "",
-    }));
-
-    return adapted;
   }
 
-  static getCurrentUser(): User | null {
+  static async getUsers(limit = 10, offset = 0): Promise<UserAdapted[]> {
+    const token = getAuthToken();
+
+    try {
+      const response = await axios.get(`${BASE_URL}/auth`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        params: { limit, offset },
+      });
+
+      const rawUsers: UserFromApi[] = response.data;
+
+      return rawUsers.map(adaptUser);
+    } catch (error: any) {
+      const message =
+        error.response?.data?.message || "Error al obtener usuarios";
+      throw new Error(message);
+    }
+  }
+
+  static getCurrentUser(): UserLoginData | null {
     if (this.currentUser) {
       return this.currentUser;
     }
@@ -259,7 +194,9 @@ export class AuthService {
     return null;
   }
 
-  static onAuthStateChanged(callback: (user: User | null) => void): () => void {
+  static onAuthStateChanged(
+    callback: (user: UserLoginData | null) => void
+  ): () => void {
     // Add listener
     this.listeners.push(callback);
 
@@ -276,8 +213,8 @@ export class AuthService {
     };
   }
 
-  static getDefaultPermissions(role: UserRole): string[] {
-    const permissions: Record<UserRole, string[]> = {
+  static getDefaultPermissions(role: string): string[] {
+    const permissions: Record<any, string[]> = {
       TÉCNICO: [
         "orders:view",
         "orders:update",

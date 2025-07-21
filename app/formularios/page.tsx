@@ -509,7 +509,7 @@ function FormFormModal({ isOpen, onClose, formulario, mode }: FormFormModalProps
 
               {formData.modulos.length === 0 && (
                 <p className="text-sm text-gray-500 text-center py-8">
-                  No hay módulos definidos. Haz clic en "Añadir módulo" para agregar.
+                  No hay módulos definidos. Haz clic en <span className='italic'>Añadir módulo</span> para agregar.
                 </p>
               )}
             </div>

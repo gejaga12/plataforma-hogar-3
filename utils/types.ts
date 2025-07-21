@@ -1,22 +1,114 @@
-export type UserRole = 'TÉCNICO' | 'SUPERVISOR' | 'ADMIN';
+export interface CreateUserData {
+  nombreCompleto: string;
+  zona: string; // zona.name
+  fechaIngreso: string;
+  fechaNacimiento: string;
+  mail: string;
+  direccion: string;
+  telefono: string;
+  roles: string[]; // solo los IDs
+  certificacionesTitulo: string;
+  notificaciones?: {
+    mail: boolean;
+    push: boolean;
+  };
+  puesto: string;
+  area: string;
+  relacionLaboral: "Periodo de Prueba" | "Contratado";
+  tipoContrato: string;
+  sucursalHogar: string; // sucursal.name
+  activo: boolean;
+}
 
-export interface User {
-  uid: string;
+export interface UserFromApi {
+  id: string;
   email: string;
-  displayName?: string;
+  fullName: string;
   photoURL?: string;
-  role: UserRole;
+  isActive: boolean;
+  fechaNacimiento: Date;
+  address: string;
+  createdAt: Date;
+  deletedAt?: null;
+  jerarquia?: Jerarquia | null;
+  sucursalHogar: SucursalHogar | null;
+  roles: Role[];
+  phoneNumber: any[];
+  zona?: Zona | null;
+  labor?: Labor | null;
+  puesto?: string;
+  area?: string;
+}
+
+export interface Jerarquia {
+  id: string;
+  name: string;
+  area: string;
+}
+
+export interface Labor {
+  id: string;
+  cuil: null;
+  fechaAlta: null;
+  categoryArca: null;
+  antiguedad: null;
+  tipoDeContrato: string;
+  horasTrabajo: null;
+  sueldo: null;
+  relacionLaboral: "Periodo de Prueba" | "Contratado";
+  fechaIngreso: Date;
+  puestos?: string[];
+}
+
+export interface Role {
+  id: string;
+  name: string;
   permissions: string[];
-  createdAt: string;
-  lastLoginAt: string;
+}
+
+export interface SucursalHogar {
+  lan: number;
+  lng: number;
+  direction: string;
+  id: string;
+  name: string;
+}
+
+export interface Zona {
+  id: string;
+  name: string;
+}
+
+//para context
+export interface UserAdapted {
+  id: string;
+  email: string;
+  fullName: string;
+  roles: Role[];
+  zona: string;
+  area: string;
+  puesto: string;
+  fechaIngreso: string;
+  fechaNacimiento: string;
+  direccion: string;
+  telefono: string;
+  relacionLaboral: string;
+  tipoContrato: string;
+  certificacionesTitulo: string;
+  sucursalHogar: string;
+  activo: boolean;
+  notificaciones: {
+    mail: boolean;
+    push: boolean;
+  };
 }
 
 export interface Order {
   id: string;
   title: string;
   description: string;
-  status: 'PENDIENTE' | 'EN_PROGRESO' | 'COMPLETADA' | 'CANCELADA';
-  priority: 'BAJA' | 'MEDIA' | 'ALTA' | 'URGENTE';
+  status: "PENDIENTE" | "EN_PROGRESO" | "COMPLETADA" | "CANCELADA";
+  priority: "BAJA" | "MEDIA" | "ALTA" | "URGENTE";
   assignedTo: string;
   assignedBy: string;
   location: {
@@ -36,7 +128,17 @@ export interface Order {
 
 export interface FormField {
   id: string;
-  type: 'text' | 'number' | 'email' | 'tel' | 'textarea' | 'select' | 'checkbox' | 'radio' | 'date' | 'file';
+  type:
+    | "text"
+    | "number"
+    | "email"
+    | "tel"
+    | "textarea"
+    | "select"
+    | "checkbox"
+    | "radio"
+    | "date"
+    | "file";
   label: string;
   value: any;
   required: boolean;
@@ -98,61 +200,14 @@ export interface MenuItem {
   label: string;
   icon: string;
   href: string;
-  roles: UserRole[];
+  roles: string[];
   children?: MenuItem[];
   badge?: string;
   isNew?: boolean;
 }
 
-// Nueva interfaz para usuarios del sistema
-export interface SystemUser {
-  id: string;
-  nombreCompleto: string;
-  zona: string;
-  fechaIngreso: string;
-  mail: string;
-  direccion: string;
-  telefono: string;
-  roles: string[];
-  certificacionesTitulo: string;
-  notificaciones: {
-    mail: boolean;
-    push: boolean;
-  };
-  puesto: string;
-  area: string;
-  periodoPruebaContratado: 'Periodo de Prueba' | 'Contratado';
-  tipoContrato: 'Relación de Dependencia' | 'Freelance' | 'Contratista';
-  documentos: string[];
-  sucursalHogar: string;
-  activo: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface CreateUserData {
-  nombreCompleto: string;
-  zona: string;
-  fechaIngreso: string;
-  mail: string;
-  direccion: string;
-  telefono: string;
-  roles: string[];
-  certificacionesTitulo: string;
-  notificaciones: {
-    mail: boolean;
-    push: boolean;
-  };
-  puesto: string;
-  area: string;
-  periodoPruebaContratado: 'Periodo de Prueba' | 'Contratado';
-  tipoContrato: 'Relación de Dependencia' | 'Freelance' | 'Contratista';
-  sucursalHogar: string;
-  activo: boolean;
-}
-
 // Tipos para el sistema de ingreso
-export type EstadoPaso = 'pendiente' | 'en_curso' | 'bloqueado' | 'completo';
+export type EstadoPaso = "pendiente" | "en_curso" | "bloqueado" | "completo";
 
 export interface PasoIngreso {
   id: string;
@@ -186,7 +241,7 @@ export interface ProcesoIngreso {
   puesto: string;
   areaDestino: string;
   fechaEstimadaIngreso: string;
-  estadoGeneral: 'iniciado' | 'en_progreso' | 'completado' | 'detenido';
+  estadoGeneral: "iniciado" | "en_progreso" | "completado" | "detenido";
   pasos: PasoIngreso[];
   createdAt: string;
   updatedAt: string;
@@ -209,8 +264,13 @@ export interface Novedad {
 }
 
 // Tipos para la agenda de trabajo
-export type AgendaView = 'day' | 'week' | 'month' | 'list';
-export type AgendaEventType = 'meeting' | 'task' | 'deadline' | 'training' | 'reminder';
+export type AgendaView = "day" | "week" | "month" | "list";
+export type AgendaEventType =
+  | "meeting"
+  | "task"
+  | "deadline"
+  | "training"
+  | "reminder";
 
 export interface AgendaEvent {
   id: string;
@@ -226,10 +286,10 @@ export interface AgendaEvent {
     avatar?: string;
   }[];
   createdBy: string;
-  status: 'pending' | 'confirmed' | 'completed';
-  priority: 'low' | 'medium' | 'high';
+  status: "pending" | "confirmed" | "completed";
+  priority: "low" | "medium" | "high";
   relatedOrder?: string;
-  recurrence: 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly' | null;
+  recurrence: "daily" | "weekly" | "monthly" | "quarterly" | "yearly" | null;
   color: string;
 }
 

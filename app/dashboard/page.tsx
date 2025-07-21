@@ -13,8 +13,8 @@ import {
 import { ProtectedLayout } from '@/components/layout/protected-layout';
 import { StatsCard } from '@/components/dashboard/stats-card';
 import { DashboardHeader } from '@/components/dashboard/dashboard-header';
-import { useAuth } from '@/hooks/use-auth';
 import { DashboardStats, Novedad } from '@/utils/types';
+import { useAuth } from '@/hooks/useAuth';
 
 // Mock function - replace with actual API call
 const fetchDashboardStats = async (): Promise<DashboardStats> => {
@@ -68,13 +68,13 @@ function DashboardContent() {
   const { data: stats, isLoading } = useQuery({
     queryKey: ['dashboard-stats'],
     queryFn: fetchDashboardStats,
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 1000 * 60 * 5, // 5 minutesF
   });
 
   // Filtrar novedades según el rol del usuario
-  const userRole = user?.role.toLowerCase() || '';
+  const userRole = user?.roles || '';
   const filteredNovedades = mockNovedades.filter(
-    novedad => novedad.rolesDestinatarios.includes(userRole)
+    novedad => novedad.rolesDestinatarios
   );
 
   const handleCerrarNovedad = (id: string) => {
@@ -91,7 +91,7 @@ function DashboardContent() {
     <div className="space-y-6">
       {/* Welcome Section with Novedades */}
       <DashboardHeader
-        nombreUsuario={user?.displayName || user?.email || 'Usuario'}
+        nombreUsuario={user?.fullName || user?.email || 'Usuario'}
         panelTitle="Panel de Control Técnico"
         icon={<Wrench size={16} />}
         novedades={filteredNovedades}

@@ -1,11 +1,12 @@
-'use client';
+"use client";
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/hooks/use-auth';
-import { Sidebar } from './sidebar';
-import { Header } from './header';
-import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+
+import { Sidebar } from "./sidebar";
+import { Header } from "./header";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { useAuth } from "@/hooks/useAuth";
 
 interface ProtectedLayoutProps {
   children: React.ReactNode;
@@ -17,7 +18,7 @@ export function ProtectedLayout({ children }: ProtectedLayoutProps) {
 
   useEffect(() => {
     if (!loading && !user) {
-      router.push('/login');
+      router.push("/login");
     }
   }, [user, loading, router]);
 
@@ -39,11 +40,12 @@ export function ProtectedLayout({ children }: ProtectedLayoutProps) {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
       <Sidebar />
-      <div className="lg:ml-64 transition-all duration-300 ease-in-out" id="main-content">
+      <div
+        className="lg:ml-64 transition-all duration-300 ease-in-out"
+        id="main-content"
+      >
         <Header />
-        <main className="p-6">
-          {children}
-        </main>
+        <main className="p-6">{children}</main>
       </div>
     </div>
   );

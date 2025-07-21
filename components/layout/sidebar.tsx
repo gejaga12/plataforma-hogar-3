@@ -44,9 +44,10 @@ import {
   MessageSquare,
   Bell,
 } from "lucide-react";
-import { useAuth } from "@/hooks/use-auth";
-import { UserRole, MenuItem } from "@/utils/types";
+
+import { MenuItem } from "@/utils/types";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
 
 const menuItems: MenuItem[] = [
   // Operaciones Principales
@@ -55,21 +56,21 @@ const menuItems: MenuItem[] = [
     label: "Dashboard",
     icon: "Home",
     href: "/dashboard",
-    roles: ["TÉCNICO", "SUPERVISOR", "ADMIN"],
+    roles: ["TÉCNICO", "SUPERVISOR", "Admin"],
   },
   {
     id: "agenda",
     label: "Agenda de Trabajo",
     icon: "Calendar",
     href: "/agenda",
-    roles: ["TÉCNICO", "SUPERVISOR", "ADMIN"],
+    roles: ["TÉCNICO", "SUPERVISOR", "Admin"],
   },
   {
     id: "incidencias",
     label: "Incidencias",
     icon: "AlertTriangle",
     href: "/incidencias",
-    roles: ["TÉCNICO", "SUPERVISOR", "ADMIN"],
+    roles: ["TÉCNICO", "SUPERVISOR", "Admin"],
     badge: "3",
   },
   {
@@ -77,21 +78,21 @@ const menuItems: MenuItem[] = [
     label: "Órdenes de Trabajo",
     icon: "ClipboardList",
     href: "/orders",
-    roles: ["TÉCNICO", "SUPERVISOR", "ADMIN"],
+    roles: ["TÉCNICO", "SUPERVISOR", "Admin"],
   },
   {
     id: "equipos",
     label: "Gestión de Equipos",
     icon: "Cog",
     href: "/equipos",
-    roles: ["TÉCNICO", "SUPERVISOR", "ADMIN"],
+    roles: ["TÉCNICO", "SUPERVISOR", "Admin"],
   },
   {
     id: "panoramica",
     label: "Mapa Panorámico",
     icon: "MapPin",
     href: "/panoramica",
-    roles: ["TÉCNICO", "SUPERVISOR", "ADMIN"],
+    roles: ["TÉCNICO", "SUPERVISOR", "Admin"],
     isNew: true,
   },
   {
@@ -99,63 +100,63 @@ const menuItems: MenuItem[] = [
     label: "Solicitudes",
     icon: "FileText",
     href: "/solicitudes",
-    roles: ["TÉCNICO", "SUPERVISOR", "ADMIN"],
+    roles: ["TÉCNICO", "SUPERVISOR", "Admin"],
   },
   {
     id: "formularios-express",
     label: "Formularios Express",
     icon: "Zap",
     href: "/formularios-express",
-    roles: ["TÉCNICO", "SUPERVISOR", "ADMIN"],
+    roles: ["TÉCNICO", "SUPERVISOR", "Admin"],
   },
   {
     id: "compra-materiales",
     label: "Compra de Materiales",
     icon: "ShoppingCart",
     href: "/compra-materiales",
-    roles: ["TÉCNICO", "SUPERVISOR", "ADMIN"],
+    roles: ["TÉCNICO", "SUPERVISOR", "Admin"],
   },
   {
     id: "reportes-errores",
     label: "Reportes de Errores",
     icon: "Bug",
     href: "/reportes-errores",
-    roles: ["TÉCNICO", "SUPERVISOR", "ADMIN"],
+    roles: ["TÉCNICO", "SUPERVISOR", "Admin"],
   },
   {
     id: "news",
     label: "Información",
     icon: "Info",
     href: "/news",
-    roles: ["TÉCNICO", "SUPERVISOR", "ADMIN"],
+    roles: ["TÉCNICO", "SUPERVISOR", "Admin"],
   },
   {
     id: "documentos",
     label: "Documentos",
     icon: "FolderOpen",
     href: "/documentos",
-    roles: ["TÉCNICO", "SUPERVISOR", "ADMIN"],
+    roles: ["TÉCNICO", "SUPERVISOR", "Admin"],
   },
   {
     id: "ranking-tecnicos",
     label: "Ranking de Técnicos",
     icon: "Trophy",
     href: "/ranking-tecnicos",
-    roles: ["SUPERVISOR", "ADMIN"],
+    roles: ["SUPERVISOR", "Admin"],
   },
   {
     id: "papelera",
     label: "Papelera",
     icon: "Trash2",
     href: "/papelera",
-    roles: ["SUPERVISOR", "ADMIN"],
+    roles: ["SUPERVISOR", "Admin"],
   },
   {
     id: "chat",
     label: "Chat",
     icon: "MessageSquare",
     href: "/chat",
-    roles: ["TÉCNICO", "SUPERVISOR", "ADMIN"],
+    roles: ["TÉCNICO", "SUPERVISOR", "Admin"],
     badge: "7",
     isNew: true,
   },
@@ -164,7 +165,7 @@ const menuItems: MenuItem[] = [
     label: "Novedades",
     icon: "Bell",
     href: "/novedades",
-    roles: ["ADMIN", "SUPERVISOR"],
+    roles: ["Admin", "SUPERVISOR"],
     isNew: true,
   },
 
@@ -174,49 +175,49 @@ const menuItems: MenuItem[] = [
     label: "Usuarios",
     icon: "Users",
     href: "/users",
-    roles: ["SUPERVISOR", "ADMIN"],
+    roles: ["SUPERVISOR", "Admin"],
   },
   {
     id: "roles",
     label: "Roles",
     icon: "Shield",
     href: "/roles",
-    roles: ["ADMIN"],
+    roles: ["Admin"],
   },
   {
     id: "organigrama",
     label: "Organigrama Empresarial",
     icon: "Sitemap",
     href: "/organigrama",
-    roles: ["SUPERVISOR", "ADMIN"],
+    roles: ["SUPERVISOR", "Admin"],
   },
   {
     id: "tecnicos",
     label: "Técnicos",
     icon: "UserCheck",
     href: "/tecnicos",
-    roles: ["SUPERVISOR", "ADMIN"],
+    roles: ["SUPERVISOR", "Admin"],
   },
   {
     id: "ingreso-egreso",
     label: "Ingreso-Egreso",
     icon: "Clock",
     href: "/ingreso-egreso",
-    roles: ["SUPERVISOR", "ADMIN"],
+    roles: ["SUPERVISOR", "Admin"],
   },
   {
     id: "horas-extras",
     label: "Horas Extras",
     icon: "UserPlus",
     href: "/horas-extras",
-    roles: ["SUPERVISOR", "ADMIN"],
+    roles: ["SUPERVISOR", "Admin"],
   },
   {
     id: "ingresos",
     label: "Procesos de Ingreso",
     icon: "UserPlus",
     href: "/ingresos",
-    roles: ["SUPERVISOR", "ADMIN"],
+    roles: ["SUPERVISOR", "Admin"],
     isNew: true,
   },
 
@@ -226,14 +227,14 @@ const menuItems: MenuItem[] = [
     label: "Clientes",
     icon: "Building",
     href: "/clientes",
-    roles: ["SUPERVISOR", "ADMIN"],
+    roles: ["SUPERVISOR", "Admin"],
   },
   {
     id: "depositos",
     label: "Depósitos",
     icon: "Warehouse",
     href: "/depositos",
-    roles: ["SUPERVISOR", "ADMIN"],
+    roles: ["SUPERVISOR", "Admin"],
     isNew: true,
   },
   {
@@ -241,49 +242,49 @@ const menuItems: MenuItem[] = [
     label: "Grupos",
     icon: "Users",
     href: "/grupos",
-    roles: ["SUPERVISOR", "ADMIN"],
+    roles: ["SUPERVISOR", "Admin"],
   },
   {
     id: "servicios",
     label: "Servicios",
     icon: "Wrench",
     href: "/servicios",
-    roles: ["SUPERVISOR", "ADMIN"],
+    roles: ["SUPERVISOR", "Admin"],
   },
   {
     id: "sucursales",
     label: "Sucursales",
     icon: "Building2",
     href: "/sucursales",
-    roles: ["SUPERVISOR", "ADMIN"],
+    roles: ["SUPERVISOR", "Admin"],
   },
   {
     id: "paises",
     label: "Países",
     icon: "Globe",
     href: "/paises",
-    roles: ["ADMIN"],
+    roles: ["Admin"],
   },
   {
     id: "provincias",
     label: "Provincias",
     icon: "Map",
     href: "/provincias",
-    roles: ["ADMIN"],
+    roles: ["Admin"],
   },
   {
     id: "ciudades",
     label: "Ciudades",
     icon: "MapPin",
     href: "/ciudades",
-    roles: ["ADMIN"],
+    roles: ["Admin"],
   },
   {
     id: "facility",
     label: "Facility",
     icon: "UserCog",
     href: "/facility",
-    roles: ["SUPERVISOR", "ADMIN"],
+    roles: ["SUPERVISOR", "Admin"],
   },
 
   // Configuración y Datos
@@ -292,21 +293,21 @@ const menuItems: MenuItem[] = [
     label: "Datos de Usuario",
     icon: "UserCog",
     href: "/datos-usuario",
-    roles: ["TÉCNICO", "SUPERVISOR", "ADMIN"],
+    roles: ["TÉCNICO", "SUPERVISOR", "Admin"],
   },
   {
     id: "datos-sucursal",
     label: "Datos de Sucursal",
     icon: "Building2",
     href: "/datos-sucursal",
-    roles: ["SUPERVISOR", "ADMIN"],
+    roles: ["SUPERVISOR", "Admin"],
   },
   {
     id: "opciones-clientes",
     label: "Opciones de Clientes",
     icon: "Settings",
     href: "/opciones-clientes",
-    roles: ["SUPERVISOR", "ADMIN"],
+    roles: ["SUPERVISOR", "Admin"],
   },
 
   // Formularios y Campos
@@ -315,21 +316,21 @@ const menuItems: MenuItem[] = [
     label: "Formularios",
     icon: "FileCheck",
     href: "/formularios",
-    roles: ["SUPERVISOR", "ADMIN"],
+    roles: ["SUPERVISOR", "Admin"],
   },
   {
     id: "modulos",
     label: "Módulos",
     icon: "Layers",
     href: "/modulos",
-    roles: ["SUPERVISOR", "ADMIN"],
+    roles: ["SUPERVISOR", "Admin"],
   },
   {
     id: "campos",
     label: "Campos",
     icon: "Type",
     href: "/campos",
-    roles: ["SUPERVISOR", "ADMIN"],
+    roles: ["SUPERVISOR", "Admin"],
   },
 
   // Reportes y Configuración
@@ -338,14 +339,14 @@ const menuItems: MenuItem[] = [
     label: "Reportes",
     icon: "BarChart3",
     href: "/reports",
-    roles: ["SUPERVISOR", "ADMIN"],
+    roles: ["SUPERVISOR", "Admin"],
   },
   {
     id: "settings",
     label: "Configuración",
     icon: "Settings",
     href: "/settings",
-    roles: ["TÉCNICO", "SUPERVISOR", "ADMIN"],
+    roles: ["TÉCNICO", "SUPERVISOR", "Admin"],
   },
 ];
 
@@ -469,8 +470,12 @@ export function Sidebar({ className }: SidebarProps) {
   const pathname = usePathname();
   const { user, signOut } = useAuth();
 
+  // console.log("user.roles:", user?.roles);
+
   const filteredMenuItems = menuItems.filter((item) =>
-    user ? item.roles.includes(user.role) : []
+    Array.isArray(user?.roles)
+      ? user.roles.some((role) => item.roles.includes(role.name))
+      : false
   );
 
   const getItemsByCategory = (categoryItems: string[]) => {
@@ -577,7 +582,9 @@ export function Sidebar({ className }: SidebarProps) {
                   HogarApp
                 </h2>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {user.role}
+                  {Array.isArray(user.roles)
+                    ? user.roles.map((r) => r.name).join(", ")
+                    : String(user.roles)}
                 </p>
               </div>
             </div>
@@ -589,19 +596,19 @@ export function Sidebar({ className }: SidebarProps) {
               {user.photoURL ? (
                 <img
                   src={user.photoURL}
-                  alt={user.displayName || user.email}
+                  alt={user.fullName || user.email}
                   className="w-8 h-8 rounded-full"
                 />
               ) : (
                 <div className="w-8 h-8 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center flex-shrink-0">
                   <span className="text-sm font-medium text-gray-600 dark:text-gray-300">
-                    {(user.displayName || user.email).charAt(0).toUpperCase()}
+                    {(user.fullName || user.email).charAt(0).toUpperCase()}
                   </span>
                 </div>
               )}
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                  {user.displayName || user.email}
+                  {user.fullName || user.email}
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
                   {user.email}

@@ -9,7 +9,7 @@ import { ChatInput } from '@/components/chat/chat-input';
 import { Message } from '@/components/chat/message-bubble';
 import { UserProfileDrawer } from '@/components/chat/user-profile-drawer';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth } from '@/context/AuthContext';
 
 // Mock data
 const mockConversations: Conversation[] = [

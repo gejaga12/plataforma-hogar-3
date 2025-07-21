@@ -1,10 +1,11 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Bell, Search, MessageSquare } from 'lucide-react';
-import { useAuth } from '@/hooks/use-auth';
-import { ThemeToggle } from '@/components/theme/theme-toggle';
-import Link from 'next/link';
+import { useState } from "react";
+import { Bell, Search, MessageSquare } from "lucide-react";
+
+import { ThemeToggle } from "@/components/theme/theme-toggle";
+import Link from "next/link";
+import { useAuth } from "@/hooks/useAuth";
 
 export function Header() {
   const { user } = useAuth();
@@ -17,7 +18,10 @@ export function Header() {
       <div className="flex items-center justify-between">
         <div className="flex-1 max-w-lg">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" size={20} />
+            <Search
+              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500"
+              size={20}
+            />
             <input
               type="text"
               placeholder="Buscar órdenes, noticias..."
@@ -28,16 +32,19 @@ export function Header() {
 
         <div className="flex items-center space-x-4">
           <ThemeToggle />
-          
-          <Link href="/chat" className="relative p-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+
+          <Link
+            href="/chat"
+            className="relative p-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+          >
             <MessageSquare size={20} />
             {unreadMessages > 0 && (
               <span className="absolute top-0 right-0 flex h-4 w-4 items-center justify-center rounded-full bg-orange-600 text-[10px] font-bold text-white">
-                {unreadMessages > 9 ? '9+' : unreadMessages}
+                {unreadMessages > 9 ? "9+" : unreadMessages}
               </span>
             )}
           </Link>
-          
+
           <button className="relative p-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
             <Bell size={20} />
             <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
@@ -61,7 +68,9 @@ export function Header() {
               <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                 {user.displayName || user.email}
               </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">{user.role}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {user.role}
+              </p>
             </div>
           </div>
         </div>
