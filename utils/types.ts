@@ -1,5 +1,6 @@
 export interface CreateUserData {
   nombreCompleto: string;
+  contrasena?: string;
   zona: string; // zona.name
   fechaIngreso: string;
   fechaNacimiento: string;
@@ -12,7 +13,7 @@ export interface CreateUserData {
     mail: boolean;
     push: boolean;
   };
-  puesto: string;
+  puesto?: string;
   area: string;
   relacionLaboral: "Periodo de Prueba" | "Contratado";
   tipoContrato: string;
@@ -23,17 +24,18 @@ export interface CreateUserData {
 export interface UserFromApi {
   id: string;
   email: string;
+  password?: string;
   fullName: string;
   photoURL?: string;
-  isActive: boolean;
+  isActive?: boolean;
   fechaNacimiento: Date;
-  address: string;
-  createdAt: Date;
+  address?: string;
+  createdAt?: Date;
   deletedAt?: null;
   jerarquia?: Jerarquia | null;
-  sucursalHogar: SucursalHogar | null;
+  sucursalHogar?: SucursalHogar | null;
   roles: Role[];
-  phoneNumber: any[];
+  phoneNumber?: any[];
   zona?: Zona | null;
   labor?: Labor | null;
   puesto?: string;
@@ -74,9 +76,20 @@ export interface SucursalHogar {
   name: string;
 }
 
-export interface Zona {
+//generico y zonas
+export interface GeoGeneric {
   id: string;
   name: string;
+}
+
+export interface Pais extends GeoGeneric {}
+
+export interface Provincia extends GeoGeneric {}
+
+export interface Zona extends GeoGeneric {
+  Coords: string[];
+  pais: Pais;
+  provincia: Provincia[];
 }
 
 //para context
@@ -84,6 +97,7 @@ export interface UserAdapted {
   id: string;
   email: string;
   fullName: string;
+  password: string;
   roles: Role[];
   zona: string;
   area: string;
@@ -94,6 +108,7 @@ export interface UserAdapted {
   telefono: string;
   relacionLaboral: string;
   tipoContrato: string;
+  photoURL: string;
   certificacionesTitulo: string;
   sucursalHogar: string;
   activo: boolean;
@@ -101,6 +116,7 @@ export interface UserAdapted {
     mail: boolean;
     push: boolean;
   };
+  laborId?: string;
 }
 
 export interface Order {

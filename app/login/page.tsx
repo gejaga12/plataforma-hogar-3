@@ -8,7 +8,7 @@ export default function LoginPage() {
     <div className="relative w-full h-screen overflow-hidden">
       {/* Imagen de fondo que cubre toda la pantalla */}
       <Image
-        src="/images/dragonite.jpg"
+        src="/images/fondo-nuevo.jpeg"
         alt="fondo"
         fill
         priority

@@ -1,4 +1,4 @@
-import { CreateUserData, UserAdapted } from "./types";
+import { CreateUserData, UserAdapted, UserFromApi } from "./types";
 
 export const mapUserToCreateUserData = (user: UserAdapted): CreateUserData => ({
   nombreCompleto: user.fullName,
@@ -19,3 +19,62 @@ export const mapUserToCreateUserData = (user: UserAdapted): CreateUserData => ({
   activo: user.activo,
   notificaciones: user.notificaciones,
 });
+
+//para edicion de info laboral
+export const mapUserAdaptedToUserFromApi = (user: UserAdapted): UserFromApi => {
+  console.log("laborId recibido:", user.laborId);
+  return {
+    id: user.id,
+    email: user.email,
+    fullName: user.fullName,
+    phoneNumber: user.telefono
+      ? user.telefono.split(",").map((t) => t.trim())
+      : [],
+    address: user.direccion,
+    fechaNacimiento: new Date(user.fechaNacimiento),
+
+    zona: user.zona ? { id: user.zona, name: "" } : null, // si tenés el tipo real, reemplazá
+    sucursalHogar: user.sucursalHogar
+      ? {
+          id: "", // completar con el id real si está disponible
+          name: user.sucursalHogar,
+          lan: 0,
+          lng: 0,
+          direction: "",
+        }
+      : null,
+    roles: user.roles.map((r) => {
+      if (typeof r === "string") {
+        return { id: r, name: r, permissions: [] };
+      }
+      return { ...r, permissions: r.permissions ?? [] };
+    }),
+
+    area: user.area || "",
+    puesto: user.puesto || "",
+    isActive: user.activo,
+    photoURL: user.photoURL,
+
+    labor: user.laborId
+      ? {
+          id: user.laborId,
+          fechaAlta: null,
+          puestos: user.puesto ? [user.puesto] : [],
+          tipoDeContrato: user.tipoContrato,
+          relacionLaboral: user.relacionLaboral as
+            | "Contratado"
+            | "Periodo de Prueba",
+          cuil: null,
+          categoryArca: null,
+          antiguedad: null,
+          horasTrabajo: null,
+          sueldo: null,
+          fechaIngreso: new Date(user.fechaIngreso),
+        }
+      : null,
+
+    createdAt: undefined,
+    deletedAt: null,
+    jerarquia: null,
+  };
+};

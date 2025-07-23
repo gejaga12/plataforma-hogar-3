@@ -27,49 +27,39 @@ export class ApiRoles {
   //crear rol
   static async crearRol(data: RolData): Promise<RolResponse> {
     try {
-      const response = await fetch(`${BASE_URL}/roles`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(data),
-      });
+      const response = await axios.post<RolResponse>(
+        `${BASE_URL}/roles`,
+        data,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-type": "application/json",
+          },
+        }
+      );
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Error al crear el rol");
-      }
-
-      const createdRole: RolResponse = await response.json();
-      return createdRole;
+      return response.data;
     } catch (error: any) {
-      throw new Error(error.message || "Fallo al crear rol");
+      const mensaje = error.response?.data?.message || "Fallo al crear rol";
+      throw new Error(mensaje);
     }
   }
 
   // Obtener todos los roles
   static async listarRoles(): Promise<RolResponse[]> {
     try {
-      const response = await fetch(`${BASE_URL}/roles`, {
-        method: "GET",
+      const response = await axios.get<RolResponse[]>(`${BASE_URL}/roles`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Error al obtener los roles");
-      }
+      console.log("roles:", response.data);
 
-      const roles: RolResponse[] = await response.json();
-
-      console.log("roles:", roles);
-
-      return roles;
+      return response.data;
     } catch (error: any) {
-      throw new Error(error.message || "Fallo al obtener roles");
+      const mensaje = error.response?.data?.message || "Fallo al obtener roles";
+      throw new Error(mensaje);
     }
   }
 
@@ -124,51 +114,45 @@ export class ApiRoles {
   // Actualizar un rol existente
   static async actualizarRol(id: string, data: RolData): Promise<RolResponse> {
     try {
-      const response = await fetch(`${BASE_URL}/roles/${id}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer${token}`,
-        },
-        body: JSON.stringify(data),
-      });
-      if (!response.ok) {
-        const errorData = await response.json();
-        const mensaje =
-          response.status === 404
-            ? "Rol no encontrado"
-            : errorData.message || "Error al actualizar el rol";
-        throw new Error(mensaje);
-      }
-      const updatedRole: RolResponse = await response.json();
-      return updatedRole;
+      const response = await axios.patch<RolResponse>(
+        `${BASE_URL}/roles/${id}`,
+        data,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`, // corregí el espacio faltante
+          },
+        }
+      );
+
+      return response.data;
     } catch (error: any) {
-      throw new Error(error.message || "Fallo al actualizar rol");
+      const status = error.response?.status;
+      const mensaje =
+        status === 404
+          ? "Rol no encontrado"
+          : error.response?.data?.message || "Fallo al actualizar rol";
+
+      throw new Error(mensaje);
     }
   }
 
   // Eliminar un rol existente
   static async eliminarRol(id: string): Promise<void> {
     try {
-      const response = await fetch(`${BASE_URL}/roles/${id}`, {
-        method: "DELETE",
+      const response = await axios.delete(`${BASE_URL}/roles/${id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        const mensaje =
-          response.status === 404
-            ? "Rol no encontrado"
-            : errorData.message || "Error al eliminar el rol";
-        throw new Error(mensaje);
-      }
-
-      // No devuelve contenido en body si es 200 OK
     } catch (error: any) {
-      throw new Error(error.message || "Fallo al eliminar rol");
+      const status = error.response?.status;
+      const mensaje =
+        status === 404
+          ? "Rol no encontrado"
+          : error.response?.data?.message || "Fallo al eliminar rol";
+
+      throw new Error(mensaje);
     }
   }
 }

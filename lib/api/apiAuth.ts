@@ -3,37 +3,59 @@ import { BASE_URL } from "@/utils/baseURL";
 
 import { getAuthToken } from "@/utils/authToken";
 import { UserAdapted, UserFromApi } from "@/utils/types";
-import { formatDateInput } from "@/components/users/UserModal";
+import { formatDateInput } from "@/utils/formatDate";
 
-// Agregá este tipo en tu archivo de tipos
 export type UserLoginData = Pick<
   UserFromApi,
-  "id" | "email" | "fullName" | "roles"
+  "id" | "email" | "fullName" | "roles" | "photoURL"
 >;
 
+//types para PATCHs
+export interface EditUserPayload {
+  email: string;
+  fullName: string;
+  address: string;
+  fechaNacimiento: Date;
+  roles: string[];
+  zona: string;
+  sucursalHogar: string;
+}
+
+export interface EditLaborPayload {
+  userId: string;
+  tipoDeContrato: string;
+  relacionLaboral: "Periodo de Prueba" | "Contratado";
+  fechaAlta: string;
+  puestos?: string[];
+}
+
+//funcion para adaptar user traido del back
 const adaptUser = (user: UserFromApi): UserAdapted => ({
   id: user.id,
   email: user.email ?? "",
   fullName: user.fullName ?? "",
-  roles: user.roles ?? [],
-  zona: user.zona?.name ?? "",
-  area: user.jerarquia?.area ?? "",
-  puesto: user.labor?.puestos?.[0] ?? "",
+  password: user.password ?? "",
+  telefono: Array.isArray(user.phoneNumber) ? user.phoneNumber.join(", ") : "",
+  direccion: user.address ?? "",
+  fechaNacimiento: formatDateInput(user.fechaNacimiento),
   fechaIngreso: user.labor?.fechaIngreso
     ? formatDateInput(user.labor.fechaIngreso)
     : "",
-  fechaNacimiento: formatDateInput(user.fechaNacimiento),
-  direccion: user.address ?? "",
-  telefono: Array.isArray(user.phoneNumber) ? user.phoneNumber.join(", ") : "",
-  relacionLaboral: user.labor?.relacionLaboral ?? "Periodo de Prueba",
+  puesto: user.labor?.puestos?.[0] ?? "",
   tipoContrato: user.labor?.tipoDeContrato ?? "Relación de Dependencia",
-  certificacionesTitulo: "",
+  relacionLaboral: user.labor?.relacionLaboral ?? "Periodo de Prueba",
+  zona: user.zona?.name ?? "",
   sucursalHogar: user.sucursalHogar?.name ?? "",
+  area: user.jerarquia?.area ?? "",
+  certificacionesTitulo: "",
   activo: user.isActive ?? true,
+  photoURL: user.photoURL ?? "",
   notificaciones: {
     mail: false,
     push: false,
   },
+  roles: user.roles ?? [],
+  laborId: user.labor?.id ?? "",
 });
 
 export class AuthService {
@@ -155,6 +177,10 @@ export class AuthService {
   static async getUsers(limit = 10, offset = 0): Promise<UserAdapted[]> {
     const token = getAuthToken();
 
+    if (!token) {
+      throw new Error("Token no disponible");
+    }
+
     try {
       const response = await axios.get(`${BASE_URL}/auth`, {
         headers: {
@@ -165,10 +191,59 @@ export class AuthService {
 
       const rawUsers: UserFromApi[] = response.data;
 
+      // console.log(rawUsers);
+
       return rawUsers.map(adaptUser);
     } catch (error: any) {
+      console.error("Error al obtener usuarios:", error?.response?.data || error.message);
       const message =
         error.response?.data?.message || "Error al obtener usuarios";
+      throw new Error(message);
+    }
+  }
+
+  //PATCH para info de usuario
+  static async editUsers(
+    id: string,
+    data: EditUserPayload
+  ): Promise<{ did: boolean }> {
+    const token = getAuthToken();
+
+    try {
+      const response = await axios.patch(`${BASE_URL}/auth/${id}`, data, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      return response.data;
+    } catch (error: any) {
+      const message =
+        error.response?.data.message || "Error al editar el usuario";
+      throw new Error(message);
+    }
+  }
+
+  //PATCH para info de labor
+  static async editLabor(
+    id: string,
+    data: EditLaborPayload
+  ): Promise<{ did: boolean }> {
+    const token = getAuthToken();
+
+    try {
+      const response = await axios.put(`${BASE_URL}/labor/${id}`, data, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      return response.data;
+    } catch (err: any) {
+      const message =
+        err.response?.data?.message || "Error al actualizar datos laborales";
       throw new Error(message);
     }
   }

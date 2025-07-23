@@ -2,7 +2,7 @@
 "use client";
 
 import React, { createContext, useEffect, useState } from "react";
-import { UserAdapted, UserFromApi } from "@/utils/types";
+import { UserAdapted } from "@/utils/types";
 import { AuthService, UserLoginData } from "@/lib/api/apiAuth";
 import { useRouter } from "next/navigation";
 
@@ -13,7 +13,6 @@ interface AuthContextType {
   error: string | null;
   isAuthenticated: boolean;
   signIn: (fullName: string, password: string) => Promise<UserLoginData>;
-  // signInWithGoogle: () => Promise<User>;
   signOut: () => Promise<void>;
   refetchUsuarios : () => Promise<void>;
 }
@@ -64,7 +63,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         try {
           const usuariosBackend = await AuthService.getUsers();
 
-          // console.log("usuarios en back:", usuariosBackend);
+          console.log("usuarios en back:", usuariosBackend);
 
           setUsers(usuariosBackend); // ⬅️ usar directamente
         } catch (e) {
@@ -111,25 +110,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setLoading(false);
     }
   };
-
-  // const signInWithGoogle = async () => {
-  //   try {
-  //     setError(null);
-  //     setLoading(true);
-  //     const userData = await AuthService.signInWithGoogle();
-  //     const expirationDate = new Date(
-  //       Date.now() + THIRTY_DAYS_MS
-  //     ).toISOString();
-  //     localStorage.setItem("auth-expiration", expirationDate);
-  //     setUser(userData);
-  //     return userData;
-  //   } catch (err: any) {
-  //     setError(err.message);
-  //     throw err;
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
 
   const signOut = async () => {
     try {

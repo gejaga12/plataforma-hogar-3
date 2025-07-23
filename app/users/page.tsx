@@ -27,9 +27,14 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import UserModal from "@/components/users/UserModal";
 import DeleteUSerModal from "@/components/users/DeleteUserModal";
-import { AuthService } from "@/lib/api/apiAuth";
+import {
+  AuthService,
+  EditLaborPayload,
+  EditUserPayload,
+} from "@/lib/api/apiAuth";
 import { ApiRoles } from "@/lib/api/apiRoles";
 import Swal from "sweetalert2";
+import { mapUserAdaptedToUserFromApi } from "@/utils/userMapper";
 
 function UsersContent() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -39,12 +44,12 @@ function UsersContent() {
     mode: "create" | "edit" | "view";
     user?: UserAdapted;
   }>({ isOpen: false, mode: "create" });
+
   const [deleteModal, setDeleteModal] = useState<{
     isOpen: boolean;
     user?: UserAdapted;
-  }>({
-    isOpen: false,
-  });
+  }>({ isOpen: false });
+
   const [rolesDisponibles, setRolesDisponibles] = useState<
     Record<string, string>
   >({});
@@ -78,10 +83,10 @@ function UsersContent() {
       const mappedPayload = {
         fullName: userData.nombreCompleto,
         email: userData.mail,
-        password: "Abc123",
+        password: userData.contrasena || "Abc123",
         phoneNumber: userData.telefono || "",
         address: userData.direccion || "",
-        puesto: userData.puesto,
+        puesto: userData.puesto || "",
         relacionLaboral: userData.relacionLaboral as
           | "Periodo de Prueba"
           | "Contratado",
@@ -97,7 +102,7 @@ function UsersContent() {
       };
 
       console.log("📤 Enviando usuario al backend:", mappedPayload);
-      
+
       return await AuthService.registerUser(mappedPayload);
     },
     onSuccess: async () => {
@@ -131,6 +136,145 @@ function UsersContent() {
       });
     },
   });
+
+  const editMutation = useMutation({
+    mutationFn: async ({
+      id,
+      formData,
+      originalData,
+    }: {
+      id: string;
+      formData: CreateUserData;
+      originalData: UserFromApi;
+    }) => {
+      const confirm = await Swal.fire({
+        title: "¿Confirmar cambios?",
+        text: "Vas a actualizar la información del usuario.",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonText: "Sí, actualizar",
+        cancelButtonText: "Cancelar",
+      });
+
+      if (!confirm.isConfirmed) return;
+
+      // Payload para datos personales
+      const userPayload: EditUserPayload = {
+        email: formData.mail,
+        fullName: formData.nombreCompleto,
+        address: formData.direccion,
+        fechaNacimiento: new Date(formData.fechaNacimiento),
+        roles: formData.roles, // solo IDs
+        zona: formData.zona,
+        sucursalHogar: formData.sucursalHogar,
+      };
+
+      // Payload para datos laborales
+      const laborId = originalData.labor?.id;
+
+      const laborPayload: EditLaborPayload = {
+        userId: id,
+        tipoDeContrato: formData.tipoContrato,
+        relacionLaboral: formData.relacionLaboral,
+        fechaAlta: new Date(formData.fechaIngreso).toISOString(),
+        puestos: formData.puesto ? [formData.puesto] : [],
+      };
+
+      console.log("Payload usuario:", userPayload);
+      console.log("Payload laboral:", laborPayload);
+
+      const results = await Promise.allSettled([
+        AuthService.editUsers(id, userPayload),
+        laborId
+          ? AuthService.editLabor(laborId, laborPayload)
+          : Promise.resolve({ did: false }),
+      ]);
+
+      const [userResult, laborResult] = results;
+      if (
+        userResult.status === "fulfilled" &&
+        (laborId ? laborResult.status === "fulfilled" : true)
+      ) {
+        Swal.fire({
+          icon: "success",
+          title: "Actualización exitosa",
+          text: "Los datos del usuario se actualizaron correctamente.",
+        });
+      } else {
+        let errores = "";
+        if (userResult.status === "rejected") {
+          errores += `Usuario: ${
+            userResult.reason.message || "Error desconocido"
+          }\n`;
+        }
+        if (laborId && laborResult.status === "rejected") {
+          errores += `Laboral: ${
+            laborResult.reason.message || "Error desconocido"
+          }`;
+        }
+        Swal.fire({
+          icon: "error",
+          title: "Error al actualizar",
+          text: errores || "Ocurrió un error durante la actualización.",
+        });
+        throw new Error(errores);
+      }
+    },
+
+    onSuccess: async () => {
+      console.log("Usuario actualizado correctamente");
+      await refetchUsuarios();
+    },
+
+    onError: (error: any) => {
+      console.log(error.message || "Error al actualizar usuario");
+    },
+  });
+
+  const handleSubmit = async (formData: CreateUserData) => {
+    const fechaIngresoDate = new Date(formData.fechaIngreso);
+    const fechaNacimientoDate = new Date(formData.fechaNacimiento);
+
+    if (
+      isNaN(fechaIngresoDate.getTime()) ||
+      isNaN(fechaNacimientoDate.getTime())
+    ) {
+      Swal.fire({
+        icon: "error",
+        title: "Fechas inválidas",
+        text: "Verificá que las fechas ingresadas sean correctas.",
+      });
+      return;
+    }
+
+    if (modalState.mode === "edit" && modalState.user?.id) {
+      const originalData = mapUserAdaptedToUserFromApi(modalState.user);
+      editMutation.mutate({
+        id: modalState.user.id,
+        formData,
+        originalData,
+      });
+    }
+    if (modalState.mode === "create") {
+      createMutation.mutate(formData, {
+        onSuccess: () => {
+          Swal.fire({
+            icon: "success",
+            title: "Usuario creado",
+            text: "El usuario fue registrado correctamente.",
+          });
+          setModalState({ isOpen: false, mode: "create" });
+        },
+        onError: () => {
+          Swal.fire({
+            icon: "error",
+            title: "Error al crear",
+            text: "No se pudo registrar el usuario. Reintentá más tarde.",
+          });
+        },
+      });
+    }
+  };
 
   const filteredUsers =
     users?.filter((user) => {
@@ -367,8 +511,12 @@ function UsersContent() {
         user={modalState.user}
         mode={modalState.mode}
         rolesDisponibles={rolesDisponibles}
-        onSubmit={(data) => createMutation.mutate(data)}
-        isloading={createMutation.isPending}
+        onSubmit={handleSubmit}
+        isloading={
+          modalState.mode === "edit"
+            ? editMutation.isPending
+            : createMutation.isPending
+        }
       />
 
       <DeleteUSerModal

@@ -43,6 +43,7 @@ import {
   Cog,
   MessageSquare,
   Bell,
+  MapPinned,
 } from "lucide-react";
 
 import { MenuItem } from "@/utils/types";
@@ -182,6 +183,13 @@ const menuItems: MenuItem[] = [
     label: "Roles",
     icon: "Shield",
     href: "/roles",
+    roles: ["Admin"],
+  },
+  {
+    id: "zonas",
+    label: "Zonas",
+    icon: "MapPinned",
+    href: "/zonas",
     roles: ["Admin"],
   },
   {
@@ -374,6 +382,7 @@ const iconMap = {
   Building,
   Globe,
   Map,
+  MapPinned,
   UserCog,
   Building2,
   Wrench,
@@ -417,6 +426,7 @@ const menuCategories = [
     items: [
       "users",
       "roles",
+      "zonas",
       "organigrama",
       "tecnicos",
       "ingreso-egreso",
