@@ -14,7 +14,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   signIn: (fullName: string, password: string) => Promise<UserLoginData>;
   signOut: () => Promise<void>;
-  refetchUsuarios : () => Promise<void>;
+  refetchUsuarios: () => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(
@@ -29,6 +29,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [users, setUsers] = useState<UserAdapted[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
   const router = useRouter();
 
   const checkTokenExpiration = () => {
@@ -135,7 +136,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         signOut,
         isAuthenticated: !!user,
         users,
-        refetchUsuarios ,
+        refetchUsuarios,
       }}
     >
       {children}

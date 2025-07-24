@@ -1,6 +1,6 @@
 import { getAuthToken } from "@/utils/authToken";
 import { BASE_URL } from "@/utils/baseURL";
-import { GeoGeneric, Pais, Provincia, Zona } from "@/utils/types";
+import { Pais, Zona } from "@/utils/types";
 
 import axios from "axios";
 
@@ -11,6 +11,7 @@ interface RawResponseAllZona {
     name: string;
     coords: { lan: number; lng: number }[];
     paisId: string;
+    active: boolean;
   }[];
   provincias: {
     id: string;
@@ -32,7 +33,6 @@ interface RegionResponse {
 }
 
 export class ZonaService {
-  
   static async createRegion(data: CreateRegionDto): Promise<RegionResponse> {
     const token = getAuthToken();
 
@@ -101,7 +101,7 @@ export class ZonaService {
 
     const { pais, region, provincias } = response.data;
 
-    console.log(response.data);
+    // console.log(response.data);
 
     const zonas: Zona[] = region.map((reg) => {
       const paisData = pais.find((p) => p.id === reg.paisId) ?? {
@@ -122,9 +122,21 @@ export class ZonaService {
         Coords: reg.coords.map((c) => `${c.lan},${c.lng}`),
         pais: paisData,
         provincia: provinciasDeZona,
+        active: reg.active ?? false,
       };
     });
 
     return { zonas, paises: pais };
+  }
+
+  //POST para activar o desactivar
+  static async toggleZona(id: string): Promise<void> {
+    const token = getAuthToken();
+
+    await axios.post(`${BASE_URL}/region/toggle/${id}`, null, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
   }
 }

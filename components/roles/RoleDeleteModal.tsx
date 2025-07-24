@@ -21,16 +21,17 @@ const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-        <div className="flex items-center space-x-2 mb-4">
+        <div className="flex items-center space-x-2 mb-4 justify-center">
           <Trash2 className="text-red-500" size={24} />
           <h3 className="text-lg font-semibold text-gray-900">
             Confirmar Eliminación
           </h3>
         </div>
 
-        <p className="text-gray-600 mb-6">
-          ¿Estás seguro de que deseas eliminar el rol{" "}
-          <strong>{roleName}</strong>? Esta acción no se puede deshacer.
+        <p className="text-gray-600 mb-6 text-center">
+          ¿Estás seguro de que deseas eliminar <br />
+          <strong>{roleName}</strong>? <br />
+          Esta acción no se puede deshacer.
         </p>
 
         <div className="flex space-x-4">

@@ -7,7 +7,7 @@ import { queryClient } from "@/utils/query-client";
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import { useEffect } from "react";
 import { AuthProvider } from "@/context/AuthContext";
-import { GlobalProvider } from "@/context/GlobalContext";
+import { Toaster } from "react-hot-toast";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -61,11 +61,10 @@ export default function RootLayout({
       <body className={inter.className}>
         <ThemeProvider defaultTheme="system" storageKey="hogarapp-ui-theme">
           <AuthProvider>
-            <GlobalProvider>
-              <QueryClientProvider client={queryClient}>
-                {children}
-              </QueryClientProvider>
-            </GlobalProvider>
+            <QueryClientProvider client={queryClient}>
+              {children}
+              <Toaster position="top-right" />
+            </QueryClientProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>

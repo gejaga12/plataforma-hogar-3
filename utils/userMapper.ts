@@ -33,7 +33,16 @@ export const mapUserAdaptedToUserFromApi = (user: UserAdapted): UserFromApi => {
     address: user.direccion,
     fechaNacimiento: new Date(user.fechaNacimiento),
 
-    zona: user.zona ? { id: user.zona, name: "" } : null, // si tenés el tipo real, reemplazá
+    zona: user.zona
+      ? {
+          id: user.zona,
+          name: "",
+          Coords:[],  // Ajusta estos valores según corresponda
+          pais: pais.name,
+          provincia: "",
+          active: true,
+        }
+      : null, // si tenés el tipo real, reemplazá
     sucursalHogar: user.sucursalHogar
       ? {
           id: "", // completar con el id real si está disponible

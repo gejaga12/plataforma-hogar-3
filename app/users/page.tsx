@@ -35,6 +35,7 @@ import {
 import { ApiRoles } from "@/lib/api/apiRoles";
 import Swal from "sweetalert2";
 import { mapUserAdaptedToUserFromApi } from "@/utils/userMapper";
+import { formatDateInput } from "@/utils/formatDate";
 
 function UsersContent() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -71,15 +72,6 @@ function UsersContent() {
 
   const createMutation = useMutation({
     mutationFn: async (userData: CreateUserData) => {
-      const fechaIngresoDate = new Date(userData.fechaIngreso);
-      const fechaNacimientoDate = new Date(userData.fechaNacimiento);
-      if (
-        isNaN(fechaIngresoDate.getTime()) ||
-        isNaN(fechaNacimientoDate.getTime())
-      ) {
-        throw new Error("Fechas inválidas");
-      }
-
       const mappedPayload = {
         fullName: userData.nombreCompleto,
         email: userData.mail,
@@ -90,8 +82,8 @@ function UsersContent() {
         relacionLaboral: userData.relacionLaboral as
           | "Periodo de Prueba"
           | "Contratado",
-        fechaIngreso: fechaIngresoDate,
-        fechaNacimiento: fechaNacimientoDate,
+        fechaIngreso: formatDateInput(userData.fechaIngreso),
+        fechaNacimiento: formatDateInput(userData.fechaNacimiento),
         zona: userData.zona,
         sucursalHogar: userData.sucursalHogar || "",
         tipoDeContrato: userData.tipoContrato as
@@ -163,7 +155,7 @@ function UsersContent() {
         email: formData.mail,
         fullName: formData.nombreCompleto,
         address: formData.direccion,
-        fechaNacimiento: new Date(formData.fechaNacimiento),
+        fechaNacimiento: formatDateInput(formData.fechaNacimiento),
         roles: formData.roles, // solo IDs
         zona: formData.zona,
         sucursalHogar: formData.sucursalHogar,
@@ -176,7 +168,7 @@ function UsersContent() {
         userId: id,
         tipoDeContrato: formData.tipoContrato,
         relacionLaboral: formData.relacionLaboral,
-        fechaAlta: new Date(formData.fechaIngreso).toISOString(),
+        fechaAlta: formatDateInput(formData.fechaIngreso),
         puestos: formData.puesto ? [formData.puesto] : [],
       };
 
@@ -319,10 +311,10 @@ function UsersContent() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-400">
             Gestión de Usuarios
           </h1>
-          <p className="text-gray-600 mt-1">
+          <p className="text-gray-600 dark:text-gray-400 mt-1">
             Administra los usuarios del sistema
           </p>
         </div>
@@ -337,7 +329,7 @@ function UsersContent() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 dark:bg-gray-900 dark:border-gray-700">
         <div className="flex flex-col md:flex-row md:items-center space-y-4 md:space-y-0 md:space-x-4">
           <div className="flex-1">
             <div className="relative">
@@ -350,7 +342,7 @@ function UsersContent() {
                 placeholder="Buscar usuarios por nombre, email o puesto..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-700  dark:bg-gray-800 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
               />
             </div>
           </div>
@@ -358,14 +350,14 @@ function UsersContent() {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+              className="px-3 py-2 border border-gray-300 dark:border-gray-700 dark:bg-gray-800 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
             >
               <option value="">Todos los estados</option>
               <option value="activo">Activos</option>
               <option value="inactivo">Inactivos</option>
             </select>
 
-            <button className="flex items-center space-x-2 px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+            <button className="flex items-center space-x-2 px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-600">
               <Filter size={16} />
               <span>Filtros</span>
             </button>
@@ -374,34 +366,34 @@ function UsersContent() {
       </div>
 
       {/* Users Table */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 dark:border-gray-700  overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-gray-50 border-b dark:bg-gray-900">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Usuario
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Puesto
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Zona
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Roles
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Estado
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Acciones
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-white divide-y divide-gray-200 dark:divide-gray-800 dark:bg-gray-900">
               {filteredUsers.map((user) => (
-                <tr key={user.id} className="hover:bg-gray-50">
+                <tr key={user.id} className="hover:bg-gray-800">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center">
@@ -414,10 +406,10 @@ function UsersContent() {
                         </span>
                       </div>
                       <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">
+                        <div className="text-sm font-medium text-gray-900 dark:text-gray-400">
                           {user.fullName || "Sin nombre"}
                         </div>
-                        <div className="text-sm text-gray-500 flex items-center">
+                        <div className="text-sm text-gray-500 flex items-center dark:text-gray-400">
                           <Mail size={12} className="mr-1" />
                           {user.email || "Sin email"}
                         </div>
@@ -425,17 +417,21 @@ function UsersContent() {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{user.puesto}</div>
+                    <div className="text-sm text-gray-900 dark:text-gray-400">
+                      {user.puesto}
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{user.zona}</div>
+                    <div className="text-sm text-gray-900 dark:text-gray-400">
+                      {user.zona}
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex flex-wrap gap-1">
                       {user.roles.map((role) => (
                         <span
                           key={typeof role === "object" ? role.id : role}
-                          className="px-2 py-1 bg-orange-100 text-orange-800 text-xs font-medium rounded-full"
+                          className="px-2 py-1 bg-orange-100 dark:bg-orange-300 text-orange-700 text-xs font-medium rounded-full"
                         >
                           {typeof role === "object" ? role.name : role}
                         </span>
@@ -460,7 +456,7 @@ function UsersContent() {
                         onClick={() =>
                           setModalState({ isOpen: true, mode: "view", user })
                         }
-                        className="text-gray-600 hover:text-gray-900 transition-colors"
+                        className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors"
                         title="Ver detalles"
                       >
                         <Eye size={16} />
@@ -469,14 +465,14 @@ function UsersContent() {
                         onClick={() =>
                           setModalState({ isOpen: true, mode: "edit", user })
                         }
-                        className="text-orange-600 hover:text-orange-900 transition-colors"
+                        className="text-orange-600 hover:text-orange-800 dark:text-orange-400 dark:hover:text-orange-300 transition-colors"
                         title="Editar"
                       >
                         <Edit size={16} />
                       </button>
                       <button
                         onClick={() => handleDeleteUser(user)}
-                        className="text-red-600 hover:text-red-900 transition-colors"
+                        className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 transition-colors"
                         title="Eliminar"
                       >
                         <Trash2 size={16} />

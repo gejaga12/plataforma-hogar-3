@@ -12,7 +12,10 @@ export interface RolData {
 export interface RolResponse {
   id: string;
   name: string;
-  users: string[];
+  users: {
+    id: string,
+    fullName: string
+  }[];
   permissions: string[];
 }
 
@@ -21,11 +24,10 @@ export interface Permiso {
   label: string;
 }
 
-const token = getAuthToken();
-
 export class ApiRoles {
   //crear rol
   static async crearRol(data: RolData): Promise<RolResponse> {
+    const token = getAuthToken();
     try {
       const response = await axios.post<RolResponse>(
         `${BASE_URL}/roles`,
@@ -47,6 +49,7 @@ export class ApiRoles {
 
   // Obtener todos los roles
   static async listarRoles(): Promise<RolResponse[]> {
+    const token = getAuthToken();
     try {
       const response = await axios.get<RolResponse[]>(`${BASE_URL}/roles`, {
         headers: {
@@ -64,6 +67,7 @@ export class ApiRoles {
   }
 
   static async listaRolesCreacion(): Promise<Record<string, string>> {
+    const token = getAuthToken();
     try {
       const response = await axios.get(`${BASE_URL}/roles/create/user`, {
         headers: {
@@ -83,6 +87,7 @@ export class ApiRoles {
 
   // Obtener permisos disponibles
   static async obtenerPermisosDisponibles(): Promise<Permiso[]> {
+    const token = getAuthToken();
     try {
       const response = await axios.get(`${BASE_URL}/roles/get/permisos`, {
         headers: {
@@ -113,6 +118,7 @@ export class ApiRoles {
 
   // Actualizar un rol existente
   static async actualizarRol(id: string, data: RolData): Promise<RolResponse> {
+    const token = getAuthToken();
     try {
       const response = await axios.patch<RolResponse>(
         `${BASE_URL}/roles/${id}`,
@@ -139,12 +145,15 @@ export class ApiRoles {
 
   // Eliminar un rol existente
   static async eliminarRol(id: string): Promise<void> {
+    const token = getAuthToken();
     try {
       const response = await axios.delete(`${BASE_URL}/roles/${id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
+
+      return response.data;
     } catch (error: any) {
       const status = error.response?.status;
       const mensaje =

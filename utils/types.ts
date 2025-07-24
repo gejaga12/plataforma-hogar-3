@@ -1,7 +1,7 @@
 export interface CreateUserData {
   nombreCompleto: string;
   contrasena?: string;
-  zona: string; // zona.name
+  zona: string;
   fechaIngreso: string;
   fechaNacimiento: string;
   mail: string;
@@ -90,6 +90,7 @@ export interface Zona extends GeoGeneric {
   Coords: string[];
   pais: Pais;
   provincia: Provincia[];
+  active: boolean;
 }
 
 //para context
@@ -104,6 +105,7 @@ export interface UserAdapted {
   puesto: string;
   fechaIngreso: string;
   fechaNacimiento: string;
+  createAt: string;
   direccion: string;
   telefono: string;
   relacionLaboral: string;

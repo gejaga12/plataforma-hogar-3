@@ -1,17 +1,22 @@
 "use client";
 
 import { ProtectedLayout } from "@/components/layout/protected-layout";
-import { ApiRoles, Permiso, RolResponse } from "@/lib/api/apiRoles";
+import { ApiRoles, Permiso } from "@/lib/api/apiRoles";
 import RolesContent from "@/components/roles/RolesContent";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Role } from "@/utils/types";
+import toast from "react-hot-toast";
 
 export interface RoleList extends Role {
-  users?: string[];
+   users: {
+    id: string,
+    fullName: string
+  }[];
 }
 
 export interface CreateRoleData {
+  id?: string;
   name: string;
   permissions?: Permiso[]; // puedes cambiarlo a string[] si lo manejás como keys directamente
   users: string[];
@@ -38,15 +43,10 @@ export default function RolesPage() {
     role: undefined,
   });
 
-  // Fetch roles desde la API
-  const fetchRoles = async (): Promise<RolResponse[]> => {
-    return await ApiRoles.listarRoles();
-  };
-
   // Obtener los roles
   const { data: roles, isLoading } = useQuery({
     queryKey: ["roles"],
-    queryFn: fetchRoles,
+    queryFn: () => ApiRoles.listarRoles(),
   });
 
   // Crear rol
@@ -58,6 +58,7 @@ export default function RolesPage() {
       });
     },
     onSuccess: () => {
+      toast.success("Rol creado con exito!");
       queryClient.invalidateQueries({ queryKey: ["roles"] });
       setModalState({ isOpen: false, mode: "create", role: undefined });
     },
@@ -87,6 +88,7 @@ export default function RolesPage() {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => ApiRoles.eliminarRol(id),
     onSuccess: () => {
+      toast.success("Rol eliminado");
       queryClient.invalidateQueries({ queryKey: ["roles"] });
       setDeleteModal({ isOpen: false, role: undefined });
     },

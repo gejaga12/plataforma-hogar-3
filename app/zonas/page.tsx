@@ -5,6 +5,7 @@ import { ZonaService } from "@/lib/api/apiZonas";
 import { Zona } from "@/utils/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React, { useState } from "react";
+import toast from "react-hot-toast";
 
 export interface CreateZonaData {
   name: string;
@@ -24,60 +25,40 @@ const ZonaPage = () => {
     zona: undefined,
   });
 
-  const [deleteModal, setDeleteModal] = useState<{
-    isOpen: boolean;
-    zona?: Zona;
-  }>({
-    isOpen: false,
-    zona: undefined,
+  const { data, isLoading } = useQuery({
+    queryKey: ["zonas"],
+    queryFn: () => ZonaService.allInfoZona(),
   });
 
-  // Obtener zonas
-  const { data: zonas, isLoading } = useQuery({
-    queryKey: ["zonas"],
-    queryFn: ZonaService.getZonas,
-  });
+  const zonas = data?.zonas ?? [];
 
   const createMutation = useMutation({
     mutationFn: (data: CreateZonaData) => ZonaService.createZona(data),
     onSuccess: () => {
+      toast.success("Zona creada con exito");
       queryClient.invalidateQueries({ queryKey: ["zonas"] });
       setModalState({ isOpen: false, mode: "create", zona: undefined });
     },
   });
 
-  //   // Actualizar zona
-  //   const updateMutation = useMutation({
-  //     mutationFn: ({ id, data }: { id: string; data: Partial<CreateZonaData> }) =>
-  //       ZonaService.actualizarZona(id, data),
-  //     onSuccess: () => {
-  //       queryClient.invalidateQueries({ queryKey: ["zonas"] });
-  //       setModalState({ isOpen: false, mode: "edit", zona: undefined });
-  //     },
-  //   });
-
-  //   // Eliminar zona
-  //   const deleteMutation = useMutation({
-  //     mutationFn: (id: string) => ZonaService.eliminarZona(id),
-  //     onSuccess: () => {
-  //       queryClient.invalidateQueries({ queryKey: ["zonas"] });
-  //       setDeleteModal({ isOpen: false, zona: undefined });
-  //     },
-  //   });
+  // Actualizar zona
+  const toggleMutation = useMutation({
+    mutationFn: (id: string) => ZonaService.toggleZona(id),
+    onSuccess: () => {
+      toast.success("Zona actualizada");
+      queryClient.invalidateQueries({ queryKey: ["zonas"] });
+    },
+  });
 
   return (
     <ProtectedLayout>
       <ZonaContent
-        zonas={zonas || []}
+        zonas={zonas}
         isLoading={isLoading}
         modalState={modalState}
         setModalState={setModalState}
-        deleteModal={deleteModal}
-        setDeleteModal={setDeleteModal}
         createZona={(data) => createMutation.mutate(data)}
-        //   updateZona={(id, data) => updateMutation.mutate({ id, data })}
-        //   deleteZona={(id) => deleteMutation.mutate(id)}
-        //   isDeleting={deleteMutation.isPending}
+        toggleMutation={(id) => toggleMutation.mutate(id)}
       />
     </ProtectedLayout>
   );

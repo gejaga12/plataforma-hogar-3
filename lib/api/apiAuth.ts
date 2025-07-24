@@ -15,7 +15,7 @@ export interface EditUserPayload {
   email: string;
   fullName: string;
   address: string;
-  fechaNacimiento: Date;
+  fechaNacimiento: string;
   roles: string[];
   zona: string;
   sucursalHogar: string;
@@ -41,6 +41,7 @@ const adaptUser = (user: UserFromApi): UserAdapted => ({
   fechaIngreso: user.labor?.fechaIngreso
     ? formatDateInput(user.labor.fechaIngreso)
     : "",
+  createAt: formatDateInput(user.createdAt),
   puesto: user.labor?.puestos?.[0] ?? "",
   tipoContrato: user.labor?.tipoDeContrato ?? "Relación de Dependencia",
   relacionLaboral: user.labor?.relacionLaboral ?? "Periodo de Prueba",
@@ -117,8 +118,8 @@ export class AuthService {
     zona: string;
     sucursalHogar: string;
     tipoDeContrato: string;
-    fechaIngreso: Date;
-    fechaNacimiento: Date;
+    fechaIngreso: string;
+    fechaNacimiento: string;
   }): Promise<UserFromApi> {
     const token = getAuthToken();
 
@@ -130,8 +131,6 @@ export class AuthService {
       });
 
       const resData = response.data;
-
-      console.log(resData);
 
       const newUser: UserFromApi = {
         id: resData.id,
@@ -146,10 +145,12 @@ export class AuthService {
         zona: resData.zona ?? null,
         createdAt: resData.createdAt ?? new Date().toISOString(),
         deletedAt: resData.deletedAt ?? null,
-        fechaNacimiento: resData.fechaNacimiento ?? new Date(),
+        fechaNacimiento: resData.fechaNacimiento,
         isActive: resData.isActive ?? true,
         labor: resData.labor ?? null, // 👈 CORRECTO
       };
+
+      console.log("Nuevo usuario:", newUser);
 
       return newUser;
     } catch (error: any) {
@@ -195,7 +196,10 @@ export class AuthService {
 
       return rawUsers.map(adaptUser);
     } catch (error: any) {
-      console.error("Error al obtener usuarios:", error?.response?.data || error.message);
+      console.error(
+        "Error al obtener usuarios:",
+        error?.response?.data || error.message
+      );
       const message =
         error.response?.data?.message || "Error al obtener usuarios";
       throw new Error(message);

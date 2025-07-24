@@ -1,15 +1,15 @@
-import { CreateRoleData, Role } from "@/app/roles/page";
+import { CreateRoleData, RoleList } from "@/app/roles/page";
 import React, { useEffect, useState } from "react";
 import { LoadingSpinner } from "../ui/loading-spinner";
-import { UserLaboral } from "@/utils/types";
+
 import { X } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 interface RoleFormModalProps {
   isOpen: boolean;
   onClose: () => void;
-  role?: Role;
+  role?: RoleList;
   mode: "create" | "edit" | "view";
-  fetchUsers: UserLaboral[];
   createRole: (data: CreateRoleData) => void;
   updateRole: (id: string, data: Partial<CreateRoleData>) => void;
   availableViews: { key: string; label: string }[];
@@ -20,11 +20,12 @@ const RoleFormModal = ({
   onClose,
   role,
   mode,
-  fetchUsers,
   createRole,
   updateRole,
   availableViews,
 }: RoleFormModalProps) => {
+  const { users } = useAuth();
+
   const [formData, setFormData] = useState<CreateRoleData>({
     name: "",
     users: [],
@@ -38,9 +39,11 @@ const RoleFormModal = ({
   useEffect(() => {
     if (mode === "edit" || mode === "view") {
       setFormData({
+        id: role?.id,
         name: role?.name || "",
-        users: role?.users || [],
-        permissions: role?.permissions.map((p) => ({ key: p, label: p })) || [],
+        users: role?.users.map((u) => u.id) || [],
+        permissions:
+          role?.permissions.map((p: any) => ({ key: p, label: p })) || [],
       });
     } else {
       setFormData({
@@ -52,8 +55,6 @@ const RoleFormModal = ({
   }, [role, mode]);
 
   const isReadOnly = mode === "view";
-
-  // console.log(availableViews);
 
   const permisosPorArea = availableViews
     .filter(
@@ -73,6 +74,7 @@ const RoleFormModal = ({
     e.preventDefault();
     setIsSubmitting(true);
     try {
+      console.log(formData);
       if (mode === "create") {
         await createRole(formData);
       } else if (mode === "edit" && role) {
@@ -132,9 +134,9 @@ const RoleFormModal = ({
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="p-6 border-b border-gray-200">
+        <div className="p-6 border-b border-gray-200 dark:bg-gray-900 dark:border-gray-700">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-gray-900">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-400">
               {mode === "create" && "Crear Nuevo Rol"}
               {mode === "edit" && "Editar Rol"}
               {mode === "view" && "Detalles del Rol"}
@@ -148,16 +150,19 @@ const RoleFormModal = ({
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+        <form
+          onSubmit={handleSubmit}
+          className="p-6 space-y-6 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
+        >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Información Básica */}
             <div className="space-y-4">
-              <h3 className="text-lg font-medium text-gray-900">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-400">
                 Información Básica
               </h3>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-800 dark:text-gray-400 mb-1">
                   Nombre del Rol *
                 </label>
                 <input
@@ -169,7 +174,7 @@ const RoleFormModal = ({
                       name: e.target.value,
                     }))
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-gray-900 dark:text-gray-100"
                   required
                   disabled={isReadOnly}
                 />
@@ -178,30 +183,56 @@ const RoleFormModal = ({
 
             {/* Usuarios Asignados */}
             <div className="space-y-4">
-              <h3 className="text-lg font-medium text-gray-900">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-400">
                 Usuarios Asignados
               </h3>
 
-              <div className="max-h-48 overflow-y-auto border border-gray-200 rounded-lg p-3">
-                {fetchUsers?.map((user) => (
-                  <label key={user.id} className="flex items-center py-2">
-                    <input
-                      type="checkbox"
-                      checked={formData.users.includes(user.id)}
-                      onChange={(e) =>
-                        handleUserChange(user.id, e.target.checked)
-                      }
-                      className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
-                      disabled={isReadOnly}
-                    />
-                    <div className="ml-2">
-                      <div className="text-sm font-medium text-gray-900">
-                        {user.fullName}
+              <div className="max-h-80 overflow-y-auto border border-gray-200 rounded-lg p-3 dark:border-gray-700">
+                {isReadOnly ? (
+                  formData.users.length === 0 ? (
+                    <span className="text-sm text-gray-700 dark:text-gray-300">
+                      Sin usuarios asignados
+                    </span>
+                  ) : (
+                    <ul className="space-y-2">
+                      {users
+                        ?.filter((user) => formData.users.includes(user.id))
+                        .map((user) => (
+                          <li key={user.id} className="text-sm text-gray-900">
+                            <span className="text-sm text-gray-700 dark:text-gray-300">
+                              {user.fullName}
+                            </span>{" "}
+                            –{" "}
+                            <span className="text-sm text-gray-700 dark:text-gray-300">
+                              {user.email}
+                            </span>
+                          </li>
+                        ))}
+                    </ul>
+                  )
+                ) : (
+                  users?.map((user) => (
+                    <label key={user.id} className="flex items-center py-2">
+                      <input
+                        type="checkbox"
+                        checked={formData.users.includes(user.id)}
+                        onChange={(e) =>
+                          handleUserChange(user.id, e.target.checked)
+                        }
+                        className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+                        disabled={isReadOnly}
+                      />
+                      <div className="ml-2">
+                        <div className="text-sm text-gray-700 dark:text-gray-300">
+                          {user.fullName}
+                        </div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                          {user.email}
+                        </div>
                       </div>
-                      <div className="text-xs text-gray-500">{user.email}</div>
-                    </div>
-                  </label>
-                ))}
+                    </label>
+                  ))
+                )}
               </div>
             </div>
           </div>
@@ -220,7 +251,7 @@ const RoleFormModal = ({
                 return (
                   <div
                     key={area}
-                    className="border border-gray-200 rounded-lg p-4 bg-white shadow-sm"
+                    className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-white dark:bg-gray-800 shadow-sm"
                   >
                     <div className="flex items-center justify-between">
                       <label className="flex items-center">
@@ -235,7 +266,7 @@ const RoleFormModal = ({
                           className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
                           disabled={isReadOnly}
                         />
-                        <span className="ml-2 text-sm font-medium text-gray-900">
+                        <span className="text-sm text-gray-700 dark:text-gray-300 ml-2">
                           {area.charAt(0).toUpperCase() + area.slice(1)}
                         </span>
                       </label>
@@ -267,8 +298,8 @@ const RoleFormModal = ({
                               className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
                               disabled={isReadOnly}
                             />
-                            <span className="ml-1 capitalize">
-                              {permiso.accion}
+                            <span className="text-sm text-gray-700 dark:text-gray-300 ml-2">
+                              {permiso.label}
                             </span>
                           </label>
                         ))}

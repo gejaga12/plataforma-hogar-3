@@ -1,8 +1,8 @@
 "use client";
 
 import { CreateZonaData } from "@/app/zonas/page";
-import { useGlobalContext } from "@/context/GlobalContext";
-import { Pais, Zona } from "@/utils/types";
+import { ZonaService } from "@/lib/api/apiZonas";
+import { useQuery } from "@tanstack/react-query";
 import { X } from "lucide-react";
 import React, { useState } from "react";
 
@@ -21,7 +21,12 @@ const ZonaModals: React.FC<ZonaModalsProps> = ({
   isloading,
   onSubmit,
 }) => {
-  const { paises, isLoading } = useGlobalContext();
+  const { data, isLoading } = useQuery({
+    queryKey: ["zonas"],
+    queryFn: () => ZonaService.allInfoZona(),
+  });
+
+  const paises = data?.paises ?? [];
 
   const [nombreZona, setNombreZona] = useState("");
   const [paisSeleccionado, setPaisSeleccionado] = useState<string | null>(null);
@@ -63,7 +68,7 @@ const ZonaModals: React.FC<ZonaModalsProps> = ({
               </label>
               <input
                 type="text"
-                className="w-full border rounded px-3 py-2 focus:outline-none focus:ring focus:border-blue-500"
+                className="w-full border rounded px-3 py-2 focus:outline-none focus:ring focus:border-blue-500 uppercase"
                 value={nombreZona}
                 onChange={(e) => setNombreZona(e.target.value)}
                 placeholder="Ej: Zona Norte"
