@@ -2,7 +2,8 @@ import React, { useState } from "react";
 import { LoadingSpinner } from "../ui/loading-spinner";
 import { CreateUserData } from "@/utils/types";
 import { useQuery } from "@tanstack/react-query";
-import { ZonaService } from "@/lib/api/apiZonas";
+import { ZonaService } from "@/api/apiZonas";
+import { Eye, EyeOff } from "lucide-react";
 
 interface FormUsersProps {
   handleSubmit: (e: React.FormEvent) => void;
@@ -28,6 +29,7 @@ const FormUsers: React.FC<FormUsersProps> = ({
   rolesDisponibles,
 }) => {
   const [showInputs, setShowInputs] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const { data: zonasResponse, isLoading: isLoadingZonas } = useQuery({
     queryKey: ["zonas"],
@@ -144,13 +146,13 @@ const FormUsers: React.FC<FormUsersProps> = ({
               />
             </div>
 
-            {/* Contraseña (futura funcionalidad) */}
-            <div>
+            {/* Contraseña */}
+            <div className="relative">
               <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-400">
                 Contraseña
               </label>
               <input
-                type="password"
+                type={showPassword ? "text" : "password"}
                 value={formData.contrasena ?? ""}
                 onChange={(e) =>
                   setFormData((prev) => ({
@@ -161,6 +163,70 @@ const FormUsers: React.FC<FormUsersProps> = ({
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:border-gray-700 dark:bg-gray-800"
                 disabled={isReadOnly}
               />
+              <button
+                type="button"
+                className="absolute top-9 right-3 text-gray-500 dark:text-gray-300"
+                onClick={() => setShowPassword((prev) => !prev)}
+                tabIndex={-1}
+              >
+                {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
+              </button>
+            </div>
+
+            {/* Zona * */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-400">
+                Zona *
+              </label>
+              {isLoadingZonas ? (
+                <LoadingSpinner size="sm" />
+              ) : (
+                <select
+                  value={formData.zona ?? ""}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      zona: e.target.value,
+                    }))
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-800 dark:border-gray-800"
+                  required={mode === "create"}
+                  disabled={isReadOnly}
+                >
+                  <option value="">Seleccionar zona</option>
+                  {zonas.map((zona) => (
+                    <option key={zona.id} value={zona.id}>
+                      {zona.name}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+
+            {/* Sucursal Hogar * */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-400">
+                Sucursal Hogar *
+              </label>
+              <select
+                value={formData.sucursalHogar ?? ""}
+                onChange={(e: any) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    sucursalHogar: e.target.value,
+                  }))
+                }
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-800 dark:border-gray-800"
+                required={mode === "create"}
+                disabled={isReadOnly}
+              >
+                <option value="">Seleccionar sucursal</option>
+                <option value="Sede Central">Sede Central</option>
+                <option value="Sucursal Norte">Sucursal Norte</option>
+                <option value="Sucursal Sur">Sucursal Sur</option>
+                <option value="Sucursal Este">Sucursal Este</option>
+                <option value="Sucursal Oeste">Sucursal Oeste</option>
+              </select>
             </div>
           </div>
         </div>
@@ -178,210 +244,139 @@ const FormUsers: React.FC<FormUsersProps> = ({
 
         {showInputs && (
           <div className="px-2 py-3 bg-gray-100 dark:bg-gray-700 rounded-lg">
+            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-400 mb-4">
+              Datos del Usuario
+            </h3>
             <div className="grid grid-cols-2 gap-6 px-1">
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-400">
-                  Información Laboral
-                </h3>
-
-                {/* Puesto * */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-400">
-                    Puesto *
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.puesto ?? ""}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        puesto: e.target.value,
-                      }))
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-600 dark:border-gray-800"
-                    required={mode === "create"}
-                    disabled={isReadOnly}
-                  />
-                </div>
-
-                {/* Area * */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-400">
-                    Área *
-                  </label>
-                  <select
-                    value={formData.area ?? ""}
-                    onChange={(e) =>
-                      setFormData((prev) => ({ ...prev, area: e.target.value }))
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-600 dark:border-gray-800"
-                    required={mode === "create"}
-                    disabled={isReadOnly}
-                  >
-                    <option value="">Seleccionar área</option>
-                    <option value="IT">IT</option>
-                    <option value="Operaciones">Operaciones</option>
-                    <option value="Mantenimiento">Mantenimiento</option>
-                    <option value="Administración">Administración</option>
-                    <option value="Recursos Humanos">Recursos Humanos</option>
-                  </select>
-                </div>
-
-                {/* Zona * */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-400">
-                    Zona *
-                  </label>
-                  {isLoadingZonas ? (
-                    <LoadingSpinner size="sm" />
-                  ) : (
-                    <select
-                      value={formData.zona ?? ""}
-                      onChange={(e) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          zona: e.target.value,
-                        }))
-                      }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-600 dark:border-gray-800"
-                      required={mode === "create"}
-                      disabled={isReadOnly}
-                    >
-                      <option value="">Seleccionar zona</option>
-                      {zonas.map((zona) => (
-                        <option key={zona.id} value={zona.id}>
-                          {zona.name}
-                        </option>
-                      ))}
-                    </select>
-                  )}
-                </div>
-
-                {/* Sucursal Hogar * */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-400">
-                    Sucursal Hogar *
-                  </label>
-                  <select
-                    value={formData.sucursalHogar ?? ""}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        sucursalHogar: e.target.value,
-                      }))
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-600 dark:border-gray-800"
-                    required={mode === "create"}
-                    disabled={isReadOnly}
-                  >
-                    <option value="">Seleccionar sucursal</option>
-                    <option value="Sede Central">Sede Central</option>
-                    <option value="Sucursal Norte">Sucursal Norte</option>
-                    <option value="Sucursal Sur">Sucursal Sur</option>
-                    <option value="Sucursal Este">Sucursal Este</option>
-                    <option value="Sucursal Oeste">Sucursal Oeste</option>
-                  </select>
-                </div>
+              {/* Puesto */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-400">
+                  Puesto *
+                </label>
+                <input
+                  type="text"
+                  value={formData.puesto ?? ""}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, puesto: e.target.value }))
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-600 dark:border-gray-800"
+                  required={mode === "create"}
+                  disabled={isReadOnly}
+                />
               </div>
 
-              {/* Contrato y Fechas */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-400">
-                  Información Contractual
-                </h3>
-                {/* Fecha de ingreso */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-400">
-                    Fecha de Ingreso *
-                  </label>
-                  <input
-                    type="date"
-                    value={formData.fechaIngreso}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        fechaIngreso: e.target.value,
-                      }))
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-600 dark:border-gray-800"
-                    required={mode === "create"}
-                    disabled={isReadOnly}
-                  />
-                </div>
+              {/* Área */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-400">
+                  Área *
+                </label>
+                <select
+                  value={formData.area ?? ""}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, area: e.target.value }))
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-600 dark:border-gray-800"
+                  required={mode === "create"}
+                  disabled={isReadOnly}
+                >
+                  <option value="">Seleccionar área</option>
+                  <option value="IT">IT</option>
+                  <option value="Operaciones">Operaciones</option>
+                  <option value="Mantenimiento">Mantenimiento</option>
+                  <option value="Administración">Administración</option>
+                  <option value="Recursos Humanos">Recursos Humanos</option>
+                </select>
+              </div>
 
-                {/* Tipo de Contrato **/}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-400">
-                    Tipo de Contrato *
-                  </label>
-                  <select
-                    value={formData.tipoContrato}
-                    onChange={(e) => {
-                      const value = e.target.value as
+              {/* Fecha de Ingreso */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-400">
+                  Fecha de Ingreso *
+                </label>
+                <input
+                  type="date"
+                  value={formData.fechaIngreso}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      fechaIngreso: e.target.value,
+                    }))
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-600 dark:border-gray-800"
+                  required={mode === "create"}
+                  disabled={isReadOnly}
+                />
+              </div>
+
+              {/* Tipo de Contrato */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-400">
+                  Tipo de Contrato *
+                </label>
+                <select
+                  value={formData.tipoContrato}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      tipoContrato: e.target.value as
                         | "Relacion de Dependencia"
                         | "Freelance"
-                        | "Contratista";
-                      setFormData((prev) => {
-                        const updated = { ...prev, tipoContrato: value };
+                        | "Contratista",
+                    }))
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-600 dark:border-gray-800"
+                  required={mode === "create"}
+                  disabled={isReadOnly}
+                >
+                  <option value="Relación de Dependencia">
+                    Relación de Dependencia
+                  </option>
+                  <option value="Freelance">Freelance</option>
+                  <option value="Contratista">Contratista</option>
+                </select>
+              </div>
 
-                        return updated;
-                      });
-                    }}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-600 dark:border-gray-800"
-                    required={mode === "create"}
-                    disabled={isReadOnly}
-                  >
-                    <option value="Relación de Dependencia">
-                      Relación de Dependencia
-                    </option>
-                    <option value="Freelance">Freelance</option>
-                    <option value="Contratista">Contratista</option>
-                  </select>
-                </div>
-
-                {/* Estado Contractual * */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-400">
-                    Estado Contractual *
-                  </label>
-                  <select
-                    value={formData.relacionLaboral}
-                    onChange={(e) => {
-                      const value = e.target.value as
+              {/* Estado Contractual */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-400">
+                  Estado Contractual *
+                </label>
+                <select
+                  value={formData.relacionLaboral}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      relacionLaboral: e.target.value as
                         | "Periodo de Prueba"
-                        | "Contratado";
-                      setFormData((prev) => {
-                        const updated = { ...prev, relacionLaboral: value };
-                        return updated;
-                      });
-                    }}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-600 dark:border-gray-800"
-                    required={mode === "create"}
-                    disabled={isReadOnly}
-                  >
-                    <option value="Periodo de Prueba">Periodo de Prueba</option>
-                    <option value="Contratado">Contratado</option>
-                  </select>
-                </div>
+                        | "Contratado",
+                    }))
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-600 dark:border-gray-800"
+                  required={mode === "create"}
+                  disabled={isReadOnly}
+                >
+                  <option value="Periodo de Prueba">Periodo de Prueba</option>
+                  <option value="Contratado">Contratado</option>
+                </select>
+              </div>
 
-                {/* Certificaciones y titulos */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-400">
-                    Certificaciones/Título
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.certificacionesTitulo}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        certificacionesTitulo: e.target.value,
-                      }))
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-600 dark:border-gray-800"
-                    disabled={isReadOnly}
-                  />
-                </div>
+              {/* Certificaciones / Título */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-400">
+                  Certificaciones/Título
+                </label>
+                <input
+                  type="text"
+                  value={formData.certificacionesTitulo}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      certificacionesTitulo: e.target.value,
+                    }))
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-600 dark:border-gray-800"
+                  disabled={isReadOnly}
+                />
               </div>
             </div>
           </div>

@@ -2,13 +2,13 @@
 "use client";
 
 import React, { createContext, useEffect, useState } from "react";
-import { UserAdapted } from "@/utils/types";
-import { AuthService, UserLoginData } from "@/lib/api/apiAuth";
+import { AuthService, UserLoginData } from "@/api/apiAuth";
 import { useRouter } from "next/navigation";
+import { UserAdapted } from "@/utils/types";
 
 interface AuthContextType {
   user: UserLoginData | null;
-  users: UserAdapted[];
+  usuarios: UserAdapted[];
   loading: boolean;
   error: string | null;
   isAuthenticated: boolean;
@@ -26,7 +26,7 @@ const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<UserLoginData | null>(null);
-  const [users, setUsers] = useState<UserAdapted[]>([]);
+  const [usuarios, setUsuarios] = useState<UserAdapted[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -50,6 +50,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (now < expDate) {
         try {
           setUser(JSON.parse(storedUser));
+          refetchUsuarios();
           setLoading(false);
         } catch {
           localStorage.removeItem("auth-user");
@@ -62,11 +63,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const unsubscribe = AuthService.onAuthStateChanged(async (user) => {
       if (user) {
         try {
-          const usuariosBackend = await AuthService.getUsers();
-
-          console.log("usuarios en back:", usuariosBackend);
-
-          setUsers(usuariosBackend); // ⬅️ usar directamente
+          setUser(user);
         } catch (e) {
           console.error("Error al traer usuarios:", e);
         }
@@ -83,13 +80,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
   }, []);
 
-  // Llamada para obtener usuarios desde el backend
   const refetchUsuarios = async () => {
     try {
-      const fetchedUsers = await AuthService.getUsers(100, 0); // podés ajustar el límite
-      setUsers(fetchedUsers);
-    } catch (err: any) {
-      console.error("Error al obtener usuarios:", err.message);
+      const data = await AuthService.getUsers(100, 0);
+
+      console.log("Usuarios de context:", data);
+      
+      setUsuarios(data);
+    } catch (e) {
+      console.error("Error al cargar usuarios:", e);
     }
   };
 
@@ -129,13 +128,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     <AuthContext.Provider
       value={{
         user,
+        usuarios,
         loading,
         error,
         signIn,
-        // signInWithGoogle,
         signOut,
         isAuthenticated: !!user,
-        users,
         refetchUsuarios,
       }}
     >

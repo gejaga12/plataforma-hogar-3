@@ -114,11 +114,8 @@ export class AuthService {
     phoneNumber: string;
     address: string;
     puesto: string;
-    relacionLaboral: string;
     zona: string;
     sucursalHogar: string;
-    tipoDeContrato: string;
-    fechaIngreso: string;
     fechaNacimiento: string;
   }): Promise<UserFromApi> {
     const token = getAuthToken();
@@ -195,6 +192,7 @@ export class AuthService {
       // console.log(rawUsers);
 
       return rawUsers.map(adaptUser);
+      
     } catch (error: any) {
       console.error(
         "Error al obtener usuarios:",

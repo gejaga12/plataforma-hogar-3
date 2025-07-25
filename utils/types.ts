@@ -2,21 +2,17 @@ export interface CreateUserData {
   nombreCompleto: string;
   contrasena?: string;
   zona: string;
-  fechaIngreso: string;
   fechaNacimiento: string;
   mail: string;
   direccion: string;
   telefono: string;
   roles: string[]; // solo los IDs
-  certificacionesTitulo: string;
   notificaciones?: {
     mail: boolean;
     push: boolean;
   };
   puesto?: string;
   area: string;
-  relacionLaboral: "Periodo de Prueba" | "Contratado";
-  tipoContrato: string;
   sucursalHogar: string; // sucursal.name
   activo: boolean;
 }
@@ -87,9 +83,9 @@ export interface Pais extends GeoGeneric {}
 export interface Provincia extends GeoGeneric {}
 
 export interface Zona extends GeoGeneric {
-  Coords: string[];
-  pais: Pais;
-  provincia: Provincia[];
+  Coords?: string[];
+  pais?: Pais;
+  provincia?: Provincia[];
   active: boolean;
 }
 

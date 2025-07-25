@@ -47,7 +47,7 @@ import {
 } from "lucide-react";
 
 import { MenuItem } from "@/utils/types";
-import { cn } from "@/lib/utils";
+import { cn } from "@/utils/cn";
 import { useAuth } from "@/hooks/useAuth";
 
 const menuItems: MenuItem[] = [

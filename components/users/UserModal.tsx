@@ -26,46 +26,38 @@ const UserModal: React.FC<UserModalProps> = ({
   const [formData, setFormData] = useState<CreateUserData>({
     nombreCompleto: "",
     zona: "",
-    fechaIngreso: "",
     fechaNacimiento: "",
     mail: "",
     direccion: "",
     telefono: "",
     roles: [],
-    certificacionesTitulo: "",
     notificaciones: { mail: true, push: true },
     puesto: "",
     area: "",
-    relacionLaboral: "Periodo de Prueba",
-    tipoContrato: "Relación de Dependencia",
     sucursalHogar: "",
     activo: true,
   });
 
   useEffect(() => {
-    if (mode === "create") {
+    if (!isOpen && mode === "create") {
       setFormData({
         nombreCompleto: "",
         zona: "",
-        fechaIngreso: "",
         fechaNacimiento: "",
         mail: "",
         direccion: "",
         telefono: "",
         roles: [],
-        certificacionesTitulo: "",
         notificaciones: { mail: true, push: true },
         puesto: "",
         area: "",
-        relacionLaboral: "Periodo de Prueba",
-        tipoContrato: "Relación de Dependencia",
         sucursalHogar: "",
         activo: true,
       });
     } else if (user) {
       setFormData(mapUserToCreateUserData(user));
     }
-  }, [user, mode]);
+  }, [user, mode, isOpen]);
 
   const handleRoleChange = (id: string, checked: boolean) => {
     setFormData((prev) => {

@@ -16,7 +16,7 @@ import React from "react";
 import { LoadingSpinner } from "../ui/loading-spinner";
 import RoleFormModal from "./RoleFormModal";
 import DeleteConfirmModal from "./RoleDeleteModal";
-import { ApiRoles, Permiso } from "@/lib/api/apiRoles";
+import { ApiRoles, Permiso } from "@/api/apiRoles";
 import { useQuery } from "@tanstack/react-query";
 
 interface Props {

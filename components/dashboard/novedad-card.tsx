@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { X, ThumbsUp, Heart, Eye, Pin } from 'lucide-react';
 import { Novedad } from '@/utils/types';
-import { cn } from '@/lib/utils';
+import { cn } from '@/utils/cn';
 
 interface NovedadCardProps {
   novedad: Novedad;

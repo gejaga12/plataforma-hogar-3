@@ -1,7 +1,7 @@
 "use client";
 
 import { ProtectedLayout } from "@/components/layout/protected-layout";
-import { ApiRoles, Permiso } from "@/lib/api/apiRoles";
+import { ApiRoles, Permiso } from "@/api/apiRoles";
 import RolesContent from "@/components/roles/RolesContent";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";

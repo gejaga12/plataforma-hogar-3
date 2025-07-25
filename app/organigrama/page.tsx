@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { 
   Plus, 
@@ -25,7 +25,7 @@ import {
 import { ProtectedLayout } from '@/components/layout/protected-layout';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { AddEmployeeModal } from '@/components/organigrama/add-employee-modal';
-import { cn } from '@/lib/utils';
+import { cn } from '@/utils/cn';
 
 interface Employee {
   id: string;

@@ -1,7 +1,7 @@
 'use client';
 
-import { DivideIcon as LucideIcon } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { LucideIcon, DivideIcon } from 'lucide-react';
+import { cn } from '@/utils/cn';
 
 interface StatsCardProps {
   title: string;

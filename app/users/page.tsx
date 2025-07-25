@@ -23,19 +23,16 @@ import {
 import { ProtectedLayout } from "@/components/layout/protected-layout";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { CreateUserData, UserAdapted, UserFromApi } from "@/utils/types";
-import { cn } from "@/lib/utils";
-import { useAuth } from "@/hooks/useAuth";
+import { cn } from "@/utils/cn";
 import UserModal from "@/components/users/UserModal";
 import DeleteUSerModal from "@/components/users/DeleteUserModal";
-import {
-  AuthService,
-  EditLaborPayload,
-  EditUserPayload,
-} from "@/lib/api/apiAuth";
-import { ApiRoles } from "@/lib/api/apiRoles";
+import { AuthService, EditUserPayload } from "@/api/apiAuth";
+import { ApiRoles } from "@/api/apiRoles";
 import Swal from "sweetalert2";
 import { mapUserAdaptedToUserFromApi } from "@/utils/userMapper";
 import { formatDateInput } from "@/utils/formatDate";
+import toast from "react-hot-toast";
+import { useAuth } from "@/hooks/useAuth";
 
 function UsersContent() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -55,7 +52,7 @@ function UsersContent() {
     Record<string, string>
   >({});
 
-  const { users, loading, refetchUsuarios } = useAuth();
+  const { usuarios, loading, refetchUsuarios } = useAuth();
 
   useEffect(() => {
     const obtenerRoles = async () => {
@@ -78,18 +75,10 @@ function UsersContent() {
         password: userData.contrasena || "Abc123",
         phoneNumber: userData.telefono || "",
         address: userData.direccion || "",
-        puesto: userData.puesto || "",
-        relacionLaboral: userData.relacionLaboral as
-          | "Periodo de Prueba"
-          | "Contratado",
-        fechaIngreso: formatDateInput(userData.fechaIngreso),
+        puesto: userData.puesto || "tecnico",
         fechaNacimiento: formatDateInput(userData.fechaNacimiento),
         zona: userData.zona,
         sucursalHogar: userData.sucursalHogar || "",
-        tipoDeContrato: userData.tipoContrato as
-          | "Relación de Dependencia"
-          | "Freelance"
-          | "Contratista",
         roles: userData.roles, // ← ids directamente
       };
 
@@ -133,7 +122,6 @@ function UsersContent() {
     mutationFn: async ({
       id,
       formData,
-      originalData,
     }: {
       id: string;
       formData: CreateUserData;
@@ -161,61 +149,15 @@ function UsersContent() {
         sucursalHogar: formData.sucursalHogar,
       };
 
-      // Payload para datos laborales
-      const laborId = originalData.labor?.id;
-
-      const laborPayload: EditLaborPayload = {
-        userId: id,
-        tipoDeContrato: formData.tipoContrato,
-        relacionLaboral: formData.relacionLaboral,
-        fechaAlta: formatDateInput(formData.fechaIngreso),
-        puestos: formData.puesto ? [formData.puesto] : [],
-      };
-
       console.log("Payload usuario:", userPayload);
-      console.log("Payload laboral:", laborPayload);
 
-      const results = await Promise.allSettled([
-        AuthService.editUsers(id, userPayload),
-        laborId
-          ? AuthService.editLabor(laborId, laborPayload)
-          : Promise.resolve({ did: false }),
-      ]);
-
-      const [userResult, laborResult] = results;
-      if (
-        userResult.status === "fulfilled" &&
-        (laborId ? laborResult.status === "fulfilled" : true)
-      ) {
-        Swal.fire({
-          icon: "success",
-          title: "Actualización exitosa",
-          text: "Los datos del usuario se actualizaron correctamente.",
-        });
-      } else {
-        let errores = "";
-        if (userResult.status === "rejected") {
-          errores += `Usuario: ${
-            userResult.reason.message || "Error desconocido"
-          }\n`;
-        }
-        if (laborId && laborResult.status === "rejected") {
-          errores += `Laboral: ${
-            laborResult.reason.message || "Error desconocido"
-          }`;
-        }
-        Swal.fire({
-          icon: "error",
-          title: "Error al actualizar",
-          text: errores || "Ocurrió un error durante la actualización.",
-        });
-        throw new Error(errores);
-      }
+      await AuthService.editUsers(id, userPayload);
     },
 
     onSuccess: async () => {
-      console.log("Usuario actualizado correctamente");
+      toast.success("Usuario actualizado correctamente");
       await refetchUsuarios();
+      setModalState({ isOpen: false, mode: "edit" });
     },
 
     onError: (error: any) => {
@@ -224,13 +166,9 @@ function UsersContent() {
   });
 
   const handleSubmit = async (formData: CreateUserData) => {
-    const fechaIngresoDate = new Date(formData.fechaIngreso);
     const fechaNacimientoDate = new Date(formData.fechaNacimiento);
 
-    if (
-      isNaN(fechaIngresoDate.getTime()) ||
-      isNaN(fechaNacimientoDate.getTime())
-    ) {
+    if (isNaN(fechaNacimientoDate.getTime())) {
       Swal.fire({
         icon: "error",
         title: "Fechas inválidas",
@@ -269,7 +207,7 @@ function UsersContent() {
   };
 
   const filteredUsers =
-    users?.filter((user) => {
+    usuarios?.filter((user) => {
       const search = searchTerm.toLowerCase();
       const matchesSearch =
         user.fullName?.toLowerCase().includes(search) ||
@@ -486,9 +424,9 @@ function UsersContent() {
         </div>
 
         {filteredUsers.length === 0 && (
-          <div className="text-center py-12">
-            <Shield className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="mt-2 text-sm font-medium text-gray-900">
+          <div className="text-center py-12 dark:bg-gray-900">
+            <Shield className="mx-auto h-12 w-12 text-gray-500" />
+            <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-gray-400">
               No hay usuarios
             </h3>
             <p className="mt-1 text-sm text-gray-500">

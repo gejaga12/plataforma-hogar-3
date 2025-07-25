@@ -1,7 +1,7 @@
 "use client";
 
 import { CreateZonaData } from "@/app/zonas/page";
-import { ZonaService } from "@/lib/api/apiZonas";
+import { ZonaService } from "@/api/apiZonas";
 import { useQuery } from "@tanstack/react-query";
 import { X } from "lucide-react";
 import React, { useState } from "react";
