@@ -2,12 +2,13 @@
 
 import "./globals.css";
 import { Inter } from "next/font/google";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "@/utils/query-client";
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import { useEffect } from "react";
 import { AuthProvider } from "@/context/AuthContext";
 import { Toaster } from "react-hot-toast";
+import { JerarquiaProvider } from "@/context/JerarquiaContext";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -61,10 +62,12 @@ export default function RootLayout({
       <body className={inter.className}>
         <ThemeProvider defaultTheme="system" storageKey="hogarapp-ui-theme">
           <AuthProvider>
-            <QueryClientProvider client={queryClient}>
-              {children}
-              <Toaster position="top-right" />
-            </QueryClientProvider>
+            <JerarquiaProvider>
+              <QueryClientProvider client={queryClient}>
+                {children}
+                <Toaster position="top-right" />
+              </QueryClientProvider>
+            </JerarquiaProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>

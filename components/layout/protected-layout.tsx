@@ -13,7 +13,9 @@ interface ProtectedLayoutProps {
 }
 
 export function ProtectedLayout({ children }: ProtectedLayoutProps) {
+
   const { user, loading } = useAuth();
+  
   const router = useRouter();
 
   useEffect(() => {

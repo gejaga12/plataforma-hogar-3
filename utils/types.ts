@@ -1,7 +1,10 @@
 export interface CreateUserData {
   nombreCompleto: string;
   contrasena?: string;
-  zona: string;
+  zona?: {
+    id: string;
+    name: string;
+  };
   fechaNacimiento: string;
   mail: string;
   direccion: string;
@@ -20,7 +23,6 @@ export interface CreateUserData {
 export interface UserFromApi {
   id: string;
   email: string;
-  password?: string;
   fullName: string;
   photoURL?: string;
   isActive?: boolean;
@@ -94,7 +96,6 @@ export interface UserAdapted {
   id: string;
   email: string;
   fullName: string;
-  password: string;
   roles: Role[];
   zona: string;
   area: string;

@@ -12,11 +12,19 @@ export interface JerarquiaNodo {
   user: boolean;
   id: string;
   cargo: string;
-  userid: number;
+  userid?: string;
   fullName: string;
-  email: string;
-  phone: string;
+  email?: string;
+  phone?: string;
+  area: string;
+  relacionLaboral?: string;
+  puesto?: string[];
   subordinados?: JerarquiaNodo[]; // Recursivo
+}
+
+export interface JerarquiaCompletaResponse {
+  areas: string[];
+  tree: JerarquiaNodo[];
 }
 
 export class JerarquiaService {
@@ -40,7 +48,7 @@ export class JerarquiaService {
   }
 
   //ARBOL COMPLETO DE JERARQUIA
-  static async getJerarquiaCompleta(): Promise<JerarquiaNodo[]> {
+  static async getJerarquiaCompleta(): Promise<JerarquiaCompletaResponse> {
     try {
       const token = getAuthToken();
       const response = await axios.get(`${BASE_URL}/jerarquia`, {
@@ -49,7 +57,7 @@ export class JerarquiaService {
         },
       });
 
-      return response.data as JerarquiaNodo[];
+      return response.data as JerarquiaCompletaResponse;
     } catch (error: any) {
       const mensaje =
         error?.response?.data?.message ||

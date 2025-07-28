@@ -1,5 +1,5 @@
 import { CreateRoleData, RoleList } from "@/app/roles/page";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { LoadingSpinner } from "../ui/loading-spinner";
 
 import { X } from "lucide-react";
@@ -24,7 +24,7 @@ const RoleFormModal = ({
   updateRole,
   availableViews,
 }: RoleFormModalProps) => {
-  const { users } = useAuth();
+  const { usuarios } = useAuth();
 
   const [formData, setFormData] = useState<CreateRoleData>({
     name: "",
@@ -35,6 +35,7 @@ const RoleFormModal = ({
     Record<string, boolean>
   >({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [searchUser, setSearchUser] = useState("");
 
   useEffect(() => {
     if (mode === "edit" || mode === "view") {
@@ -95,18 +96,6 @@ const RoleFormModal = ({
     }));
   };
 
-  const handleVistaChange = (vistaId: string, checked: boolean) => {
-    setFormData((prev) => {
-      const already = prev.permissions?.map((p) => p.key);
-      return {
-        ...prev,
-        permissions: checked
-          ? [...(prev.permissions ?? []), { key: vistaId, label: vistaId }]
-          : (prev.permissions ?? []).filter((p) => p.key !== vistaId),
-      };
-    });
-  };
-
   const handlePermisoChange = (permisoKey: string, checked: boolean) => {
     setFormData((prev) => {
       const actual = prev.permissions ?? [];
@@ -119,15 +108,23 @@ const RoleFormModal = ({
     });
   };
 
-  const isVistaSelected = (vistaId: string) =>
-    formData.permissions?.some((p) => p.key === vistaId);
-
   const toggleArea = (area: string) => {
     setAreasExpandidas((prev) => ({
       ...prev,
       [area]: !prev[area],
     }));
   };
+
+  const filteredUsuarios = useMemo(() => {
+    const term = searchUser.toLowerCase();
+    return (
+      usuarios?.filter(
+        (u) =>
+          u.fullName.toLowerCase().includes(term) ||
+          u.email.toLowerCase().includes(term)
+      ) ?? []
+    );
+  }, [usuarios, searchUser]);
 
   if (!isOpen) return null;
 
@@ -183,10 +180,18 @@ const RoleFormModal = ({
 
             {/* Usuarios Asignados */}
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-400">
-                Usuarios Asignados
-              </h3>
-
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-400">
+                  {isReadOnly ? "Usuarios asignados" : "Asignar usuario/s"}
+                </h3>
+                <input
+                  type="text"
+                  placeholder="Buscar..."
+                  value={searchUser}
+                  onChange={(e) => setSearchUser(e.target.value)}
+                  className="text-sm px-3 py-2 border border-gray-300 rounded-md dark:border-gray-500 dark:bg-gray-700 dark:text-gray-400 focus:outline-none"
+                />
+              </div>
               <div className="max-h-80 overflow-y-auto border border-gray-200 rounded-lg p-3 dark:border-gray-700">
                 {isReadOnly ? (
                   formData.users.length === 0 ? (
@@ -195,7 +200,7 @@ const RoleFormModal = ({
                     </span>
                   ) : (
                     <ul className="space-y-2">
-                      {users
+                      {filteredUsuarios
                         ?.filter((user) => formData.users.includes(user.id))
                         .map((user) => (
                           <li key={user.id} className="text-sm text-gray-900">
@@ -211,7 +216,7 @@ const RoleFormModal = ({
                     </ul>
                   )
                 ) : (
-                  users?.map((user) => (
+                  filteredUsuarios?.map((user) => (
                     <label key={user.id} className="flex items-center py-2">
                       <input
                         type="checkbox"
@@ -270,13 +275,15 @@ const RoleFormModal = ({
                           {area.charAt(0).toUpperCase() + area.slice(1)}
                         </span>
                       </label>
-                      <button
-                        type="button"
-                        onClick={() => toggleArea(area)}
-                        className="text-sm text-orange-600 underline"
-                      >
-                        {isExpanded ? "Ocultar acciones" : "Ver acciones"}
-                      </button>
+                      {area !== "all" && (
+                        <button
+                          type="button"
+                          onClick={() => toggleArea(area)}
+                          className="text-sm text-orange-600 underline"
+                        >
+                          {isExpanded ? "Ocultar acciones" : "Ver acciones"}
+                        </button>
+                      )}
                     </div>
 
                     {isExpanded && (

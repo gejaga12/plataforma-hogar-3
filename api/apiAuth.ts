@@ -17,8 +17,16 @@ export interface EditUserPayload {
   address: string;
   fechaNacimiento: string;
   roles: string[];
-  zona: string;
+  zona: {
+    id: string;
+    name: string;
+    active: boolean;
+    pais: { id: string; name: string };
+    provincia: any[];
+    Coords: any[];
+  };
   sucursalHogar: string;
+  password?: string;
 }
 
 export interface EditLaborPayload {
@@ -34,7 +42,6 @@ const adaptUser = (user: UserFromApi): UserAdapted => ({
   id: user.id,
   email: user.email ?? "",
   fullName: user.fullName ?? "",
-  password: user.password ?? "",
   telefono: Array.isArray(user.phoneNumber) ? user.phoneNumber.join(", ") : "",
   direccion: user.address ?? "",
   fechaNacimiento: formatDateInput(user.fechaNacimiento),
@@ -192,7 +199,6 @@ export class AuthService {
       // console.log(rawUsers);
 
       return rawUsers.map(adaptUser);
-      
     } catch (error: any) {
       console.error(
         "Error al obtener usuarios:",

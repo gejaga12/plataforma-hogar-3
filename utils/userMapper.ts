@@ -1,20 +1,32 @@
 import { formatDateInput } from "./formatDate";
-import { CreateUserData, UserAdapted, UserFromApi } from "./types";
+import { CreateUserData, UserAdapted, UserFromApi, Zona } from "./types";
 
-export const mapUserToCreateUserData = (user: UserAdapted): CreateUserData => ({
-  nombreCompleto: user.fullName,
-  zona: user.zona,
-  fechaNacimiento: user.fechaNacimiento,
-  mail: user.email,
-  direccion: user.direccion,
-  telefono: user.telefono,
-  roles: user.roles.map((r) => r.id),
-  puesto: user.puesto,
-  area: user.area,
-  sucursalHogar: user.sucursalHogar,
-  activo: user.activo,
-  notificaciones: user.notificaciones,
-});
+export function mapUserToCreateUserData(
+  user: UserAdapted,
+  zonas: Zona[]
+): CreateUserData {
+  const zonaEncontrada = zonas.find(
+    (z) => z.name === user.zona || z.id === user.zona
+  );
+
+  return {
+    nombreCompleto: user.fullName,
+    mail: user.email,
+    direccion: user.direccion,
+    telefono: user.telefono,
+    fechaNacimiento: user.fechaNacimiento,
+    contrasena: undefined,
+    roles: user.roles.map((r) => (typeof r === "string" ? r : r.id)),
+    notificaciones: user.notificaciones ?? { mail: true, push: true },
+    puesto: user.puesto ?? "",
+    area: user.area ?? "",
+    sucursalHogar: user.sucursalHogar ?? "",
+    activo: user.activo,
+    zona: zonaEncontrada
+      ? { id: zonaEncontrada.id, name: zonaEncontrada.name }
+      : undefined,
+  };
+}
 
 //para edicion de info laboral
 export const mapUserAdaptedToUserFromApi = (user: UserAdapted): UserFromApi => {

@@ -1,4 +1,4 @@
-import { CreateUserData, UserAdapted, UserFromApi } from "@/utils/types";
+import { CreateUserData, UserAdapted, UserFromApi, Zona } from "@/utils/types";
 import { X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { mapUserToCreateUserData } from "@/utils/userMapper";
@@ -12,7 +12,23 @@ interface UserModalProps {
   onSubmit: (data: CreateUserData) => void;
   rolesDisponibles: Record<string, string>;
   isloading: boolean;
+  zonas: Zona[];
 }
+
+const initialFormData: CreateUserData = {
+  nombreCompleto: "",
+  zona: undefined,
+  fechaNacimiento: "",
+  mail: "",
+  direccion: "",
+  telefono: "",
+  roles: [],
+  notificaciones: { mail: true, push: true },
+  puesto: "",
+  area: "",
+  sucursalHogar: "",
+  activo: true,
+};
 
 const UserModal: React.FC<UserModalProps> = ({
   isOpen,
@@ -22,42 +38,17 @@ const UserModal: React.FC<UserModalProps> = ({
   onSubmit,
   rolesDisponibles,
   isloading,
+  zonas,
 }) => {
-  const [formData, setFormData] = useState<CreateUserData>({
-    nombreCompleto: "",
-    zona: "",
-    fechaNacimiento: "",
-    mail: "",
-    direccion: "",
-    telefono: "",
-    roles: [],
-    notificaciones: { mail: true, push: true },
-    puesto: "",
-    area: "",
-    sucursalHogar: "",
-    activo: true,
-  });
+  const [formData, setFormData] = useState<CreateUserData>(initialFormData);
 
   useEffect(() => {
     if (!isOpen && mode === "create") {
-      setFormData({
-        nombreCompleto: "",
-        zona: "",
-        fechaNacimiento: "",
-        mail: "",
-        direccion: "",
-        telefono: "",
-        roles: [],
-        notificaciones: { mail: true, push: true },
-        puesto: "",
-        area: "",
-        sucursalHogar: "",
-        activo: true,
-      });
+      setFormData(initialFormData);
     } else if (user) {
-      setFormData(mapUserToCreateUserData(user));
+      setFormData(mapUserToCreateUserData(user, zonas));
     }
-  }, [user, mode, isOpen]);
+  }, [user, mode, isOpen, zonas]);
 
   const handleRoleChange = (id: string, checked: boolean) => {
     setFormData((prev) => {
@@ -98,6 +89,7 @@ const UserModal: React.FC<UserModalProps> = ({
               onSubmit(formData); // ahora lo delega al padre
             }}
             formData={formData}
+            zonas={zonas}
             setFormData={setFormData}
             isReadOnly={isReadOnly}
             onClose={onClose}

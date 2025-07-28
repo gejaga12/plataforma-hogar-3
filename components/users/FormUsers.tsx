@@ -1,8 +1,6 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { LoadingSpinner } from "../ui/loading-spinner";
-import { CreateUserData } from "@/utils/types";
-import { useQuery } from "@tanstack/react-query";
-import { ZonaService } from "@/api/apiZonas";
+import { CreateUserData, Zona } from "@/utils/types";
 import { Eye, EyeOff } from "lucide-react";
 
 interface FormUsersProps {
@@ -11,6 +9,7 @@ interface FormUsersProps {
   handleRoleChange: (id: string, checked: boolean) => void;
   onClose: () => void;
   formData: CreateUserData;
+  zonas: Zona[];
   isReadOnly: boolean;
   isloading: boolean;
   mode: "create" | "edit" | "view";
@@ -27,16 +26,30 @@ const FormUsers: React.FC<FormUsersProps> = ({
   isloading,
   mode,
   rolesDisponibles,
+  zonas,
 }) => {
   const [showInputs, setShowInputs] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  const { data: zonasResponse, isLoading: isLoadingZonas } = useQuery({
-    queryKey: ["zonas"],
-    queryFn: () => ZonaService.allInfoZona(),
-  });
-
-  const zonas = zonasResponse?.zonas ?? [];
+  useEffect(() => {
+    if (
+      mode === "edit" &&
+      zonas.length > 0 &&
+      formData.zona &&
+      !zonas.some((z) => z.id === formData.zona?.id)
+    ) {
+      const zonaEncontrada = zonas.find((z) => z.name === formData.zona?.name);
+      if (zonaEncontrada) {
+        setFormData((prev) => ({
+          ...prev,
+          zona: {
+            id: zonaEncontrada.id,
+            name: zonaEncontrada.name,
+          },
+        }));
+      }
+    }
+  }, [zonas, mode, formData.zona, setFormData]);
 
   return (
     <>
@@ -147,48 +160,62 @@ const FormUsers: React.FC<FormUsersProps> = ({
             </div>
 
             {/* Contraseña */}
-            <div className="relative">
-              <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-400">
-                Contraseña
-              </label>
-              <input
-                type={showPassword ? "text" : "password"}
-                value={formData.contrasena ?? ""}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    contrasena: e.target.value,
-                  }))
-                }
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:border-gray-700 dark:bg-gray-800"
-                disabled={isReadOnly}
-              />
-              <button
-                type="button"
-                className="absolute top-9 right-3 text-gray-500 dark:text-gray-300"
-                onClick={() => setShowPassword((prev) => !prev)}
-                tabIndex={-1}
-              >
-                {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
-              </button>
-            </div>
+            {!isReadOnly && (
+              <div className="relative">
+                <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-400">
+                  Contraseña
+                </label>
+                <input
+                  type={showPassword ? "text" : "password"}
+                  value={formData.contrasena ?? ""}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      contrasena: e.target.value,
+                    }))
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:border-gray-700 dark:bg-gray-800"
+                  disabled={isReadOnly}
+                />
+                <button
+                  type="button"
+                  className="absolute top-9 right-3 text-gray-500 dark:text-gray-300"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  tabIndex={-1}
+                >
+                  {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
+                </button>
+              </div>
+            )}
 
             {/* Zona * */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-400">
                 Zona *
               </label>
-              {isLoadingZonas ? (
+              {isloading ? (
                 <LoadingSpinner size="sm" />
+              ) : isReadOnly ? (
+                <div className="px-3 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-300">
+                  {formData.zona?.name || "Sin asignar"}
+                </div>
               ) : (
                 <select
-                  value={formData.zona ?? ""}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      zona: e.target.value,
-                    }))
-                  }
+                  value={formData.zona?.id ?? ""}
+                  onChange={(e) => {
+                    const zonaSeleccionada = zonas.find(
+                      (z) => z.id === e.target.value
+                    );
+                    if (zonaSeleccionada) {
+                      setFormData((prev) => ({
+                        ...prev,
+                        zona: {
+                          id: zonaSeleccionada.id,
+                          name: zonaSeleccionada.name,
+                        },
+                      }));
+                    }
+                  }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-800 dark:border-gray-800"
                   required={mode === "create"}
                   disabled={isReadOnly}

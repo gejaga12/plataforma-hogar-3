@@ -43,28 +43,10 @@ export function LoginForm() {
     }
   };
 
-  // const handleGoogleSignIn = async () => {
-  //   try {
-  //     setLoading(true);
-  //     await signInWithGoogle();
-  //     router.push("/dashboard");
-  //   } catch (error: any) {
-  //     setError("root", { message: error.message });
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-
   return (
     <div className="h-auto flex items-center justify-center rounded-lg bg-white/95 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8 transition-colors">
       <div className="max-w-md w-full space-y-8">
         <div>
-         <div className="mx-auto flex items-center justify-center h-12 w-1/2 bg-orange-500 rounded-lg px-2">
-            <h1 className="text-white text-xl font-bold flex items-center gap-1">
-              H O G
-              <Home className="text-white" size={21} />R
-            </h1>
-          </div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-gray-100">
             Iniciar Sesión
           </h2>

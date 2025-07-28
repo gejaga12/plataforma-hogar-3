@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useEffect, useMemo, useState } from "react";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   Plus,
   Search,
@@ -33,6 +33,7 @@ import { mapUserAdaptedToUserFromApi } from "@/utils/userMapper";
 import { formatDateInput } from "@/utils/formatDate";
 import toast from "react-hot-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { ZonaService } from "@/api/apiZonas";
 
 function UsersContent() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -53,6 +54,12 @@ function UsersContent() {
   >({});
 
   const { usuarios, loading, refetchUsuarios } = useAuth();
+  const { data: zonasResponse, isLoading: isLoadingZonas } = useQuery({
+    queryKey: ["zonas"],
+    queryFn: () => ZonaService.allInfoZona(),
+  });
+
+  const zonas = useMemo(() => zonasResponse?.zonas ?? [], [zonasResponse]);
 
   useEffect(() => {
     const obtenerRoles = async () => {
@@ -77,7 +84,7 @@ function UsersContent() {
         address: userData.direccion || "",
         puesto: userData.puesto || "tecnico",
         fechaNacimiento: formatDateInput(userData.fechaNacimiento),
-        zona: userData.zona,
+        zona: userData.zona?.id || "",
         sucursalHogar: userData.sucursalHogar || "",
         roles: userData.roles, // ← ids directamente
       };
@@ -138,14 +145,25 @@ function UsersContent() {
 
       if (!confirm.isConfirmed) return;
 
+      const zonaCompleta = zonas.find((z) => z.id === formData.zona?.id);
+      if (!zonaCompleta) throw new Error("Zona no encontrada");
+
       // Payload para datos personales
       const userPayload: EditUserPayload = {
         email: formData.mail,
         fullName: formData.nombreCompleto,
+        password: formData.contrasena ?? undefined,
         address: formData.direccion,
         fechaNacimiento: formatDateInput(formData.fechaNacimiento),
         roles: formData.roles, // solo IDs
-        zona: formData.zona,
+        zona: {
+          id: zonaCompleta.id,
+          name: zonaCompleta.name,
+          active: true,
+          pais: { id: "", name: "" },
+          provincia: [],
+          Coords: [],
+        },
         sucursalHogar: formData.sucursalHogar,
       };
 
@@ -445,6 +463,7 @@ function UsersContent() {
         user={modalState.user}
         mode={modalState.mode}
         rolesDisponibles={rolesDisponibles}
+        zonas={zonas}
         onSubmit={handleSubmit}
         isloading={
           modalState.mode === "edit"

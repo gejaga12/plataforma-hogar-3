@@ -22,7 +22,6 @@ interface AddEmployeeModalProps {
   onClose: () => void;
   onSubmit: (data: Omit<Employee, 'id'>, supervisorId: string) => void;
   isLoading?: boolean;
-  availableSupervisors: { id: string; nombre: string; puesto: string }[];
   selectedSupervisorId?: string;
 }
 
@@ -44,7 +43,7 @@ export function AddEmployeeModal({
   onClose, 
   onSubmit, 
   isLoading = false,
-  availableSupervisors,
+ 
   selectedSupervisorId
 }: AddEmployeeModalProps) {
   const [formData, setFormData] = useState<Omit<Employee, 'id'>>({
@@ -204,11 +203,7 @@ export function AddEmployeeModal({
               required
             >
               <option value="">Seleccionar supervisor</option>
-              {availableSupervisors.map(supervisor => (
-                <option key={supervisor.id} value={supervisor.id}>
-                  {supervisor.nombre} - {supervisor.puesto}
-                </option>
-              ))}
+             
             </select>
           </div>
 
