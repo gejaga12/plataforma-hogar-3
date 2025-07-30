@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { LoadingSpinner } from "../ui/loading-spinner";
 import { CreateUserData, Zona } from "@/utils/types";
 import { Eye, EyeOff } from "lucide-react";
+import { useJerarquia } from "@/hooks/useJerarquia";
 
 interface FormUsersProps {
   handleSubmit: (e: React.FormEvent) => void;
@@ -30,6 +31,8 @@ const FormUsers: React.FC<FormUsersProps> = ({
 }) => {
   const [showInputs, setShowInputs] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  const { areas, isLoading: isLoadingAreas } = useJerarquia();
 
   useEffect(() => {
     if (
@@ -146,7 +149,7 @@ const FormUsers: React.FC<FormUsersProps> = ({
               </label>
               <input
                 type="date"
-                value={formData.fechaNacimiento}
+                value={formData.fechaNacimiento ?? ""}
                 onChange={(e) =>
                   setFormData((prev) => ({
                     ...prev,
@@ -259,154 +262,178 @@ const FormUsers: React.FC<FormUsersProps> = ({
         </div>
 
         {/* Información Laboral */}
-        <button
-          type="button"
-          className="p-2 rounded-md w-auto bg-orange-500 hover:bg-orange-600 text-xs font-semibold text-white dark:hover:bg-orange-400"
-          onClick={() => setShowInputs((prev) => !prev)}
-        >
-          {showInputs
-            ? "Ocultar Informacion Laboral"
-            : "Mostrar Informacion laboral"}
-        </button>
+        {(mode === "edit" || mode === "view") && (
+          <>
+            <button
+              type="button"
+              className="p-2 rounded-md w-auto bg-orange-500 hover:bg-orange-600 text-xs font-semibold text-white dark:hover:bg-orange-400"
+              onClick={() => setShowInputs((prev) => !prev)}
+            >
+              {showInputs
+                ? "Ocultar Informacion Laboral"
+                : "Mostrar Informacion laboral"}
+            </button>
 
-        {showInputs && (
-          <div className="px-2 py-3 bg-gray-100 dark:bg-gray-700 rounded-lg">
-            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-400 mb-4">
-              Datos del Usuario
-            </h3>
-            <div className="grid grid-cols-2 gap-6 px-1">
-              {/* Puesto */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-400">
-                  Puesto *
-                </label>
-                <input
-                  type="text"
-                  value={formData.puesto ?? ""}
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, puesto: e.target.value }))
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-600 dark:border-gray-800"
-                  required={mode === "create"}
-                  disabled={isReadOnly}
-                />
-              </div>
+            {showInputs && (
+              <div className="px-2 py-3 bg-gray-100 dark:bg-gray-700 rounded-lg">
+                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-400 mb-4">
+                  Datos del Usuario
+                </h3>
+                <div className="grid grid-cols-2 gap-6 px-1">
+                  {/* Puesto */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-400">
+                      Puesto *
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.puesto ?? ""}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          puesto: e.target.value,
+                        }))
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-600 dark:border-gray-800"
+                      required={mode === "edit"}
+                      disabled={isReadOnly}
+                    />
+                  </div>
 
-              {/* Área */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-400">
-                  Área *
-                </label>
-                <select
-                  value={formData.area ?? ""}
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, area: e.target.value }))
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-600 dark:border-gray-800"
-                  required={mode === "create"}
-                  disabled={isReadOnly}
-                >
-                  <option value="">Seleccionar área</option>
-                  <option value="IT">IT</option>
-                  <option value="Operaciones">Operaciones</option>
-                  <option value="Mantenimiento">Mantenimiento</option>
-                  <option value="Administración">Administración</option>
-                  <option value="Recursos Humanos">Recursos Humanos</option>
-                </select>
-              </div>
+                  {/* Área */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-400">
+                      Área *
+                    </label>
+                    {isLoadingAreas ? (
+                      <LoadingSpinner size="sm" />
+                    ) : isReadOnly ? (
+                      <div className="px-3 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-300">
+                        {formData.area || "Sin asignar"}
+                      </div>
+                    ) : (
+                      <select
+                        value={formData.area ?? ""}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            area: e.target.value,
+                          }))
+                        }
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-600 dark:border-gray-800"
+                        required={mode === "edit"}
+                        disabled={isReadOnly || (areas?.length ?? 0) === 0}
+                      >
+                        <option value="">
+                          {(areas?.length ?? 0) === 0
+                            ? "No hay areas disponibles"
+                            : "Seleccionar area"}
+                        </option>
+                        {areas?.map((area) => (
+                          <option value={area} key={area}>
+                            {area}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
 
-              {/* Fecha de Ingreso */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-400">
-                  Fecha de Ingreso *
-                </label>
-                <input
-                  type="date"
-                  value={formData.fechaIngreso}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      fechaIngreso: e.target.value,
-                    }))
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-600 dark:border-gray-800"
-                  required={mode === "create"}
-                  disabled={isReadOnly}
-                />
-              </div>
+                  {/* Fecha de Ingreso */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-400">
+                      Fecha de Ingreso *
+                    </label>
+                    <input
+                      type="date"
+                      value={formData.fechaIngreso ?? ""}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          fechaIngreso: e.target.value,
+                        }))
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-600 dark:border-gray-800"
+                      required={mode === "edit"}
+                      disabled={isReadOnly}
+                    />
+                  </div>
 
-              {/* Tipo de Contrato */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-400">
-                  Tipo de Contrato *
-                </label>
-                <select
-                  value={formData.tipoContrato}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      tipoContrato: e.target.value as
-                        | "Relacion de Dependencia"
-                        | "Freelance"
-                        | "Contratista",
-                    }))
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-600 dark:border-gray-800"
-                  required={mode === "create"}
-                  disabled={isReadOnly}
-                >
-                  <option value="Relación de Dependencia">
-                    Relación de Dependencia
-                  </option>
-                  <option value="Freelance">Freelance</option>
-                  <option value="Contratista">Contratista</option>
-                </select>
-              </div>
+                  {/* Tipo de Contrato */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-400">
+                      Tipo de Contrato *
+                    </label>
+                    <select
+                      value={formData.tipoContrato}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          tipoContrato: e.target.value as
+                            | "Relacion de Dependencia"
+                            | "Freelance"
+                            | "Contratista",
+                        }))
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-600 dark:border-gray-800"
+                      required={mode === "edit"}
+                      disabled={isReadOnly}
+                    >
+                      <option value="Relación de Dependencia">
+                        Relación de Dependencia
+                      </option>
+                      <option value="Freelance">Freelance</option>
+                      <option value="Contratista">Contratista</option>
+                    </select>
+                  </div>
 
-              {/* Estado Contractual */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-400">
-                  Estado Contractual *
-                </label>
-                <select
-                  value={formData.relacionLaboral}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      relacionLaboral: e.target.value as
-                        | "Periodo de Prueba"
-                        | "Contratado",
-                    }))
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-600 dark:border-gray-800"
-                  required={mode === "create"}
-                  disabled={isReadOnly}
-                >
-                  <option value="Periodo de Prueba">Periodo de Prueba</option>
-                  <option value="Contratado">Contratado</option>
-                </select>
-              </div>
+                  {/* Estado Contractual */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-400">
+                      Estado Contractual *
+                    </label>
+                    <select
+                      value={formData.relacionLaboral}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          relacionLaboral: e.target.value as
+                            | "Periodo de Prueba"
+                            | "Contratado",
+                        }))
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-600 dark:border-gray-800"
+                      required={mode === "edit"}
+                      disabled={isReadOnly}
+                    >
+                      <option value="Periodo de Prueba">
+                        Periodo de Prueba
+                      </option>
+                      <option value="Contratado">Contratado</option>
+                    </select>
+                  </div>
 
-              {/* Certificaciones / Título */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-400">
-                  Certificaciones/Título
-                </label>
-                <input
-                  type="text"
-                  value={formData.certificacionesTitulo}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      certificacionesTitulo: e.target.value,
-                    }))
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-600 dark:border-gray-800"
-                  disabled={isReadOnly}
-                />
+                  {/* Certificaciones / Título */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-400">
+                      Certificaciones/Título
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.certificacionesTitulo}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          certificacionesTitulo: e.target.value,
+                        }))
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-600 dark:border-gray-800"
+                      disabled={isReadOnly}
+                    />
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
+            )}
+          </>
         )}
 
         {/* Roles y Configuraciones */}

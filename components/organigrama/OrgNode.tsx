@@ -6,15 +6,15 @@ import { UserPlus } from "lucide-react";
 interface OrgNodeProps {
   node: JerarquiaNodo;
   onNodeClick: (node: JerarquiaNodo) => void;
-  onAddEmployee: (supervisorId: string) => void;
+  onOpenCrearModal: (parentId: string) => void;
   level?: number;
 }
 
 const OrgNode = ({
   node,
   onNodeClick,
-  onAddEmployee,
   level = 0,
+  onOpenCrearModal,
 }: OrgNodeProps) => {
   const initial = node.fullName?.charAt(0)?.toUpperCase() || "?";
   const puesto = node.puesto?.join(" / ") || node.cargo || "Sin puesto";
@@ -40,7 +40,10 @@ const OrgNode = ({
               <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
                 {node.fullName}
               </p>
-              <p className="text-xs text-gray-600 dark:text-gray-400 truncate">
+              <p 
+              className="text-xs text-gray-600 dark:text-gray-400 truncate"
+              title={puesto}
+              >
                 {puesto}
               </p>
             </div>
@@ -64,7 +67,7 @@ const OrgNode = ({
         <button
           onClick={(e) => {
             e.stopPropagation();
-            onAddEmployee(node.id);
+            onOpenCrearModal(node.id); // <- llama al padre
           }}
           className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 bg-green-500 hover:bg-green-600 text-white rounded-full p-1 shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
           title="Agregar subordinado"
@@ -91,7 +94,7 @@ const OrgNode = ({
                 <OrgNode
                   node={child}
                   onNodeClick={onNodeClick}
-                  onAddEmployee={onAddEmployee}
+                  onOpenCrearModal={onOpenCrearModal}
                   level={level + 1}
                 />
               </div>

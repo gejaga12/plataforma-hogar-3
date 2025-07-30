@@ -62,12 +62,10 @@ export default function RootLayout({
       <body className={inter.className}>
         <ThemeProvider defaultTheme="system" storageKey="hogarapp-ui-theme">
           <AuthProvider>
-            <JerarquiaProvider>
-              <QueryClientProvider client={queryClient}>
-                {children}
-                <Toaster position="top-right" />
-              </QueryClientProvider>
-            </JerarquiaProvider>
+            <QueryClientProvider client={queryClient}>
+              {children}
+              <Toaster position="top-right" />
+            </QueryClientProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>

@@ -8,6 +8,10 @@ export interface crearJerarquiaData {
   area: string;
 }
 
+export interface CrearJerarquiaConUsuario extends crearJerarquiaData {
+  usuarioId?: string;
+}
+
 export interface JerarquiaNodo {
   user: boolean;
   id: string;
@@ -28,11 +32,12 @@ export interface JerarquiaCompletaResponse {
 }
 
 export class JerarquiaService {
+  
   static async crearJerarquia(data: crearJerarquiaData): Promise<any> {
     try {
       const token = getAuthToken();
 
-      const response = await axios.post(`${BASE_URL}/jeararquia`, data, {
+      const response = await axios.post(`${BASE_URL}/jerarquia`, data, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
@@ -68,10 +73,10 @@ export class JerarquiaService {
 
   static async asociarUsuarioANodo(
     orgid: string,
-    userid: number
+    userid: string
   ): Promise<any> {
     try {
-      const token = localStorage.getItem("token");
+      const token = getAuthToken();;
 
       const response = await axios.post(
         `${BASE_URL}/jerarquia/${orgid}/${userid}`,
