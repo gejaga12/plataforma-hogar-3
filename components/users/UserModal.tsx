@@ -1,15 +1,16 @@
 import { CreateUserData, UserAdapted, UserFromApi, Zona } from "@/utils/types";
 import { X } from "lucide-react";
 import { useEffect, useState } from "react";
-import { mapUserToCreateUserData } from "@/utils/userMapper";
 import FormUsers from "./FormUsers";
+import { EstadoContractual, FormDataLabor } from "./FormDatosLaborales";
+import { formatDateInput } from "@/utils/formatDate";
 
 interface UserModalProps {
   isOpen: boolean;
   onClose: () => void;
   user?: UserAdapted;
   mode: "create" | "edit" | "view";
-  onSubmit: (data: CreateUserData) => void;
+  onSubmit: (payload: { user: CreateUserData; labor?: FormDataLabor }) => void;
   rolesDisponibles: Record<string, string>;
   isloading: boolean;
   zonas: Zona[];
@@ -25,9 +26,23 @@ const initialFormData: CreateUserData = {
   roles: [],
   notificaciones: { mail: true, push: true },
   puesto: "",
-  area: "",
   sucursalHogar: "",
   activo: true,
+};
+
+const initialLabor: FormDataLabor = {
+  tipoDeContrato: "Relacion de Dependencia",
+  relacionLaboral: "Periodo de Prueba",
+  fechaIngreso: "",
+  fechaAlta: "",
+  cuil: "",
+  categoryArca: "",
+  antiguedad: "",
+  horasTrabajo: "",
+  sueldo: "",
+  certificacionesTitulo: "",
+  puestos: [],
+  area: "",
 };
 
 const UserModal: React.FC<UserModalProps> = ({
@@ -41,14 +56,65 @@ const UserModal: React.FC<UserModalProps> = ({
   zonas,
 }) => {
   const [formData, setFormData] = useState<CreateUserData>(initialFormData);
+  const [formDataLabor, setFormDataLabor] =
+    useState<FormDataLabor>(initialLabor);
 
   useEffect(() => {
-    if (!isOpen && mode === "create") {
+    if (!isOpen) return;
+
+    if (mode === "create") {
       setFormData(initialFormData);
-    } else if (user) {
-      setFormData(mapUserToCreateUserData(user, zonas));
+      setFormDataLabor(initialLabor);
+      return;
     }
-  }, [user, mode, isOpen, zonas]);
+
+    if (user) {
+      // intentar encontrar la zona por nombre (en tu Adapted guardás el name)
+      const zonaObj = zonas?.find((z) => z.name === user.zona.name);
+
+      // roles: en UserAdapted pueden venir como string o {id, name}
+      const roleIds = (user.roles || []).map((r: any) =>
+        typeof r === "string" ? r : r.id
+      );
+
+      setFormData({
+        nombreCompleto: user.fullName || "",
+        zona: zonaObj, // <- objeto Zona o undefined
+        fechaNacimiento: user.fechaNacimiento || "", // asumís formato "yyyy-MM-dd" para input date
+        mail: user.email || "",
+        direccion: user.direccion || "",
+        telefono: user.telefono || "",
+        roles: roleIds, // <- ids de los roles
+        notificaciones: user.notificaciones || { mail: true, push: true },
+        sucursalHogar: user.sucursalHogar || "",
+        activo: user.activo ?? true,
+      });
+
+      setFormDataLabor((prev) => {
+        const laborDeUser = user.labor;
+
+        const laborData: FormDataLabor = {
+          cuil: laborDeUser?.cuil ? String(laborDeUser.cuil).replace(/\D/g, "").slice(0, 11) : "",
+          fechaIngreso: formatDateInput(laborDeUser?.fechaIngreso) || "",
+          fechaAlta: formatDateInput(laborDeUser?.fechaAlta) || "",
+          tipoDeContrato: laborDeUser?.tipoDeContrato || "Relación de Dependencia",
+          relacionLaboral: laborDeUser?.relacionLaboral as EstadoContractual,
+          categoryArca: laborDeUser?.categoryArca || "",
+          antiguedad: laborDeUser?.antiguedad || "",
+          horasTrabajo: laborDeUser?.horasTrabajo || "",
+          sueldo: laborDeUser?.sueldo != null ? String(laborDeUser.sueldo) : "",
+          certificacionesTitulo: user.certificacionesTitulo || "",
+          puestos:
+            Array.isArray(laborDeUser?.puestos) && laborDeUser!.puestos[0]
+              ? laborDeUser!.puestos
+              : user.labor?.puestos || [""],
+          area: user.area || "",
+        };
+        console.log('labor:', laborData);
+        return laborData
+      });
+    }
+  }, [isOpen, mode, user, zonas]);
 
   const handleRoleChange = (id: string, checked: boolean) => {
     setFormData((prev) => {
@@ -86,7 +152,7 @@ const UserModal: React.FC<UserModalProps> = ({
           <FormUsers
             handleSubmit={(e) => {
               e.preventDefault();
-              onSubmit(formData); // ahora lo delega al padre
+              onSubmit({ user: formData, labor: formDataLabor }); // ahora lo delega al padre
             }}
             formData={formData}
             zonas={zonas}
@@ -97,6 +163,8 @@ const UserModal: React.FC<UserModalProps> = ({
             mode={mode}
             rolesDisponibles={rolesDisponibles}
             handleRoleChange={handleRoleChange}
+            formDataLabor={formDataLabor}
+            setFormDataLabor={setFormDataLabor}
           />
         </div>
       </div>

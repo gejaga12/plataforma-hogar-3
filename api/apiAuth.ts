@@ -17,54 +17,78 @@ export interface EditUserPayload {
   address: string;
   fechaNacimiento: string;
   roles: string[];
-  zona: {
-    id: string;
-    name: string;
-    active: boolean;
-    pais: { id: string; name: string };
-    provincia: any[];
-    Coords: any[];
-  };
+  zona: string;
   sucursalHogar: string;
   password?: string;
 }
 
-export interface EditLaborPayload {
-  userId: string;
-  tipoDeContrato: string;
-  relacionLaboral: "Periodo de Prueba" | "Contratado";
-  fechaAlta: string;
-  puestos?: string[];
-}
-
 //funcion para adaptar user traido del back
-const adaptUser = (user: UserFromApi): UserAdapted => ({
-  id: user.id,
-  email: user.email ?? "",
-  fullName: user.fullName ?? "",
-  telefono: Array.isArray(user.phoneNumber) ? user.phoneNumber.join(", ") : "",
-  direccion: user.address ?? "",
-  fechaNacimiento: formatDateInput(user.fechaNacimiento),
-  fechaIngreso: user.labor?.fechaIngreso
-    ? formatDateInput(user.labor.fechaIngreso)
-    : "",
-  createAt: formatDateInput(user.createdAt),
-  puesto: user.labor?.puestos?.[0] ?? "",
-  tipoContrato: user.labor?.tipoDeContrato ?? "Relación de Dependencia",
-  relacionLaboral: user.labor?.relacionLaboral ?? "Periodo de Prueba",
-  zona: user.zona?.name ?? "",
-  sucursalHogar: user.sucursalHogar?.name ?? "",
-  area: user.jerarquia?.area ?? "",
-  certificacionesTitulo: "",
-  activo: user.isActive ?? true,
-  photoURL: user.photoURL ?? "",
-  notificaciones: {
-    mail: false,
-    push: false,
-  },
-  roles: user.roles ?? [],
-  laborId: user.labor?.id ?? "",
-});
+export const adaptUser = (user: UserFromApi): UserAdapted => {
+  const labor = user.labor ?? null;
+
+  // Normalizo array de puestos laborales (si viene en labor.puestos)
+  const puestosList: string[] = Array.isArray(labor?.puestos)
+    ? (labor!.puestos as any[]).map((p) => p.name).filter(Boolean)
+    : [];
+
+  // Si no hay puestos en labor, uso el "puesto" suelto del usuario si existe
+  if (puestosList.length === 0 && user.puesto) {
+    puestosList.push(user.puesto);
+  }
+
+  const relacionLaboral = labor?.relacionLaboral ?? "Periodo de Prueba";
+
+  return {
+    id: user.id,
+    email: user.email ?? "",
+    fullName: user.fullName ?? "",
+    telefono: Array.isArray(user.phoneNumber)
+      ? user.phoneNumber.join(", ")
+      : "",
+    direccion: user.address ?? "",
+    fechaNacimiento: formatDateInput(user.fechaNacimiento),
+    createAt: formatDateInput(user.createdAt),
+    relacionLaboral,
+    zona: {
+      name:
+        user.zona && (user as any).zona?.name
+          ? (user as any).zona.name
+          : // fallback si en algún endpoint es string (p.ej. "NEA")
+            (typeof (user as any).zona === "string"
+              ? (user as any).zona
+              : "") ?? "",
+      id: (user as any).zona?.id ?? "",
+    },
+    sucursalHogar: (user as any).sucursalHogar?.name ?? "",
+    area: user.jerarquia?.area ?? "",
+    certificacionesTitulo: "", // si luego el back lo provee, mapear aquí
+    activo: user.isActive ?? true,
+    photoURL: user.photoURL ?? "",
+    notificaciones: { mail: false, push: false },
+    roles: user.roles ?? [],
+    // bloque laboral completo
+    labor: labor
+      ? {
+          id: labor.id,
+          cuil:
+            typeof labor.cuil === "number"
+              ? String(labor.cuil).padStart(11, "0")
+              : undefined,
+          fechaAlta: labor.fechaAlta ? formatDateInput(labor.fechaAlta) : "",
+          fechaIngreso: labor.fechaIngreso
+            ? formatDateInput(labor.fechaIngreso)
+            : "",
+          tipoDeContrato: labor.tipoDeContrato,
+          relacionLaboral,
+          categoryArca: labor.categoryArca ?? undefined,
+          antiguedad: labor.antiguedad ?? undefined,
+          horasTrabajo: labor.horasTrabajo ?? undefined,
+          sueldo: typeof labor.sueldo === "number" ? labor.sueldo : undefined,
+          puestos: puestosList,
+        }
+      : undefined,
+  };
+};
 
 export class AuthService {
   private static currentUser: UserLoginData | null = null;
@@ -124,6 +148,7 @@ export class AuthService {
     zona: string;
     sucursalHogar: string;
     fechaNacimiento: string;
+    jerarquia?: string;
   }): Promise<UserFromApi> {
     const token = getAuthToken();
 
@@ -229,29 +254,6 @@ export class AuthService {
     } catch (error: any) {
       const message =
         error.response?.data.message || "Error al editar el usuario";
-      throw new Error(message);
-    }
-  }
-
-  //PATCH para info de labor
-  static async editLabor(
-    id: string,
-    data: EditLaborPayload
-  ): Promise<{ did: boolean }> {
-    const token = getAuthToken();
-
-    try {
-      const response = await axios.put(`${BASE_URL}/labor/${id}`, data, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-
-      return response.data;
-    } catch (err: any) {
-      const message =
-        err.response?.data?.message || "Error al actualizar datos laborales";
       throw new Error(message);
     }
   }

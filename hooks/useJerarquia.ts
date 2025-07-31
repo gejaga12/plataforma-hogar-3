@@ -13,11 +13,11 @@ export const useJerarquia = () => {
     staleTime: 1000 * 60 * 5, // 5 minutos
   });
 
-  useEffect(() => {
-    if (data) {
-      console.log("🌳 Datos cargados:", data.areas, data.tree);
-    }
-  }, [data]);
+  // useEffect(() => {
+  //   if (data) {
+  //     console.log("🌳 Datos cargados:", data.areas, data.tree);
+  //   }
+  // }, [data]);
 
   return {
     jerarquia: data?.tree || [],

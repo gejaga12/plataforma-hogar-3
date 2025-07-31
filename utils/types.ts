@@ -1,3 +1,24 @@
+//User crudo del back
+export interface UserFromApi {
+  id: string;
+  email: string;
+  fullName: string;
+  photoURL?: string;
+  isActive?: boolean;
+  fechaNacimiento: Date | string;
+  address?: string;
+  createdAt?: Date | string;
+  deletedAt?: null;
+  jerarquia?: Jerarquia | null;
+  sucursalHogar?: SucursalHogar | null;
+  roles: Role[];
+  phoneNumber?: any[];
+  zona?: Zona | null;
+  labor?: Labor | null;
+  puesto?: string;
+  area?: string;
+}
+
 export interface CreateUserData {
   nombreCompleto: string;
   contrasena?: string;
@@ -15,29 +36,35 @@ export interface CreateUserData {
     push: boolean;
   };
   puesto?: string;
-  area: string;
   sucursalHogar: string; // sucursal.name
   activo: boolean;
 }
 
-export interface UserFromApi {
+//usuario adaptado
+export interface UserAdapted {
   id: string;
   email: string;
   fullName: string;
-  photoURL?: string;
-  isActive?: boolean;
-  fechaNacimiento: Date;
-  address?: string;
-  createdAt?: Date;
-  deletedAt?: null;
-  jerarquia?: Jerarquia | null;
-  sucursalHogar?: SucursalHogar | null;
   roles: Role[];
-  phoneNumber?: any[];
-  zona?: Zona | null;
-  labor?: Labor | null;
-  puesto?: string;
-  area?: string;
+  zona: {
+    name: string;
+    id: string;
+  };
+  area: string;
+  fechaNacimiento: string;
+  createAt: string;
+  direccion: string;
+  telefono: string;
+  relacionLaboral: string;
+  photoURL: string;
+  certificacionesTitulo: string;
+  sucursalHogar: string;
+  activo: boolean;
+  notificaciones: {
+    mail: boolean;
+    push: boolean;
+  };
+  labor?: Labor;
 }
 
 export interface Jerarquia {
@@ -48,15 +75,15 @@ export interface Jerarquia {
 
 export interface Labor {
   id: string;
-  cuil: null;
-  fechaAlta: null;
-  categoryArca: null;
-  antiguedad: null;
+  cuil?: string;
+  fechaAlta?: string;
+  categoryArca?: string;
+  antiguedad?: string;
   tipoDeContrato: string;
-  horasTrabajo: null;
-  sueldo: null;
-  relacionLaboral: "Periodo de Prueba" | "Contratado";
-  fechaIngreso: Date;
+  horasTrabajo?: string;
+  sueldo?: number;
+  relacionLaboral: string;
+  fechaIngreso: Date | string;
   puestos?: string[];
 }
 
@@ -81,41 +108,12 @@ export interface GeoGeneric {
 }
 
 export interface Pais extends GeoGeneric {}
-
 export interface Provincia extends GeoGeneric {}
-
 export interface Zona extends GeoGeneric {
   Coords?: string[];
   pais?: Pais;
   provincia?: Provincia[];
   active: boolean;
-}
-
-//para context
-export interface UserAdapted {
-  id: string;
-  email: string;
-  fullName: string;
-  roles: Role[];
-  zona: string;
-  area: string;
-  puesto: string;
-  fechaIngreso: string;
-  fechaNacimiento: string;
-  createAt: string;
-  direccion: string;
-  telefono: string;
-  relacionLaboral: string;
-  tipoContrato: string;
-  photoURL: string;
-  certificacionesTitulo: string;
-  sucursalHogar: string;
-  activo: boolean;
-  notificaciones: {
-    mail: boolean;
-    push: boolean;
-  };
-  laborId?: string;
 }
 
 export interface Order {
@@ -306,27 +304,4 @@ export interface AgendaEvent {
   relatedOrder?: string;
   recurrence: "daily" | "weekly" | "monthly" | "quarterly" | "yearly" | null;
   color: string;
-}
-
-// Interfaces para el organigrama
-export interface Employee {
-  id: string;
-  nombre: string;
-  email: string;
-  telefono: string;
-  puesto: string;
-  area: string;
-  supervisor?: string;
-  fechaIngreso: string;
-  activo: boolean;
-  avatar?: string;
-  children?: Employee[];
-}
-
-export interface VacantPosition {
-  id: string;
-  puesto: string;
-  area: string;
-  supervisor?: string;
-  isVacant: true;
 }

@@ -22,18 +22,23 @@ import {
 } from "lucide-react";
 import { ProtectedLayout } from "@/components/layout/protected-layout";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { CreateUserData, UserAdapted, UserFromApi } from "@/utils/types";
+import { CreateUserData, UserAdapted } from "@/utils/types";
 import { cn } from "@/utils/cn";
 import UserModal from "@/components/users/UserModal";
 import DeleteUSerModal from "@/components/users/DeleteUserModal";
 import { AuthService, EditUserPayload } from "@/api/apiAuth";
 import { ApiRoles } from "@/api/apiRoles";
 import Swal from "sweetalert2";
-import { mapUserAdaptedToUserFromApi } from "@/utils/userMapper";
 import { formatDateInput } from "@/utils/formatDate";
 import toast from "react-hot-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { ZonaService } from "@/api/apiZonas";
+import { CrearLaborDTO, LaborService } from "@/api/apiLabor";
+import { FormDataLabor } from "@/components/users/FormDatosLaborales";
+import {
+  buildLaborUpdatePayload,
+  mapLaborFormToDTO,
+} from "@/utils/mappersUsers";
 
 function UsersContent() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -75,27 +80,62 @@ function UsersContent() {
   }, []);
 
   const createMutation = useMutation({
-    mutationFn: async (userData: CreateUserData) => {
-      const mappedPayload = {
-        fullName: userData.nombreCompleto,
-        email: userData.mail,
-        password: userData.contrasena || "Abc123",
-        phoneNumber: userData.telefono || "",
-        address: userData.direccion || "",
-        puesto: userData.puesto || "tecnico",
-        fechaNacimiento: formatDateInput(userData.fechaNacimiento),
-        zona: userData.zona?.id || "",
-        sucursalHogar: userData.sucursalHogar || "",
-        roles: userData.roles, // ← ids directamente
+    mutationFn: async (payload: {
+      user: CreateUserData;
+      labor?: FormDataLabor;
+    }) => {
+      const { user, labor } = payload;
+
+      const userPayload = {
+        fullName: user.nombreCompleto,
+        email: user.mail,
+        password: user.contrasena || "Abc123",
+        phoneNumber: user.telefono || "",
+        address: user.direccion || "",
+        puesto: user.puesto || "tecnico",
+        fechaNacimiento: formatDateInput(user.fechaNacimiento),
+        zona: user.zona?.id || "",
+        sucursalHogar: user.sucursalHogar || "",
+        roles: user.roles,
       };
 
-      console.log("📤 Enviando usuario al backend:", mappedPayload);
+      console.log("📤 Payload de usuario:", userPayload);
 
-      return await AuthService.registerUser(mappedPayload);
+      const newUser = await AuthService.registerUser(userPayload);
+
+      // 2) Crear labor (si se completó)
+      if (
+        labor &&
+        labor.fechaIngreso &&
+        labor.tipoDeContrato &&
+        labor.relacionLaboral
+      ) {
+        const laborDTO = mapLaborFormToDTO(labor, newUser.id);
+
+        console.log("📤 Payload de labor:", laborDTO);
+
+        const laborResponse = await LaborService.crearLabor(laborDTO);
+
+        console.log("✅ Respuesta del backend Labor:", laborResponse);
+      }
+
+      return newUser;
     },
     onSuccess: async () => {
       await refetchUsuarios();
       setModalState({ isOpen: false, mode: "create" });
+      Swal.fire({
+        icon: "success",
+        title: "Usuario creado",
+        text: "El usuario fue registrado correctamente.",
+      });
+    },
+    onError: (e: any) => {
+      Swal.fire({
+        icon: "error",
+        title: "Error al crear",
+        text: e?.message || "No se pudo registrar el usuario.",
+      });
     },
   });
 
@@ -129,10 +169,13 @@ function UsersContent() {
     mutationFn: async ({
       id,
       formData,
+      originalData,
+      laborForm,
     }: {
       id: string;
       formData: CreateUserData;
-      originalData: UserFromApi;
+      originalData: UserAdapted;
+      laborForm?: FormDataLabor;
     }) => {
       const confirm = await Swal.fire({
         title: "¿Confirmar cambios?",
@@ -156,20 +199,32 @@ function UsersContent() {
         address: formData.direccion,
         fechaNacimiento: formatDateInput(formData.fechaNacimiento),
         roles: formData.roles, // solo IDs
-        zona: {
-          id: zonaCompleta.id,
-          name: zonaCompleta.name,
-          active: true,
-          pais: { id: "", name: "" },
-          provincia: [],
-          Coords: [],
-        },
+        zona: zonaCompleta.id,
         sucursalHogar: formData.sucursalHogar,
       };
 
       console.log("Payload usuario:", userPayload);
-
       await AuthService.editUsers(id, userPayload);
+
+      // ---- Actualizar labor si corresponde ----
+      const laborId = originalData.labor?.id;
+      if (laborForm && laborId) {
+        const changes = buildLaborUpdatePayload(laborForm, originalData.labor);
+
+        // Si no hay cambios, evitamos la llamada
+        if (Object.keys(changes).length > 0) {
+          console.log("Payload labor (EDIT, solo cambios):", changes);
+          await LaborService.actualizarLabor(laborId, changes);
+        } else {
+          console.log(
+            "No hay cambios en datos laborales, no se actualiza labor."
+          );
+        }
+      } else {
+        console.log(
+          "No se envía actualización de labor: falta laborForm o laborId."
+        );
+      }
     },
 
     onSuccess: async () => {
@@ -183,44 +238,27 @@ function UsersContent() {
     },
   });
 
-  const handleSubmit = async (formData: CreateUserData) => {
-    const fechaNacimientoDate = new Date(formData.fechaNacimiento);
+  const handleSubmit = async (payload: {
+    user: CreateUserData;
+    labor?: FormDataLabor;
+  }) => {
+    const { user, labor } = payload;
 
-    if (isNaN(fechaNacimientoDate.getTime())) {
-      Swal.fire({
-        icon: "error",
-        title: "Fechas inválidas",
-        text: "Verificá que las fechas ingresadas sean correctas.",
-      });
+    if (modalState.mode === "create") {
+      // delega toda la lógica a createMutation
+      createMutation.mutate({ user, labor });
       return;
     }
 
     if (modalState.mode === "edit" && modalState.user?.id) {
-      const originalData = mapUserAdaptedToUserFromApi(modalState.user);
+      // delega toda la lógica a editMutation
       editMutation.mutate({
         id: modalState.user.id,
-        formData,
-        originalData,
+        formData: user,
+        originalData: modalState.user,
+        laborForm: labor,
       });
-    }
-    if (modalState.mode === "create") {
-      createMutation.mutate(formData, {
-        onSuccess: () => {
-          Swal.fire({
-            icon: "success",
-            title: "Usuario creado",
-            text: "El usuario fue registrado correctamente.",
-          });
-          setModalState({ isOpen: false, mode: "create" });
-        },
-        onError: () => {
-          Swal.fire({
-            icon: "error",
-            title: "Error al crear",
-            text: "No se pudo registrar el usuario. Reintentá más tarde.",
-          });
-        },
-      });
+      return;
     }
   };
 
@@ -230,7 +268,9 @@ function UsersContent() {
       const matchesSearch =
         user.fullName?.toLowerCase().includes(search) ||
         user.email?.toLowerCase().includes(search) || // ← protegido con ?
-        user.puesto?.toLowerCase().includes(search);
+        user.labor?.puestos?.some((puesto) =>
+          puesto.toLowerCase().includes(search)
+        );
 
       const matchesStatus =
         !statusFilter ||
@@ -374,12 +414,12 @@ function UsersContent() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900 dark:text-gray-400">
-                      {user.puesto}
+                      {user.labor?.puestos}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900 dark:text-gray-400">
-                      {user.zona}
+                      {user.zona.name}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
