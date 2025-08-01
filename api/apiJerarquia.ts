@@ -16,7 +16,7 @@ export interface JerarquiaNodo {
   user: boolean;
   id: string;
   cargo: string;
-  userid?: string;
+  userid?: number;
   fullName: string;
   email?: string;
   phone?: string;

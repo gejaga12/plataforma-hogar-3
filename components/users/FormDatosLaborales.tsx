@@ -1,42 +1,40 @@
 import React from "react";
-import { LoadingSpinner } from "../ui/loading-spinner";
+import { UserAdapted } from "@/utils/types";
 
 interface FormDatosLaboralesProps {
   formDataLabor: FormDataLabor;
   setFormDataLabor: React.Dispatch<React.SetStateAction<FormDataLabor>>;
   isReadOnly: boolean;
   mode: "create" | "edit" | "view";
-  areas: any[]; // el tipo real que uses
-  isLoadingAreas: boolean;
+  user:UserAdapted | undefined;
 }
 
 export type EstadoContractual = "Periodo de Prueba" | "Contratado";
 
 export interface FormDataLabor {
-  cuil?: string; 
-  fechaIngreso: string; 
-  fechaAlta?: string; 
-  categoryArca?: string; 
+  cuil?: number;
+  fechaIngreso: string;
+  fechaAlta?: string;
+  categoryArca?: string;
   antiguedad?: string;
-  tipoDeContrato: string; 
+  tipoDeContrato: string;
   horasTrabajo?: string;
-  sueldo?: string; 
-  relacionLaboral: EstadoContractual; 
-  certificacionesTitulo?: string; 
+  sueldo?: string;
+  relacionLaboral: EstadoContractual;
+  certificacionesTitulo?: string;
   area?: string;
   puestos?: string[];
+  jerarquiaId?: string;
 }
 
 const FormDatosLaborales: React.FC<FormDatosLaboralesProps> = ({
   formDataLabor,
   setFormDataLabor,
   isReadOnly,
-  mode,
-  areas,
-  isLoadingAreas,
+  user,
 }) => {
-  const isCreate = mode === "create";
 
+  
   return (
     <div className="px-2 py-3 bg-gray-100 dark:bg-gray-700 rounded-lg">
       <h3 className="text-lg font-medium text-gray-900 dark:text-gray-400 mb-4">
@@ -50,13 +48,15 @@ const FormDatosLaborales: React.FC<FormDatosLaboralesProps> = ({
             CUIL *
           </label>
           <input
-            type="text"
+            type="number"
             maxLength={11}
             placeholder="cuil (11 dígitos)"
             value={formDataLabor.cuil ?? ""}
             onChange={(e) => {
-              const digits = e.target.value.replace(/\D/g, "").slice(0, 11);
-              setFormDataLabor((prev) => ({ ...prev, cuil: digits }));
+              setFormDataLabor((prev) => ({
+                ...prev,
+                cuil: Number(e.target.value),
+              }));
             }}
             onKeyDown={(e) => {
               // evita teclas no numéricas comunes
@@ -64,7 +64,6 @@ const FormDatosLaborales: React.FC<FormDatosLaboralesProps> = ({
               if (invalid.includes(e.key)) e.preventDefault();
             }}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-600 dark:border-gray-800"
-            required={isCreate}
             disabled={isReadOnly}
           />
           <p className="text-xs text-gray-500 mt-1">11 dígitos sin guiones.</p>
@@ -77,7 +76,7 @@ const FormDatosLaborales: React.FC<FormDatosLaboralesProps> = ({
           </label>
           <input
             type="text"
-            value={formDataLabor.puestos ?? ""}
+            value={formDataLabor.puestos?.[0] ?? ""}
             onChange={(e) =>
               setFormDataLabor((prev) => ({
                 ...prev,
@@ -91,40 +90,15 @@ const FormDatosLaborales: React.FC<FormDatosLaboralesProps> = ({
 
         {/* Área */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-400">
-            Área *
+          <label className="block text-sm font-medium text-gray-700">
+            Área
           </label>
-          {isLoadingAreas ? (
-            <LoadingSpinner size="sm" />
-          ) : isReadOnly ? (
-            <div className="px-3 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-300">
-              {areas || "Sin asignar"}
-            </div>
-          ) : (
-            <select
-              value={formDataLabor.area ?? ""}
-              onChange={(e) =>
-                setFormDataLabor((prev) => ({
-                  ...prev,
-                  area: e.target.value,
-                }))
-              }
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-600 dark:border-gray-800"
-              required={isCreate}
-              disabled={isReadOnly || (areas?.length ?? 0) === 0}
-            >
-              <option value="">
-                {(areas?.length ?? 0) === 0
-                  ? "No hay areas disponibles"
-                  : "Seleccionar area"}
-              </option>
-              {areas?.map((area) => (
-                <option value={area} key={area}>
-                  {area}
-                </option>
-              ))}
-            </select>
-          )}
+
+          <div className="mt-1 bg-gray-100 text-gray-700 border border-gray-300 px-3 py-2 rounded-md">
+            {user?.jerarquia
+              ? `${user.jerarquia.area} - ${user.jerarquia.name}`
+              : "Asignar un área desde organigrama"}
+          </div>
         </div>
 
         {/* Fecha de Ingreso */}
@@ -142,7 +116,6 @@ const FormDatosLaborales: React.FC<FormDatosLaboralesProps> = ({
               }))
             }
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-600 dark:border-gray-800"
-            required={isCreate}
             disabled={isReadOnly}
           />
         </div>
@@ -180,7 +153,6 @@ const FormDatosLaborales: React.FC<FormDatosLaboralesProps> = ({
               }))
             }
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-600 dark:border-gray-800"
-            required={isCreate}
             disabled={isReadOnly}
           >
             <option value="">Seleccionar tipo de contrato</option>
@@ -206,7 +178,6 @@ const FormDatosLaborales: React.FC<FormDatosLaboralesProps> = ({
               }))
             }
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-600 dark:border-gray-800"
-            required={isCreate}
             disabled={isReadOnly}
           >
             <option value="">Seleccionar estado</option>

@@ -5,7 +5,7 @@ import { formatDateInput } from "@/utils/formatDate";
 import axios from "axios";
 
 export interface CrearLaborDTO {
-  userId?: string;
+  userId?: number;
   cuil?: number; // 11 dígitos (CUIL argentino)
   fechaIngreso: string | Date; // se normaliza a ISO
   fechaAlta?: string | Date; // opcional según tu UI
@@ -15,6 +15,8 @@ export interface CrearLaborDTO {
   horasTrabajo?: string; // la doc la muestra como string ("40")
   sueldo?: number;
   relacionLaboral?: string;
+  area?: string;
+  jerarquiaId?: string; // ID de la jerarquía asociada
 }
 
 export interface CrearPuestoDTO {
@@ -25,11 +27,11 @@ export interface CrearPuestoDTO {
 //Helper para mapear formdatalabor a crearlaborDTO
 export function buildCrearLaborPayload(
   form: FormDataLabor,
-  userId: string
+  userId: number
 ): CrearLaborDTO {
   return {
     userId,
-    cuil: Number(form.cuil),
+    cuil: form.cuil,
     fechaIngreso: formatDateInput(form.fechaIngreso),
     fechaAlta: form.fechaAlta ? formatDateInput(form.fechaAlta) : undefined,
     categoryArca: form.categoryArca?.trim() || undefined,

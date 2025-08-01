@@ -3,24 +3,6 @@ import { FormDataLabor } from "@/components/users/FormDatosLaborales";
 import { formatDateInput } from "./formatDate";
 import { UserAdapted } from "./types";
 
-//crear labor
-export const mapLaborFormToDTO = (
-  labor: FormDataLabor,
-  userId: string
-): CrearLaborDTO => ({
-  userId,
-  cuil: labor.cuil ? Number(labor.cuil) : undefined,
-  fechaIngreso: formatDateInput(labor.fechaIngreso),
-  fechaAlta: labor.fechaAlta ? formatDateInput(labor.fechaAlta) : undefined,
-  categoryArca: labor.categoryArca?.trim() || undefined,
-  antiguedad: labor.antiguedad?.trim() || undefined,
-  tipoDeContrato: labor.tipoDeContrato, // << rename correcto
-  horasTrabajo: labor.horasTrabajo?.trim() || undefined,
-  sueldo: labor.sueldo ? Number(labor.sueldo) : undefined,
-  relacionLaboral: labor.relacionLaboral,
-});
-
-
 // editar labor
 // recibe el form y el labor previo (opcional) para comparar cambios
 export const buildLaborUpdatePayload = (
@@ -48,7 +30,10 @@ export const buildLaborUpdatePayload = (
   }
 
   // tipoContrato -> tipoDeContrato
-  if (form.tipoDeContrato && form.tipoDeContrato !== (prev?.tipoDeContrato ?? "")) {
+  if (
+    form.tipoDeContrato &&
+    form.tipoDeContrato !== (prev?.tipoDeContrato ?? "")
+  ) {
     out.tipoDeContrato = form.tipoDeContrato;
   }
 

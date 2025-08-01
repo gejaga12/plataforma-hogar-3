@@ -26,19 +26,15 @@ import { CreateUserData, UserAdapted } from "@/utils/types";
 import { cn } from "@/utils/cn";
 import UserModal from "@/components/users/UserModal";
 import DeleteUSerModal from "@/components/users/DeleteUserModal";
-import { AuthService, EditUserPayload } from "@/api/apiAuth";
+import { AuthService } from "@/api/apiAuth";
 import { ApiRoles } from "@/api/apiRoles";
 import Swal from "sweetalert2";
 import { formatDateInput } from "@/utils/formatDate";
 import toast from "react-hot-toast";
-import { useAuth } from "@/hooks/useAuth";
 import { ZonaService } from "@/api/apiZonas";
-import { CrearLaborDTO, LaborService } from "@/api/apiLabor";
+import { buildCrearLaborPayload, LaborService } from "@/api/apiLabor";
 import { FormDataLabor } from "@/components/users/FormDatosLaborales";
-import {
-  buildLaborUpdatePayload,
-  mapLaborFormToDTO,
-} from "@/utils/mappersUsers";
+import { useAuth } from "@/hooks/useAuth";
 
 function UsersContent() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -59,12 +55,36 @@ function UsersContent() {
   >({});
 
   const { usuarios, loading, refetchUsuarios } = useAuth();
+
   const { data: zonasResponse, isLoading: isLoadingZonas } = useQuery({
     queryKey: ["zonas"],
     queryFn: () => ZonaService.allInfoZona(),
   });
 
   const zonas = useMemo(() => zonasResponse?.zonas ?? [], [zonasResponse]);
+
+  const userActual = usuarios?.find((u) => u.id === modalState.user?.id);
+
+  const hasLaborData = (labor?: FormDataLabor): boolean => {
+    if (!labor) return false;
+
+    const campos = [
+      labor.cuil,
+      labor.fechaIngreso,
+      labor.fechaAlta,
+      labor.tipoDeContrato,
+      labor.relacionLaboral,
+      labor.categoryArca,
+      labor.antiguedad,
+      labor.horasTrabajo,
+      labor.sueldo,
+      labor.certificacionesTitulo,
+      labor.area,
+      labor.puestos?.[0],
+    ];
+
+    return campos.some((campo) => campo && campo !== "");
+  };
 
   useEffect(() => {
     const obtenerRoles = async () => {
@@ -87,40 +107,30 @@ function UsersContent() {
       const { user, labor } = payload;
 
       const userPayload = {
-        fullName: user.nombreCompleto,
         email: user.mail,
-        password: user.contrasena || "Abc123",
-        phoneNumber: user.telefono || "",
-        address: user.direccion || "",
-        puesto: user.puesto || "tecnico",
+        password: user.contrasena || "Abc123", // por defecto si no se carga
+        fullName: user.nombreCompleto,
+        phoneNumber: user.telefono,
+        roles: user.roles, // array de IDs
+        address: user.direccion ?? "",
+        puesto: user.puesto ?? "tecnico",
+        zona: user.zona?.id ?? "",
+        sucursalHogar: user.sucursalHogar ?? "",
         fechaNacimiento: formatDateInput(user.fechaNacimiento),
-        zona: user.zona?.id || "",
-        sucursalHogar: user.sucursalHogar || "",
-        roles: user.roles,
+        jerarquia: user.jerarquiaId ?? undefined,
       };
-
-      console.log("📤 Payload de usuario:", userPayload);
-
+      // 👉 POST a /auth/register
       const newUser = await AuthService.registerUser(userPayload);
 
-      // 2) Crear labor (si se completó)
-      if (
-        labor &&
-        labor.fechaIngreso &&
-        labor.tipoDeContrato &&
-        labor.relacionLaboral
-      ) {
-        const laborDTO = mapLaborFormToDTO(labor, newUser.id);
-
-        console.log("📤 Payload de labor:", laborDTO);
-
-        const laborResponse = await LaborService.crearLabor(laborDTO);
-
-        console.log("✅ Respuesta del backend Labor:", laborResponse);
+      // 👉 POST a /labor si hay datos cargados
+      if (hasLaborData(labor)) {
+        const laborDTO = buildCrearLaborPayload(labor!, newUser.id); // aseguramos que no sea undefined
+        await LaborService.crearLabor(laborDTO);
       }
 
       return newUser;
     },
+
     onSuccess: async () => {
       await refetchUsuarios();
       setModalState({ isOpen: false, mode: "create" });
@@ -130,6 +140,7 @@ function UsersContent() {
         text: "El usuario fue registrado correctamente.",
       });
     },
+
     onError: (e: any) => {
       Swal.fire({
         icon: "error",
@@ -139,8 +150,42 @@ function UsersContent() {
     },
   });
 
+  const editMutation = useMutation({
+    mutationFn: async ({
+      id,
+      formData,
+      originalData,
+      laborForm,
+    }: {
+      id: number;
+      formData: CreateUserData;
+      originalData: UserAdapted;
+      laborForm?: FormDataLabor;
+    }) => {
+      const confirm = await Swal.fire({
+        title: "¿Confirmar cambios?",
+        text: "Vas a actualizar la información del usuario.",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonText: "Sí, actualizar",
+        cancelButtonText: "Cancelar",
+      });
+
+      if (!confirm.isConfirmed) return;
+    },
+
+    onSuccess: async () => {
+      toast.success("Usuario actualizado correctamente");
+      setModalState({ isOpen: false, mode: "edit" });
+    },
+
+    onError: (error: any) => {
+      console.log(error.message || "Error al actualizar usuario");
+    },
+  });
+
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => AuthService.DeleteUSerModal(id),
+    mutationFn: (id: number) => AuthService.DeleteUSerModal(id),
     onSuccess: async () => {
       await refetchUsuarios();
       setDeleteModal({ isOpen: false });
@@ -162,79 +207,6 @@ function UsersContent() {
         confirmButtonText: "Cerrar",
         confirmButtonColor: "#d33",
       });
-    },
-  });
-
-  const editMutation = useMutation({
-    mutationFn: async ({
-      id,
-      formData,
-      originalData,
-      laborForm,
-    }: {
-      id: string;
-      formData: CreateUserData;
-      originalData: UserAdapted;
-      laborForm?: FormDataLabor;
-    }) => {
-      const confirm = await Swal.fire({
-        title: "¿Confirmar cambios?",
-        text: "Vas a actualizar la información del usuario.",
-        icon: "warning",
-        showCancelButton: true,
-        confirmButtonText: "Sí, actualizar",
-        cancelButtonText: "Cancelar",
-      });
-
-      if (!confirm.isConfirmed) return;
-
-      const zonaCompleta = zonas.find((z) => z.id === formData.zona?.id);
-      if (!zonaCompleta) throw new Error("Zona no encontrada");
-
-      // Payload para datos personales
-      const userPayload: EditUserPayload = {
-        email: formData.mail,
-        fullName: formData.nombreCompleto,
-        password: formData.contrasena ?? undefined,
-        address: formData.direccion,
-        fechaNacimiento: formatDateInput(formData.fechaNacimiento),
-        roles: formData.roles, // solo IDs
-        zona: zonaCompleta.id,
-        sucursalHogar: formData.sucursalHogar,
-      };
-
-      console.log("Payload usuario:", userPayload);
-      await AuthService.editUsers(id, userPayload);
-
-      // ---- Actualizar labor si corresponde ----
-      const laborId = originalData.labor?.id;
-      if (laborForm && laborId) {
-        const changes = buildLaborUpdatePayload(laborForm, originalData.labor);
-
-        // Si no hay cambios, evitamos la llamada
-        if (Object.keys(changes).length > 0) {
-          console.log("Payload labor (EDIT, solo cambios):", changes);
-          await LaborService.actualizarLabor(laborId, changes);
-        } else {
-          console.log(
-            "No hay cambios en datos laborales, no se actualiza labor."
-          );
-        }
-      } else {
-        console.log(
-          "No se envía actualización de labor: falta laborForm o laborId."
-        );
-      }
-    },
-
-    onSuccess: async () => {
-      toast.success("Usuario actualizado correctamente");
-      await refetchUsuarios();
-      setModalState({ isOpen: false, mode: "edit" });
-    },
-
-    onError: (error: any) => {
-      console.log(error.message || "Error al actualizar usuario");
     },
   });
 
@@ -269,7 +241,7 @@ function UsersContent() {
         user.fullName?.toLowerCase().includes(search) ||
         user.email?.toLowerCase().includes(search) || // ← protegido con ?
         user.labor?.puestos?.some((puesto) =>
-          puesto.toLowerCase().includes(search)
+          puesto?.toLowerCase().includes(search)
         );
 
       const matchesStatus =
@@ -389,7 +361,10 @@ function UsersContent() {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200 dark:divide-gray-800 dark:bg-gray-900">
               {filteredUsers.map((user) => (
-                <tr key={user.id} className="hover:bg-gray-800">
+                <tr
+                  key={user.id}
+                  className="hover:bg-gray-100 dark:hover:bg-gray-800"
+                >
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center">
@@ -500,7 +475,7 @@ function UsersContent() {
       <UserModal
         isOpen={modalState.isOpen}
         onClose={() => setModalState({ isOpen: false, mode: "create" })}
-        user={modalState.user}
+        user={userActual}
         mode={modalState.mode}
         rolesDisponibles={rolesDisponibles}
         zonas={zonas}

@@ -1,11 +1,12 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { LoadingSpinner } from "../ui/loading-spinner";
-import { CreateUserData, Zona } from "@/utils/types";
+import { CreateUserData, UserAdapted, Zona } from "@/utils/types";
 import { Eye, EyeOff } from "lucide-react";
 import { useJerarquia } from "@/hooks/useJerarquia";
 import FormDatosLaborales, { FormDataLabor } from "./FormDatosLaborales";
 
 interface FormUsersProps {
+  user: UserAdapted | undefined;
   handleSubmit: (e: React.FormEvent) => void;
   formData: CreateUserData;
   setFormData: React.Dispatch<React.SetStateAction<CreateUserData>>;
@@ -33,30 +34,9 @@ const FormUsers: React.FC<FormUsersProps> = ({
   formDataLabor,
   setFormDataLabor,
   zonas,
+  user,
 }) => {
   const [showPassword, setShowPassword] = useState(false);
-
-  const { areas, isLoading: isLoadingAreas } = useJerarquia();
-
-  useEffect(() => {
-    if (
-      mode === "edit" &&
-      zonas.length > 0 &&
-      formData.zona &&
-      !zonas.some((z) => z.id === formData.zona?.id)
-    ) {
-      const zonaEncontrada = zonas.find((z) => z.name === formData.zona?.name);
-      if (zonaEncontrada) {
-        setFormData((prev) => ({
-          ...prev,
-          zona: {
-            id: zonaEncontrada.id,
-            name: zonaEncontrada.name,
-          },
-        }));
-      }
-    }
-  }, [zonas, mode, formData.zona, setFormData]);
 
   return (
     <>
@@ -270,8 +250,7 @@ const FormUsers: React.FC<FormUsersProps> = ({
           setFormDataLabor={setFormDataLabor}
           isReadOnly={isReadOnly}
           mode={mode}
-          areas={areas}
-          isLoadingAreas={isLoadingAreas}
+          user={user}
         />
 
         {/* Roles y Configuraciones */}

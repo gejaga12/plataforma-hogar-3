@@ -19,12 +19,15 @@ export interface EditUserPayload {
   roles: string[];
   zona: string;
   sucursalHogar: string;
-  password?: string;
+  password: string;
+  jerarquia?: string; // ID de la jerarquía
+  puesto: string;
 }
 
 //funcion para adaptar user traido del back
 export const adaptUser = (user: UserFromApi): UserAdapted => {
   const labor = user.labor ?? null;
+  const jerarquia = user.jerarquia ?? null;
 
   // Normalizo array de puestos laborales (si viene en labor.puestos)
   const puestosList: string[] = Array.isArray(labor?.puestos)
@@ -60,7 +63,13 @@ export const adaptUser = (user: UserFromApi): UserAdapted => {
       id: (user as any).zona?.id ?? "",
     },
     sucursalHogar: (user as any).sucursalHogar?.name ?? "",
-    area: user.jerarquia?.area ?? "",
+    jerarquia: jerarquia
+      ? {
+          id: jerarquia.id,
+          name: jerarquia.name,
+          area: jerarquia.area ?? "",
+        }
+      : undefined,
     certificacionesTitulo: "", // si luego el back lo provee, mapear aquí
     activo: user.isActive ?? true,
     photoURL: user.photoURL ?? "",
@@ -70,10 +79,7 @@ export const adaptUser = (user: UserFromApi): UserAdapted => {
     labor: labor
       ? {
           id: labor.id,
-          cuil:
-            typeof labor.cuil === "number"
-              ? String(labor.cuil).padStart(11, "0")
-              : undefined,
+          cuil: labor.cuil,
           fechaAlta: labor.fechaAlta ? formatDateInput(labor.fechaAlta) : "",
           fechaIngreso: labor.fechaIngreso
             ? formatDateInput(labor.fechaIngreso)
@@ -142,7 +148,6 @@ export class AuthService {
     password: string;
     fullName: string;
     roles: string[]; // IDs de los roles
-    phoneNumber: string;
     address: string;
     puesto: string;
     zona: string;
@@ -188,7 +193,7 @@ export class AuthService {
     }
   }
 
-  static async DeleteUSerModal(id: string): Promise<void> {
+  static async DeleteUSerModal(id: number): Promise<void> {
     const token = getAuthToken();
 
     try {

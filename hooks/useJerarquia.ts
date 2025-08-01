@@ -1,10 +1,14 @@
 // hooks/useJerarquia.ts
 import { useQuery } from "@tanstack/react-query";
 import { JerarquiaService } from "@/api/apiJerarquia";
-import { useEffect } from "react";
 
 export const useJerarquia = () => {
-  const { data, isLoading, isError, refetch } = useQuery({
+  const {
+    data: jerarquiaData,
+    isLoading: isLoadingJerarquia,
+    isError: isErrorJerarquia,
+    refetch: refetchJerarquia,
+  } = useQuery({
     queryKey: ["jerarquia"],
     queryFn: async () => {
       console.log("✅ Ejecutando getJerarquiaCompleta");
@@ -13,17 +17,25 @@ export const useJerarquia = () => {
     staleTime: 1000 * 60 * 5, // 5 minutos
   });
 
-  // useEffect(() => {
-  //   if (data) {
-  //     console.log("🌳 Datos cargados:", data.areas, data.tree);
-  //   }
-  // }, [data]);
+  const {
+    data: nodosDisponibles,
+    isLoading: isLoadingNodos,
+    isError: isErrorNodos,
+    refetch: refetchNodos,
+  } = useQuery({
+    queryKey: ["nodos-disponibles"],
+    queryFn: JerarquiaService.getNodosDisponibles,
+    staleTime: 1000 * 60 * 5,
+  });
 
   return {
-    jerarquia: data?.tree || [],
-    areas: data?.areas || [],
-    isLoading,
-    isError,
-    refetchJerarquia: refetch,
+    jerarquia: jerarquiaData?.tree || [],
+    areas: jerarquiaData?.areas || [],
+    nodosDisponibles: nodosDisponibles || [],
+    isLoading: isLoadingJerarquia || isLoadingNodos,
+    isError: isErrorJerarquia || isErrorNodos,
+    refetchJerarquia,
+    refetchNodos,
   };
 };
+

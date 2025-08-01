@@ -84,7 +84,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       const data = await AuthService.getUsers(100, 0);
 
-      console.log("Usuarios de context:", data);
+      console.log(data);
       
       setUsuarios(data);
     } catch (e) {

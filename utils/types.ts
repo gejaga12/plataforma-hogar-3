@@ -1,6 +1,6 @@
 //User crudo del back
 export interface UserFromApi {
-  id: string;
+  id: number;
   email: string;
   fullName: string;
   photoURL?: string;
@@ -22,6 +22,7 @@ export interface UserFromApi {
 export interface CreateUserData {
   nombreCompleto: string;
   contrasena?: string;
+  telefono?: string;
   zona?: {
     id: string;
     name: string;
@@ -29,20 +30,20 @@ export interface CreateUserData {
   fechaNacimiento: string;
   mail: string;
   direccion: string;
-  telefono: string;
   roles: string[]; // solo los IDs
   notificaciones?: {
     mail: boolean;
     push: boolean;
   };
-  puesto?: string;
+  puesto: string;
   sucursalHogar: string; // sucursal.name
   activo: boolean;
+  jerarquiaId?: string;
 }
 
 //usuario adaptado
 export interface UserAdapted {
-  id: string;
+  id: number;
   email: string;
   fullName: string;
   roles: Role[];
@@ -50,7 +51,7 @@ export interface UserAdapted {
     name: string;
     id: string;
   };
-  area: string;
+  jerarquia?: Jerarquia;
   fechaNacimiento: string;
   createAt: string;
   direccion: string;
@@ -75,7 +76,7 @@ export interface Jerarquia {
 
 export interface Labor {
   id: string;
-  cuil?: string;
+  cuil?: number;
   fechaAlta?: string;
   categoryArca?: string;
   antiguedad?: string;

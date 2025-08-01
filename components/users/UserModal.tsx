@@ -1,4 +1,4 @@
-import { CreateUserData, UserAdapted, UserFromApi, Zona } from "@/utils/types";
+import { CreateUserData, UserAdapted, Zona } from "@/utils/types";
 import { X } from "lucide-react";
 import { useEffect, useState } from "react";
 import FormUsers from "./FormUsers";
@@ -22,7 +22,6 @@ const initialFormData: CreateUserData = {
   fechaNacimiento: "",
   mail: "",
   direccion: "",
-  telefono: "",
   roles: [],
   notificaciones: { mail: true, push: true },
   puesto: "",
@@ -31,11 +30,11 @@ const initialFormData: CreateUserData = {
 };
 
 const initialLabor: FormDataLabor = {
-  tipoDeContrato: "Relacion de Dependencia",
+  tipoDeContrato: "",
   relacionLaboral: "Periodo de Prueba",
   fechaIngreso: "",
   fechaAlta: "",
-  cuil: "",
+  cuil: undefined,
   categoryArca: "",
   antiguedad: "",
   horasTrabajo: "",
@@ -70,7 +69,7 @@ const UserModal: React.FC<UserModalProps> = ({
 
     if (user) {
       // intentar encontrar la zona por nombre (en tu Adapted guardás el name)
-      const zonaObj = zonas?.find((z) => z.name === user.zona.name);
+      const zonaObj = zonas?.find((z) => z.id === user.zona.id);
 
       // roles: en UserAdapted pueden venir como string o {id, name}
       const roleIds = (user.roles || []).map((r: any) =>
@@ -83,18 +82,18 @@ const UserModal: React.FC<UserModalProps> = ({
         fechaNacimiento: user.fechaNacimiento || "", // asumís formato "yyyy-MM-dd" para input date
         mail: user.email || "",
         direccion: user.direccion || "",
-        telefono: user.telefono || "",
         roles: roleIds, // <- ids de los roles
         notificaciones: user.notificaciones || { mail: true, push: true },
         sucursalHogar: user.sucursalHogar || "",
         activo: user.activo ?? true,
+        puesto: user.labor?.puestos?.[0] || "",
       });
 
       setFormDataLabor((prev) => {
         const laborDeUser = user.labor;
 
         const laborData: FormDataLabor = {
-          cuil: laborDeUser?.cuil ? String(laborDeUser.cuil).replace(/\D/g, "").slice(0, 11) : "",
+          cuil: laborDeUser?.cuil,
           fechaIngreso: formatDateInput(laborDeUser?.fechaIngreso) || "",
           fechaAlta: formatDateInput(laborDeUser?.fechaAlta) || "",
           tipoDeContrato: laborDeUser?.tipoDeContrato || "Relación de Dependencia",
@@ -108,13 +107,14 @@ const UserModal: React.FC<UserModalProps> = ({
             Array.isArray(laborDeUser?.puestos) && laborDeUser!.puestos[0]
               ? laborDeUser!.puestos
               : user.labor?.puestos || [""],
-          area: user.area || "",
+           area: user.jerarquia?.area || "",
+           jerarquiaId: user.jerarquia?.id || "",
         };
-        console.log('labor:', laborData);
+        
         return laborData
       });
     }
-  }, [isOpen, mode, user, zonas]);
+  }, [isOpen, mode]);
 
   const handleRoleChange = (id: string, checked: boolean) => {
     setFormData((prev) => {
@@ -165,6 +165,7 @@ const UserModal: React.FC<UserModalProps> = ({
             handleRoleChange={handleRoleChange}
             formDataLabor={formDataLabor}
             setFormDataLabor={setFormDataLabor}
+            user={user}
           />
         </div>
       </div>
