@@ -1,8 +1,7 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useState } from "react";
 import { LoadingSpinner } from "../ui/loading-spinner";
 import { CreateUserData, UserAdapted, Zona } from "@/utils/types";
 import { Eye, EyeOff } from "lucide-react";
-import { useJerarquia } from "@/hooks/useJerarquia";
 import FormDatosLaborales, { FormDataLabor } from "./FormDatosLaborales";
 
 interface FormUsersProps {

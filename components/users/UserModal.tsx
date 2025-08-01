@@ -40,7 +40,7 @@ const initialLabor: FormDataLabor = {
   horasTrabajo: "",
   sueldo: "",
   certificacionesTitulo: "",
-  puestos: [],
+  puestos: [""],
   area: "",
 };
 
@@ -79,14 +79,14 @@ const UserModal: React.FC<UserModalProps> = ({
       setFormData({
         nombreCompleto: user.fullName || "",
         zona: zonaObj, // <- objeto Zona o undefined
-        fechaNacimiento: user.fechaNacimiento || "", // asumís formato "yyyy-MM-dd" para input date
+        fechaNacimiento: formatDateInput(user.fechaNacimiento) || "", // asumís formato "yyyy-MM-dd" para input date
         mail: user.email || "",
-        direccion: user.direccion || "",
+        direccion: user.address || "",
         roles: roleIds, // <- ids de los roles
         notificaciones: user.notificaciones || { mail: true, push: true },
         sucursalHogar: user.sucursalHogar || "",
         activo: user.activo ?? true,
-        puesto: user.labor?.puestos?.[0] || "",
+        puesto: user.labor?.puestos?.[0]?.puesto || "",
       });
 
       setFormDataLabor((prev) => {
@@ -96,22 +96,20 @@ const UserModal: React.FC<UserModalProps> = ({
           cuil: laborDeUser?.cuil,
           fechaIngreso: formatDateInput(laborDeUser?.fechaIngreso) || "",
           fechaAlta: formatDateInput(laborDeUser?.fechaAlta) || "",
-          tipoDeContrato: laborDeUser?.tipoDeContrato || "Relación de Dependencia",
+          tipoDeContrato:
+            laborDeUser?.tipoDeContrato || "Relación de Dependencia",
           relacionLaboral: laborDeUser?.relacionLaboral as EstadoContractual,
           categoryArca: laborDeUser?.categoryArca || "",
           antiguedad: laborDeUser?.antiguedad || "",
           horasTrabajo: laborDeUser?.horasTrabajo || "",
           sueldo: laborDeUser?.sueldo != null ? String(laborDeUser.sueldo) : "",
           certificacionesTitulo: user.certificacionesTitulo || "",
-          puestos:
-            Array.isArray(laborDeUser?.puestos) && laborDeUser!.puestos[0]
-              ? laborDeUser!.puestos
-              : user.labor?.puestos || [""],
-           area: user.jerarquia?.area || "",
-           jerarquiaId: user.jerarquia?.id || "",
+          puestos: laborDeUser?.puestos?.map((p) => p.puesto) || [""],
+          area: user.jerarquia?.area || "",
+          jerarquiaId: user.jerarquia?.id || "",
         };
-        
-        return laborData
+
+        return laborData;
       });
     }
   }, [isOpen, mode]);

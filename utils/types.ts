@@ -15,8 +15,6 @@ export interface UserFromApi {
   phoneNumber?: any[];
   zona?: Zona | null;
   labor?: Labor | null;
-  puesto?: string;
-  area?: string;
 }
 
 export interface CreateUserData {
@@ -54,7 +52,7 @@ export interface UserAdapted {
   jerarquia?: Jerarquia;
   fechaNacimiento: string;
   createAt: string;
-  direccion: string;
+  address: string;
   telefono: string;
   relacionLaboral: string;
   photoURL: string;
@@ -85,7 +83,12 @@ export interface Labor {
   sueldo?: number;
   relacionLaboral: string;
   fechaIngreso: Date | string;
-  puestos?: string[];
+  puestos?: Puesto[];
+}
+
+export interface Puesto {
+  id: string;
+  puesto: string;
 }
 
 export interface Role {

@@ -24,77 +24,74 @@ export interface EditUserPayload {
   puesto: string;
 }
 
-//funcion para adaptar user traido del back
-export const adaptUser = (user: UserFromApi): UserAdapted => {
-  const labor = user.labor ?? null;
-  const jerarquia = user.jerarquia ?? null;
+// //funcion para adaptar user traido del back
+// export const adaptUser = (user: UserFromApi): UserAdapted => {
+//   const labor = user.labor ?? null;
+//   const jerarquia = user.jerarquia ?? null;
 
-  // Normalizo array de puestos laborales (si viene en labor.puestos)
-  const puestosList: string[] = Array.isArray(labor?.puestos)
-    ? (labor!.puestos as any[]).map((p) => p.name).filter(Boolean)
-    : [];
+//   // Normalizo array de puestos laborales (si viene en labor.puestos)
+//   const puestosList: string[] = Array.isArray(labor?.puestos)
+//     ? labor!.puestos
+//         .map((p: any) => (typeof p === "string" ? p : p.puesto))
+//         .filter(Boolean)
+//     : [];
 
-  // Si no hay puestos en labor, uso el "puesto" suelto del usuario si existe
-  if (puestosList.length === 0 && user.puesto) {
-    puestosList.push(user.puesto);
-  }
+//   const relacionLaboral = labor?.relacionLaboral ?? "Periodo de Prueba";
 
-  const relacionLaboral = labor?.relacionLaboral ?? "Periodo de Prueba";
-
-  return {
-    id: user.id,
-    email: user.email ?? "",
-    fullName: user.fullName ?? "",
-    telefono: Array.isArray(user.phoneNumber)
-      ? user.phoneNumber.join(", ")
-      : "",
-    direccion: user.address ?? "",
-    fechaNacimiento: formatDateInput(user.fechaNacimiento),
-    createAt: formatDateInput(user.createdAt),
-    relacionLaboral,
-    zona: {
-      name:
-        user.zona && (user as any).zona?.name
-          ? (user as any).zona.name
-          : // fallback si en algún endpoint es string (p.ej. "NEA")
-            (typeof (user as any).zona === "string"
-              ? (user as any).zona
-              : "") ?? "",
-      id: (user as any).zona?.id ?? "",
-    },
-    sucursalHogar: (user as any).sucursalHogar?.name ?? "",
-    jerarquia: jerarquia
-      ? {
-          id: jerarquia.id,
-          name: jerarquia.name,
-          area: jerarquia.area ?? "",
-        }
-      : undefined,
-    certificacionesTitulo: "", // si luego el back lo provee, mapear aquí
-    activo: user.isActive ?? true,
-    photoURL: user.photoURL ?? "",
-    notificaciones: { mail: false, push: false },
-    roles: user.roles ?? [],
-    // bloque laboral completo
-    labor: labor
-      ? {
-          id: labor.id,
-          cuil: labor.cuil,
-          fechaAlta: labor.fechaAlta ? formatDateInput(labor.fechaAlta) : "",
-          fechaIngreso: labor.fechaIngreso
-            ? formatDateInput(labor.fechaIngreso)
-            : "",
-          tipoDeContrato: labor.tipoDeContrato,
-          relacionLaboral,
-          categoryArca: labor.categoryArca ?? undefined,
-          antiguedad: labor.antiguedad ?? undefined,
-          horasTrabajo: labor.horasTrabajo ?? undefined,
-          sueldo: typeof labor.sueldo === "number" ? labor.sueldo : undefined,
-          puestos: puestosList,
-        }
-      : undefined,
-  };
-};
+//   return {
+//     id: user.id,
+//     email: user.email ?? "",
+//     fullName: user.fullName ?? "",
+//     telefono: Array.isArray(user.phoneNumber)
+//       ? user.phoneNumber.join(", ")
+//       : "",
+//     direccion: user.address ?? "",
+//     fechaNacimiento: formatDateInput(user.fechaNacimiento),
+//     createAt: formatDateInput(user.createdAt),
+//     relacionLaboral,
+//     zona: {
+//       name:
+//         user.zona && (user as any).zona?.name
+//           ? (user as any).zona.name
+//           : // fallback si en algún endpoint es string (p.ej. "NEA")
+//             (typeof (user as any).zona === "string"
+//               ? (user as any).zona
+//               : "") ?? "",
+//       id: (user as any).zona?.id ?? "",
+//     },
+//     sucursalHogar: (user as any).sucursalHogar?.name ?? "",
+//     jerarquia: jerarquia
+//       ? {
+//           id: jerarquia.id,
+//           name: jerarquia.name,
+//           area: jerarquia.area ?? "",
+//         }
+//       : undefined,
+//     certificacionesTitulo: "", // si luego el back lo provee, mapear aquí
+//     activo: user.isActive ?? true,
+//     photoURL: user.photoURL ?? "",
+//     notificaciones: { mail: false, push: false },
+//     roles: user.roles ?? [],
+//     // bloque laboral completo
+//     labor: labor
+//       ? {
+//           id: labor.id,
+//           cuil: labor.cuil,
+//           fechaAlta: labor.fechaAlta ? formatDateInput(labor.fechaAlta) : "",
+//           fechaIngreso: labor.fechaIngreso
+//             ? formatDateInput(labor.fechaIngreso)
+//             : "",
+//           tipoDeContrato: labor.tipoDeContrato,
+//           relacionLaboral,
+//           categoryArca: labor.categoryArca ?? undefined,
+//           antiguedad: labor.antiguedad ?? undefined,
+//           horasTrabajo: labor.horasTrabajo ?? undefined,
+//           sueldo: typeof labor.sueldo === "number" ? labor.sueldo : undefined,
+//           puestos: puestosList.map((p) => ({ puesto: p })),
+//         }
+//       : undefined,
+//   };
+// };
 
 export class AuthService {
   private static currentUser: UserLoginData | null = null;
@@ -184,8 +181,6 @@ export class AuthService {
         labor: resData.labor ?? null, // 👈 CORRECTO
       };
 
-      console.log("Nuevo usuario:", newUser);
-
       return newUser;
     } catch (error: any) {
       const message = error.response?.data?.message || "Fallo el registro";
@@ -224,11 +219,9 @@ export class AuthService {
         params: { limit, offset },
       });
 
-      const rawUsers: UserFromApi[] = response.data;
+      const rawUsers: UserAdapted[] = response.data;
 
-      // console.log(rawUsers);
-
-      return rawUsers.map(adaptUser);
+      return rawUsers;
     } catch (error: any) {
       console.error(
         "Error al obtener usuarios:",

@@ -35,6 +35,7 @@ import { ZonaService } from "@/api/apiZonas";
 import { buildCrearLaborPayload, LaborService } from "@/api/apiLabor";
 import { FormDataLabor } from "@/components/users/FormDatosLaborales";
 import { useAuth } from "@/hooks/useAuth";
+import { PuestoService } from "@/api/apiPuesto";
 
 function UsersContent() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -122,12 +123,31 @@ function UsersContent() {
       // 👉 POST a /auth/register
       const newUser = await AuthService.registerUser(userPayload);
 
+      console.log("Nuevo usuario:", newUser);
+
       // 👉 POST a /labor si hay datos cargados
       if (hasLaborData(labor)) {
         const laborDTO = buildCrearLaborPayload(labor!, newUser.id); // aseguramos que no sea undefined
-        await LaborService.crearLabor(laborDTO);
-      }
 
+        console.log("📤 Payload de labor:", laborDTO);
+
+        const nuevaLabor = await LaborService.crearLabor(laborDTO);
+
+        if (
+          labor?.puestos &&
+          Array.isArray(labor.puestos) &&
+          labor.puestos[0] // hay al menos uno
+        ) {
+          const puestoPayload = {
+            puesto: labor.puestos[0],
+            laborid: nuevaLabor.id,
+          };
+
+          console.log("📤 Payload de puesto:", puestoPayload);
+
+          await PuestoService.crearPuesto(puestoPayload);
+        }
+      }
       return newUser;
     },
 
@@ -241,7 +261,7 @@ function UsersContent() {
         user.fullName?.toLowerCase().includes(search) ||
         user.email?.toLowerCase().includes(search) || // ← protegido con ?
         user.labor?.puestos?.some((puesto) =>
-          puesto?.toLowerCase().includes(search)
+          puesto?.puesto.toLowerCase().includes(search)
         );
 
       const matchesStatus =
@@ -389,12 +409,12 @@ function UsersContent() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900 dark:text-gray-400">
-                      {user.labor?.puestos}
+                      {user.labor?.puestos?.map((puesto) => puesto.puesto).join(", ") || "Sin puesto"}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900 dark:text-gray-400">
-                      {user.zona.name}
+                      {user.zona?.name}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">

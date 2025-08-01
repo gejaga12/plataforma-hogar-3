@@ -6,7 +6,7 @@ interface FormDatosLaboralesProps {
   setFormDataLabor: React.Dispatch<React.SetStateAction<FormDataLabor>>;
   isReadOnly: boolean;
   mode: "create" | "edit" | "view";
-  user:UserAdapted | undefined;
+  user: UserAdapted | undefined;
 }
 
 export type EstadoContractual = "Periodo de Prueba" | "Contratado";
@@ -33,8 +33,6 @@ const FormDatosLaborales: React.FC<FormDatosLaboralesProps> = ({
   isReadOnly,
   user,
 }) => {
-
-  
   return (
     <div className="px-2 py-3 bg-gray-100 dark:bg-gray-700 rounded-lg">
       <h3 className="text-lg font-medium text-gray-900 dark:text-gray-400 mb-4">
@@ -80,7 +78,7 @@ const FormDatosLaborales: React.FC<FormDatosLaboralesProps> = ({
             onChange={(e) =>
               setFormDataLabor((prev) => ({
                 ...prev,
-                puesto: e.target.value,
+                puestos: [e.target.value, ...(prev.puestos?.slice(1) || [])],
               }))
             }
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-600 dark:border-gray-800"
