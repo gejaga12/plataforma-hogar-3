@@ -35,7 +35,7 @@ const FormDatosLaborales: React.FC<FormDatosLaboralesProps> = ({
 }) => {
   return (
     <div className="px-2 py-3 bg-gray-100 dark:bg-gray-700 rounded-lg">
-      <h3 className="text-lg font-medium text-gray-900 dark:text-gray-400 mb-4">
+      <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
         Datos laborales
       </h3>
 
@@ -88,11 +88,11 @@ const FormDatosLaborales: React.FC<FormDatosLaboralesProps> = ({
 
         {/* Área */}
         <div>
-          <label className="block text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-400">
             Área
           </label>
 
-          <div className="mt-1 bg-gray-100 text-gray-700 border border-gray-300 px-3 py-2 rounded-md">
+          <div className="mt-1 bg-gray-100 border border-gray-300 px-3 py-2 rounded-md dark:bg-gray-600 dark:border-gray-800">
             {user?.jerarquia
               ? `${user.jerarquia.area} - ${user.jerarquia.name}`
               : "Asignar un área desde organigrama"}

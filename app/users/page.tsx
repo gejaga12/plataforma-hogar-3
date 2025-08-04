@@ -9,16 +9,8 @@ import {
   Edit,
   Trash2,
   Eye,
-  MoreHorizontal,
-  UserCheck,
-  UserX,
-  Mail,
-  Phone,
-  MapPin,
-  Calendar,
-  Building,
   Shield,
-  X,
+  Mail,
 } from "lucide-react";
 import { ProtectedLayout } from "@/components/layout/protected-layout";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
@@ -112,7 +104,7 @@ function UsersContent() {
         password: user.contrasena || "Abc123", // por defecto si no se carga
         fullName: user.nombreCompleto,
         phoneNumber: user.telefono,
-        roles: user.roles, // array de IDs
+        roles: user.roles,
         address: user.direccion ?? "",
         puesto: user.puesto ?? "tecnico",
         zona: user.zona?.id ?? "",
@@ -266,8 +258,8 @@ function UsersContent() {
 
       const matchesStatus =
         !statusFilter ||
-        (statusFilter === "activo" && user.activo) ||
-        (statusFilter === "inactivo" && !user.activo);
+        (statusFilter === "activo" && user.isActive) ||
+        (statusFilter === "inactivo" && !user.isActive);
 
       return matchesSearch && matchesStatus;
     }) || [];
@@ -433,12 +425,12 @@ function UsersContent() {
                     <span
                       className={cn(
                         "px-2 py-1 text-xs font-medium rounded-full",
-                        user.activo
+                        user.isActive
                           ? "bg-green-100 text-green-800"
                           : "bg-red-100 text-red-800"
                       )}
                     >
-                      {user.activo ? "Activo" : "Inactivo"}
+                      {user.isActive ? "Activo" : "Inactivo"}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">

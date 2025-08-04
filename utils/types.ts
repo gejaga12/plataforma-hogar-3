@@ -1,22 +1,3 @@
-//User crudo del back
-export interface UserFromApi {
-  id: number;
-  email: string;
-  fullName: string;
-  photoURL?: string;
-  isActive?: boolean;
-  fechaNacimiento: Date | string;
-  address?: string;
-  createdAt?: Date | string;
-  deletedAt?: null;
-  jerarquia?: Jerarquia | null;
-  sucursalHogar?: SucursalHogar | null;
-  roles: Role[];
-  phoneNumber?: any[];
-  zona?: Zona | null;
-  labor?: Labor | null;
-}
-
 export interface CreateUserData {
   nombreCompleto: string;
   contrasena?: string;
@@ -51,14 +32,15 @@ export interface UserAdapted {
   };
   jerarquia?: Jerarquia;
   fechaNacimiento: string;
-  createAt: string;
+  createdAt: string;
+  deletedAt: string | null;
   address: string;
   telefono: string;
   relacionLaboral: string;
-  photoURL: string;
+  photoURL?: string;
   certificacionesTitulo: string;
   sucursalHogar: string;
-  activo: boolean;
+  isActive: boolean;
   notificaciones: {
     mail: boolean;
     push: boolean;
@@ -112,11 +94,14 @@ export interface GeoGeneric {
 }
 
 export interface Pais extends GeoGeneric {}
-export interface Provincia extends GeoGeneric {}
+export interface Provincia extends GeoGeneric {
+  regionId?: string;
+  code?: number;
+}
 export interface Zona extends GeoGeneric {
   Coords?: string[];
   pais?: Pais;
-  provincia?: Provincia[];
+  provincias?: Provincia[];
   active: boolean;
 }
 

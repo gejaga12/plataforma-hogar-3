@@ -2,11 +2,10 @@ import axios from "axios";
 import { BASE_URL } from "@/utils/baseURL";
 
 import { getAuthToken } from "@/utils/authToken";
-import { UserAdapted, UserFromApi } from "@/utils/types";
-import { formatDateInput } from "@/utils/formatDate";
+import { UserAdapted } from "@/utils/types";
 
 export type UserLoginData = Pick<
-  UserFromApi,
+  UserAdapted,
   "id" | "email" | "fullName" | "roles" | "photoURL"
 >;
 
@@ -23,75 +22,6 @@ export interface EditUserPayload {
   jerarquia?: string; // ID de la jerarquía
   puesto: string;
 }
-
-// //funcion para adaptar user traido del back
-// export const adaptUser = (user: UserFromApi): UserAdapted => {
-//   const labor = user.labor ?? null;
-//   const jerarquia = user.jerarquia ?? null;
-
-//   // Normalizo array de puestos laborales (si viene en labor.puestos)
-//   const puestosList: string[] = Array.isArray(labor?.puestos)
-//     ? labor!.puestos
-//         .map((p: any) => (typeof p === "string" ? p : p.puesto))
-//         .filter(Boolean)
-//     : [];
-
-//   const relacionLaboral = labor?.relacionLaboral ?? "Periodo de Prueba";
-
-//   return {
-//     id: user.id,
-//     email: user.email ?? "",
-//     fullName: user.fullName ?? "",
-//     telefono: Array.isArray(user.phoneNumber)
-//       ? user.phoneNumber.join(", ")
-//       : "",
-//     direccion: user.address ?? "",
-//     fechaNacimiento: formatDateInput(user.fechaNacimiento),
-//     createAt: formatDateInput(user.createdAt),
-//     relacionLaboral,
-//     zona: {
-//       name:
-//         user.zona && (user as any).zona?.name
-//           ? (user as any).zona.name
-//           : // fallback si en algún endpoint es string (p.ej. "NEA")
-//             (typeof (user as any).zona === "string"
-//               ? (user as any).zona
-//               : "") ?? "",
-//       id: (user as any).zona?.id ?? "",
-//     },
-//     sucursalHogar: (user as any).sucursalHogar?.name ?? "",
-//     jerarquia: jerarquia
-//       ? {
-//           id: jerarquia.id,
-//           name: jerarquia.name,
-//           area: jerarquia.area ?? "",
-//         }
-//       : undefined,
-//     certificacionesTitulo: "", // si luego el back lo provee, mapear aquí
-//     activo: user.isActive ?? true,
-//     photoURL: user.photoURL ?? "",
-//     notificaciones: { mail: false, push: false },
-//     roles: user.roles ?? [],
-//     // bloque laboral completo
-//     labor: labor
-//       ? {
-//           id: labor.id,
-//           cuil: labor.cuil,
-//           fechaAlta: labor.fechaAlta ? formatDateInput(labor.fechaAlta) : "",
-//           fechaIngreso: labor.fechaIngreso
-//             ? formatDateInput(labor.fechaIngreso)
-//             : "",
-//           tipoDeContrato: labor.tipoDeContrato,
-//           relacionLaboral,
-//           categoryArca: labor.categoryArca ?? undefined,
-//           antiguedad: labor.antiguedad ?? undefined,
-//           horasTrabajo: labor.horasTrabajo ?? undefined,
-//           sueldo: typeof labor.sueldo === "number" ? labor.sueldo : undefined,
-//           puestos: puestosList.map((p) => ({ puesto: p })),
-//         }
-//       : undefined,
-//   };
-// };
 
 export class AuthService {
   private static currentUser: UserLoginData | null = null;
@@ -151,7 +81,7 @@ export class AuthService {
     sucursalHogar: string;
     fechaNacimiento: string;
     jerarquia?: string;
-  }): Promise<UserFromApi> {
+  }): Promise<UserAdapted> {
     const token = getAuthToken();
 
     try {
@@ -163,13 +93,13 @@ export class AuthService {
 
       const resData = response.data;
 
-      const newUser: UserFromApi = {
+      const newUser: UserAdapted = {
         id: resData.id,
         email: resData.email ?? "",
         fullName: resData.fullName ?? "",
         roles: resData.roles ?? [], // array de objetos { id, name }
         photoURL: resData.photoURL || "",
-        phoneNumber: resData.phoneNumber || [],
+        telefono: resData.telefono || [],
         address: resData.address || "",
         jerarquia: resData.jerarquia ?? null,
         sucursalHogar: resData.sucursalHogar ?? null,
@@ -178,7 +108,13 @@ export class AuthService {
         deletedAt: resData.deletedAt ?? null,
         fechaNacimiento: resData.fechaNacimiento,
         isActive: resData.isActive ?? true,
-        labor: resData.labor ?? null, // 👈 CORRECTO
+        labor: resData.labor ?? null,
+        relacionLaboral: "",
+        certificacionesTitulo: "",
+        notificaciones: {
+          mail: false,
+          push: false,
+        },
       };
 
       return newUser;

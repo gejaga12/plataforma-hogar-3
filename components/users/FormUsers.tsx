@@ -271,7 +271,7 @@ const FormUsers: React.FC<FormUsersProps> = ({
                       type="checkbox"
                       checked={formData.roles.includes(id)}
                       onChange={(e) => handleRoleChange(id, e.target.checked)}
-                      className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+                      className="accent-blue-600 dark:accent-violet-700"
                       disabled={isReadOnly}
                     />
                     <span className="ml-2 text-sm text-gray-700 capitalize dark:text-gray-500">
@@ -296,7 +296,7 @@ const FormUsers: React.FC<FormUsersProps> = ({
                         activo: e.target.checked,
                       }))
                     }
-                    className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+                    className="accent-blue-600 dark:accent-violet-700"
                     disabled={isReadOnly}
                   />
                   <span className="ml-2 text-sm font-medium text-gray-700 dark:text-gray-400">
@@ -324,7 +324,7 @@ const FormUsers: React.FC<FormUsersProps> = ({
                           },
                         }))
                       }
-                      className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+                     className="accent-blue-600 dark:accent-violet-700"
                       disabled={isReadOnly}
                     />
                     <span className="ml-2 text-sm text-gray-700 dark:text-gray-400">
@@ -344,7 +344,7 @@ const FormUsers: React.FC<FormUsersProps> = ({
                           },
                         }))
                       }
-                      className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+                      className="accent-blue-600 dark:accent-violet-700"
                       disabled={isReadOnly}
                     />
                     <span className="ml-2 text-sm text-gray-700 dark:text-gray-400">

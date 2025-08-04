@@ -69,7 +69,7 @@ const UserModal: React.FC<UserModalProps> = ({
 
     if (user) {
       // intentar encontrar la zona por nombre (en tu Adapted guardás el name)
-      const zonaObj = zonas?.find((z) => z.id === user.zona.id);
+      const zonaObj = zonas?.find((z) => z.id === user.zona?.id);
 
       // roles: en UserAdapted pueden venir como string o {id, name}
       const roleIds = (user.roles || []).map((r: any) =>
@@ -78,14 +78,14 @@ const UserModal: React.FC<UserModalProps> = ({
 
       setFormData({
         nombreCompleto: user.fullName || "",
-        zona: zonaObj, // <- objeto Zona o undefined
-        fechaNacimiento: formatDateInput(user.fechaNacimiento) || "", // asumís formato "yyyy-MM-dd" para input date
+        zona: zonaObj,
+        fechaNacimiento: formatDateInput(user.fechaNacimiento) || "", 
         mail: user.email || "",
         direccion: user.address || "",
-        roles: roleIds, // <- ids de los roles
+        roles: roleIds,
         notificaciones: user.notificaciones || { mail: true, push: true },
         sucursalHogar: user.sucursalHogar || "",
-        activo: user.activo ?? true,
+        activo: user.isActive ?? true,
         puesto: user.labor?.puestos?.[0]?.puesto || "",
       });
 
@@ -150,7 +150,7 @@ const UserModal: React.FC<UserModalProps> = ({
           <FormUsers
             handleSubmit={(e) => {
               e.preventDefault();
-              onSubmit({ user: formData, labor: formDataLabor }); // ahora lo delega al padre
+              onSubmit({ user: formData, labor: formDataLabor });
             }}
             formData={formData}
             zonas={zonas}
