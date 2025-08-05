@@ -20,8 +20,8 @@ export interface CrearLaborDTO {
 }
 
 export interface CrearPuestoDTO {
-  puesto: string; // ej: "Supervisor de Planta"
-  laborid: string; // uuid de la labor asociada
+  name: string;
+  laborid: string;
 }
 
 //Helper para mapear formdatalabor a crearlaborDTO
@@ -101,6 +101,24 @@ export class LaborService {
       return response.data;
     } catch (error: any) {
       const message = error?.response?.data?.message || "Error al crear puesto";
+      throw new Error(message);
+    }
+  }
+
+  static async actualizarPuesto(id: string, data: any): Promise<any> {
+    try {
+      const token = getAuthToken();
+
+      const response = await axios.put(`${BASE_URL}/puesto/${id}`, data, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      return response.data;
+    } catch (error: any) {
+      const message =
+        error?.response?.data?.message || "Error al actualizar el puesto";
       throw new Error(message);
     }
   }

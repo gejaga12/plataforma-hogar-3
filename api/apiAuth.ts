@@ -16,10 +16,9 @@ export interface EditUserPayload {
   address: string;
   fechaNacimiento: string;
   roles: string[];
-  zona: string;
-  sucursalHogar: string;
-  password: string;
-  jerarquia?: string; // ID de la jerarquía
+  zona?: string;
+  sucursalHogar?: string;
+  password?: string;
   puesto: string;
 }
 
@@ -171,7 +170,7 @@ export class AuthService {
 
   //PATCH para info de usuario
   static async editUsers(
-    id: string,
+    id: number,
     data: EditUserPayload
   ): Promise<{ did: boolean }> {
     const token = getAuthToken();

@@ -70,7 +70,7 @@ export interface Labor {
 
 export interface Puesto {
   id: string;
-  puesto: string;
+  name: string;
 }
 
 export interface Role {

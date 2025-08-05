@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { ProtectedLayout } from "@/components/layout/protected-layout";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { CreateUserData, UserAdapted } from "@/utils/types";
+import { CreateUserData, Puesto, UserAdapted } from "@/utils/types";
 import { cn } from "@/utils/cn";
 import UserModal from "@/components/users/UserModal";
 import DeleteUSerModal from "@/components/users/DeleteUserModal";
@@ -24,10 +24,15 @@ import Swal from "sweetalert2";
 import { formatDateInput } from "@/utils/formatDate";
 import toast from "react-hot-toast";
 import { ZonaService } from "@/api/apiZonas";
-import { buildCrearLaborPayload, LaborService } from "@/api/apiLabor";
+import {
+  buildCrearLaborPayload,
+  CrearLaborDTO,
+  LaborService,
+} from "@/api/apiLabor";
 import { FormDataLabor } from "@/components/users/FormDatosLaborales";
 import { useAuth } from "@/hooks/useAuth";
 import { PuestoService } from "@/api/apiPuesto";
+import { SucursalHogarService } from "@/api/apiSucursalHogar";
 
 function UsersContent() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -54,6 +59,11 @@ function UsersContent() {
     queryFn: () => ZonaService.allInfoZona(),
   });
 
+  const { data: sucursales, isLoading } = useQuery({
+    queryKey: ["sucursalesHogar"],
+    queryFn: () => SucursalHogarService.getAllSucursalesHogar(),
+  });
+
   const zonas = useMemo(() => zonasResponse?.zonas ?? [], [zonasResponse]);
 
   const userActual = usuarios?.find((u) => u.id === modalState.user?.id);
@@ -71,7 +81,6 @@ function UsersContent() {
       labor.antiguedad,
       labor.horasTrabajo,
       labor.sueldo,
-      labor.certificacionesTitulo,
       labor.area,
       labor.puestos?.[0],
     ];
@@ -131,7 +140,10 @@ function UsersContent() {
           labor.puestos[0] // hay al menos uno
         ) {
           const puestoPayload = {
-            puesto: labor.puestos[0],
+            puesto:
+              labor.puestos[0] && typeof labor.puestos[0] != "string"
+                ? labor.puestos[0]?.name
+                : "",
             laborid: nuevaLabor.id,
           };
 
@@ -165,33 +177,69 @@ function UsersContent() {
   const editMutation = useMutation({
     mutationFn: async ({
       id,
+      laborId,
       formData,
-      originalData,
       laborForm,
     }: {
       id: number;
+      laborId: string;
       formData: CreateUserData;
-      originalData: UserAdapted;
       laborForm?: FormDataLabor;
     }) => {
-      const confirm = await Swal.fire({
-        title: "¿Confirmar cambios?",
-        text: "Vas a actualizar la información del usuario.",
-        icon: "warning",
-        showCancelButton: true,
-        confirmButtonText: "Sí, actualizar",
-        cancelButtonText: "Cancelar",
-      });
+      //Payload para datos de usuario
+      const payload = {
+        email: formData.mail,
+        password: formData.contrasena || undefined,
+        fullName: formData.nombreCompleto,
+        roles: formData.roles,
+        phoneNumber: formData.telefono,
+        address: formData.direccion,
+        puesto: formData.puesto,
+        zona: formData.zona?.id,
+        sucursalHogar: formData.sucursalHogar || undefined,
+        fechaNacimiento: formData.fechaNacimiento,
+      };
+      // console.log("📤 Enviando payload al PATCH", payload);
+      await AuthService.editUsers(id, payload);
 
-      if (!confirm.isConfirmed) return;
+      if (
+        laborForm &&
+        laborForm?.tipoDeContrato &&
+        laborForm?.relacionLaboral
+      ) {
+        //Payload para datos laborales
+        const laborPayload: Partial<CrearLaborDTO> = {
+          fechaIngreso: laborForm.fechaIngreso,
+          fechaAlta: laborForm.fechaAlta,
+          categoryArca: laborForm.categoryArca,
+          antiguedad: laborForm.antiguedad,
+          tipoDeContrato: laborForm.tipoDeContrato,
+          horasTrabajo: laborForm.horasTrabajo,
+          relacionLaboral: laborForm.relacionLaboral,
+          cuil: laborForm.cuil ? Number(laborForm.cuil) : undefined,
+          sueldo: laborForm.sueldo ? Number(laborForm.sueldo) : undefined,
+        };
+
+        // console.log("📤 Payload laboral:", laborPayload);
+        await LaborService.actualizarLabor(laborId, laborPayload);
+      }
+
+      const puesto = laborForm?.puestos?.[0] as Puesto;
+      const puestoId = puesto?.id;
+      const payloadPuesto = { laborId, name: puesto?.name };
+
+      console.log("📤 Payload puesto:", { ...payloadPuesto, puestoId });
+
+      await LaborService.actualizarPuesto(puestoId, payloadPuesto);
     },
 
     onSuccess: async () => {
       toast.success("Usuario actualizado correctamente");
+      await refetchUsuarios();
       setModalState({ isOpen: false, mode: "edit" });
     },
-
     onError: (error: any) => {
+      console.error("❌ Error en edición:", error.message || error);
       console.log(error.message || "Error al actualizar usuario");
     },
   });
@@ -234,12 +282,13 @@ function UsersContent() {
       return;
     }
 
+    // const puestos = labor?.puestos && labor.puestos.every(p => typeof p != "string") ? labor.puestos : []
+
     if (modalState.mode === "edit" && modalState.user?.id) {
-      // delega toda la lógica a editMutation
       editMutation.mutate({
         id: modalState.user.id,
+        laborId: modalState.user?.labor?.id ?? "",
         formData: user,
-        originalData: modalState.user,
         laborForm: labor,
       });
       return;
@@ -253,7 +302,7 @@ function UsersContent() {
         user.fullName?.toLowerCase().includes(search) ||
         user.email?.toLowerCase().includes(search) || // ← protegido con ?
         user.labor?.puestos?.some((puesto) =>
-          puesto?.puesto.toLowerCase().includes(search)
+          puesto?.name.toLowerCase().includes(search)
         );
 
       const matchesStatus =
@@ -401,7 +450,9 @@ function UsersContent() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900 dark:text-gray-400">
-                      {user.labor?.puestos?.map((puesto) => puesto.puesto).join(", ") || "Sin puesto"}
+                      {user.labor?.puestos
+                        ?.map((puesto) => puesto.name)
+                        .join(", ") || "Sin puesto"}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">

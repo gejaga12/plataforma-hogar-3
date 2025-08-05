@@ -1,5 +1,5 @@
 import React from "react";
-import { UserAdapted } from "@/utils/types";
+import { Puesto, UserAdapted } from "@/utils/types";
 
 interface FormDatosLaboralesProps {
   formDataLabor: FormDataLabor;
@@ -19,11 +19,10 @@ export interface FormDataLabor {
   antiguedad?: string;
   tipoDeContrato: string;
   horasTrabajo?: string;
-  sueldo?: string;
+  sueldo?: number;
   relacionLaboral: EstadoContractual;
-  certificacionesTitulo?: string;
   area?: string;
-  puestos?: string[];
+  puestos?: Puesto[];
   jerarquiaId?: string;
 }
 
@@ -47,14 +46,18 @@ const FormDatosLaborales: React.FC<FormDatosLaboralesProps> = ({
           </label>
           <input
             type="number"
-            maxLength={11}
             placeholder="cuil (11 dígitos)"
             value={formDataLabor.cuil ?? ""}
             onChange={(e) => {
-              setFormDataLabor((prev) => ({
-                ...prev,
-                cuil: Number(e.target.value),
-              }));
+              const value = e.target.value;
+
+              // permite vacío o hasta 11 dígitos
+              if (value === "" || value.length <= 11) {
+                setFormDataLabor((prev) => ({
+                  ...prev,
+                  cuil: value === "" ? undefined : Number(value),
+                }));
+              }
             }}
             onKeyDown={(e) => {
               // evita teclas no numéricas comunes
@@ -74,12 +77,25 @@ const FormDatosLaborales: React.FC<FormDatosLaboralesProps> = ({
           </label>
           <input
             type="text"
-            value={formDataLabor.puestos?.[0] ?? ""}
+            value={
+              typeof formDataLabor.puestos?.[0] === "string"
+                ? formDataLabor.puestos[0]
+                : formDataLabor.puestos?.[0]?.name || ""
+            }
             onChange={(e) =>
-              setFormDataLabor((prev) => ({
-                ...prev,
-                puestos: [e.target.value, ...(prev.puestos?.slice(1) || [])],
-              }))
+              setFormDataLabor(({ puestos, ...prev }) => {
+                puestos = puestos as Puesto[];
+                return {
+                  ...prev,
+                  puestos: [
+                    {
+                      ...(typeof puestos?.[0] == "string" ? puestos?.[0] : {}),
+                      name: e.target.value,
+                      id: puestos?.[0]?.id ?? "", // conservar el id
+                    },
+                  ],
+                };
+              })
             }
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-600 dark:border-gray-800"
             disabled={isReadOnly}
@@ -254,11 +270,14 @@ const FormDatosLaborales: React.FC<FormDatosLaboralesProps> = ({
           <input
             type="number"
             min={0}
-            step="0.01"
             placeholder="120000"
             value={formDataLabor.sueldo ?? ""}
             onChange={(e) =>
-              setFormDataLabor((prev) => ({ ...prev, sueldo: e.target.value }))
+              setFormDataLabor((prev) => ({
+                ...prev,
+                sueldo:
+                  e.target.value === "" ? undefined : Number(e.target.value),
+              }))
             }
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-600 dark:border-gray-800"
             disabled={isReadOnly}
@@ -266,7 +285,7 @@ const FormDatosLaborales: React.FC<FormDatosLaboralesProps> = ({
         </div>
 
         {/* Certificaciones / Título */}
-        <div>
+        {/* <div>
           <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-400">
             Certificaciones/Título
           </label>
@@ -282,7 +301,7 @@ const FormDatosLaborales: React.FC<FormDatosLaboralesProps> = ({
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-600 dark:border-gray-800"
             disabled={isReadOnly}
           />
-        </div>
+        </div> */}
       </div>
     </div>
   );

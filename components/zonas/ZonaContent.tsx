@@ -91,7 +91,7 @@ const ZonaContent: React.FC<Props> = ({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Zonas</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-400">Zonas</h1>
           <p className="text-gray-600 mt-1">Gestiona las zonas del sistema</p>
         </div>
 

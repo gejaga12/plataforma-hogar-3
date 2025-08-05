@@ -38,9 +38,8 @@ const initialLabor: FormDataLabor = {
   categoryArca: "",
   antiguedad: "",
   horasTrabajo: "",
-  sueldo: "",
-  certificacionesTitulo: "",
-  puestos: [""],
+  sueldo: undefined,
+  puestos: [],
   area: "",
 };
 
@@ -86,7 +85,7 @@ const UserModal: React.FC<UserModalProps> = ({
         notificaciones: user.notificaciones || { mail: true, push: true },
         sucursalHogar: user.sucursalHogar || "",
         activo: user.isActive ?? true,
-        puesto: user.labor?.puestos?.[0]?.puesto || "",
+        puesto: user.labor?.puestos?.[0]?.name || "",
       });
 
       setFormDataLabor((prev) => {
@@ -102,9 +101,8 @@ const UserModal: React.FC<UserModalProps> = ({
           categoryArca: laborDeUser?.categoryArca || "",
           antiguedad: laborDeUser?.antiguedad || "",
           horasTrabajo: laborDeUser?.horasTrabajo || "",
-          sueldo: laborDeUser?.sueldo != null ? String(laborDeUser.sueldo) : "",
-          certificacionesTitulo: user.certificacionesTitulo || "",
-          puestos: laborDeUser?.puestos?.map((p) => p.puesto) || [""],
+          sueldo: laborDeUser?.sueldo != null ? Number(laborDeUser.sueldo) : undefined,
+          puestos: laborDeUser?.puestos,
           area: user.jerarquia?.area || "",
           jerarquiaId: user.jerarquia?.id || "",
         };

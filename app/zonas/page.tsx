@@ -29,7 +29,7 @@ const ZonaPage = () => {
   const paises = data?.paises ?? [];
   const provincias = data?.provincias ?? [];
 
-   console.log("zonas:", zonas);
+  //  console.log("zonas:", zonas);
   // console.log('paises:', paises);
   //  console.log('provincias:', provincias);
 
@@ -94,7 +94,7 @@ const ZonaPage = () => {
       queryClient.invalidateQueries({ queryKey: ["zonas"] });
     },
     onError: (error) => {
-      console.log('Error:', error);
+      console.log("Error:", error);
       toast.error("Ocurrio un error al eliminar la zona");
     },
   });
@@ -127,7 +127,9 @@ const ZonaPage = () => {
           zonaId: string;
           provinciaIds: string[];
         }) => addPronviceMutation.mutate(data)}
-        deleteZona={(data: {zonaId: string}) => deleteZonaMutation.mutate(data)}
+        deleteZona={(data: { zonaId: string }) =>
+          deleteZonaMutation.mutate(data)
+        }
       />
     </ProtectedLayout>
   );
