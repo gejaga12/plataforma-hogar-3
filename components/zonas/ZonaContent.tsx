@@ -1,10 +1,12 @@
-import { MapPinned, Plus, PlusCircleIcon } from "lucide-react";
+import { Edit, MapPinned, Plus, PlusCircleIcon, Trash2 } from "lucide-react";
 import React, { useState } from "react";
 import { LoadingSpinner } from "../ui/loading-spinner";
 import { Pais, Provincia, Zona } from "@/utils/types";
 import ZonaModals from "./ZonaModals";
 import { CreateRegionDto } from "@/api/apiZonas";
 import ProvinciaModal from "./Zona-provincia-modal";
+import ZonaCrearProvPais from "./ZonaCrearProvPais";
+import ConfirmDeleteModal from "../ui/ConfirmDeleteModal";
 
 interface Props {
   zonas: Zona[];
@@ -27,6 +29,11 @@ interface Props {
   createZona: (data: CreateRegionDto) => void;
   createPaisMutation: (name: string) => void;
   createPronvinciaMutation: (name: string) => void;
+  addPronviceMutation: (data: {
+    zonaId: string;
+    provinciaIds: string[];
+  }) => void;
+  deleteZona: (data: { zonaId: string }) => void;
 }
 
 const ZonaContent: React.FC<Props> = ({
@@ -35,14 +42,22 @@ const ZonaContent: React.FC<Props> = ({
   provincias,
   isLoading,
   modalState,
+  deleteZona,
   setModalState,
   createZona,
   toggleMutation,
   createPaisMutation,
   createPronvinciaMutation,
+  addPronviceMutation,
 }) => {
   const [showModalProvincias, setShowModalProvincias] = useState(false);
+  const [zonaSeleccionada, setZonaSeleccionada] = useState<Zona | null>(null);
   const [selectedZonaId, setSelectedZonaId] = useState<string | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [modalCreatePaisProv, setModalCreatePaisProv] = useState<{
+    isOpen: boolean;
+    mode: "provincia" | "pais" | undefined;
+  }>({ isOpen: false, mode: undefined });
 
   const handleAbrirModalProvincias = (zonaId: string) => {
     setSelectedZonaId(zonaId);
@@ -50,10 +65,14 @@ const ZonaContent: React.FC<Props> = ({
   };
 
   const handleAsignarProvincias = (zonaId: string, provinciaIds: string[]) => {
-    console.log("🛰️ Asignando provincias", { zonaId, provinciaIds });
-    
+    addPronviceMutation({ zonaId, provinciaIds });
     setShowModalProvincias(false);
     setSelectedZonaId(null);
+  };
+
+  const handleEliminar = (zona: Zona) => {
+    setZonaSeleccionada(zona);
+    setIsDeleteModalOpen(true);
   };
 
   if (isLoading) {
@@ -76,13 +95,37 @@ const ZonaContent: React.FC<Props> = ({
           <p className="text-gray-600 mt-1">Gestiona las zonas del sistema</p>
         </div>
 
-        <button
-          onClick={() => setModalState({ isOpen: true, mode: "create" })}
-          className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
-        >
-          <Plus size={20} />
-          <span>Crear Zona</span>
-        </button>
+        <div className="flex gap-4 justify-between">
+          <button
+            onClick={() =>
+              setModalCreatePaisProv({
+                isOpen: true,
+                mode: "provincia",
+              })
+            }
+            className="bg-orange-600 hover:bg-orange-700 dark:bg-orange-500 dark:hover:bg-orange-400 text-white text-sm px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
+          >
+            <Plus size={20} />
+            <span>Crear Provincia</span>
+          </button>
+
+          <button
+            onClick={() =>
+              setModalCreatePaisProv({ isOpen: true, mode: "pais" })
+            }
+            className="bg-orange-600 hover:bg-orange-700 dark:bg-orange-500 dark:hover:bg-orange-400 text-white text-sm px-3 py-2 rounded-lg flex items-center space-x-2 transition-colors"
+          >
+            <Plus size={20} />
+            <span>Crear Pais</span>
+          </button>
+          <button
+            onClick={() => setModalState({ isOpen: true, mode: "create" })}
+            className="bg-orange-600 hover:bg-orange-700 dark:bg-orange-500 dark:hover:bg-orange-400 text-white text-sm px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
+          >
+            <Plus size={20} />
+            <span>Crear Zona</span>
+          </button>
+        </div>
       </div>
 
       {/* Table */}
@@ -101,6 +144,9 @@ const ZonaContent: React.FC<Props> = ({
                   Provincias
                 </th>
                 <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Activar/Desactivar
+                </th>
+                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Acciones
                 </th>
               </tr>
@@ -111,6 +157,7 @@ const ZonaContent: React.FC<Props> = ({
                   key={zona.id}
                   className="hover:bg-gray-50 transition-colors dark:hover:bg-gray-800"
                 >
+                  {/* nombre zona */}
                   <td className="px-4 py-3 uppercase">
                     <div className="flex items-center">
                       <MapPinned
@@ -122,6 +169,7 @@ const ZonaContent: React.FC<Props> = ({
                       </span>
                     </div>
                   </td>
+                  {/* nombre pais */}
                   <td className="px-4 py-3 uppercase">
                     <div className="flex items-center justify-center">
                       <span className="text-sm font-medium text-gray-900 dark:text-gray-400">
@@ -129,22 +177,18 @@ const ZonaContent: React.FC<Props> = ({
                       </span>
                     </div>
                   </td>
+                  {/* lista de provincias */}
                   <td className="px-4 py-3">
-                    <div className="flex gap-2 items-center justify-center">
-                      <button
-                        onClick={() => handleAbrirModalProvincias(zona.id)}
-                        className="rounded-full text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-200"
-                        title="Asignar provincias"
-                      >
-                        <PlusCircleIcon size={16} />
-                      </button>
-                      <span className="text-sm font-light text-gray-900 dark:text-gray-400 truncate">
+                    <div className="flex items-center justify-center">
+                      <span className="text-xs font-light text-gray-900 dark:text-gray-400 truncate">
                         {zona.provincias
                           ?.map((provincia) => provincia.name)
-                          .join(", ") || "Sin provincias asignadas"}
+                          .join(", ") || "Sin provincias asignadas"
+                        }
                       </span>
                     </div>
                   </td>
+                  {/* activar/desactivar */}
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-center space-x-2">
                       <label className="relative inline-flex items-center cursor-pointer w-11 h-6">
@@ -166,6 +210,26 @@ const ZonaContent: React.FC<Props> = ({
                       >
                         {zona.active ? "Activo" : "Inactivo"}
                       </span>
+                    </div>
+                  </td>
+                  {/* acciones */}
+                  <td className="px-4 py-3">
+                    <div className="flex gap-4 items-center justify-center">
+                      <button
+                        onClick={() => handleAbrirModalProvincias(zona.id)}
+                        className="text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-200"
+                        title="Asignar provincias"
+                      >
+                        <Edit size={16} className="mx-auto" />
+                      </button>
+
+                      <button
+                        className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-200"
+                        onClick={() => handleEliminar(zona)}
+                        title="Eliminar zona"
+                      >
+                        <Trash2 size={16} className="mx-auto" />
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -191,8 +255,6 @@ const ZonaContent: React.FC<Props> = ({
         mode={modalState.mode}
         isloading={isLoading}
         onSubmit={createZona}
-        createPaisMutation={createPaisMutation}
-        createPronvinciaMutation={createPronvinciaMutation}
         paises={paises}
         provincias={provincias}
       />
@@ -207,8 +269,35 @@ const ZonaContent: React.FC<Props> = ({
           }}
           zonaId={selectedZonaId}
           onSubmit={handleAsignarProvincias}
+          zonas={zonas}
         />
       )}
+
+      <ZonaCrearProvPais
+        modalCreatePaisProv={modalCreatePaisProv}
+        setModalCreatePaisProv={setModalCreatePaisProv}
+        createPaisMutation={createPaisMutation}
+        createPronvinciaMutation={createPronvinciaMutation}
+      />
+
+      <ConfirmDeleteModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setZonaSeleccionada(null);
+        }}
+        onConfirm={() => {
+          if (zonaSeleccionada) {
+            deleteZona({ zonaId: zonaSeleccionada.id });
+            setIsDeleteModalOpen(false);
+            setZonaSeleccionada(null);
+          }
+        }}
+        title="Eliminar zona"
+        message={`¿Estás seguro de que deseas eliminar la zona "${zonaSeleccionada?.name}"?`}
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+      />
     </div>
   );
 };

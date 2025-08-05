@@ -1,6 +1,6 @@
 "use client";
 
-import { X } from "lucide-react";
+import { MapPinCheck, MapPinPlus, X } from "lucide-react";
 import React, { useState } from "react";
 import { Pais, Provincia } from "@/utils/types";
 import toast from "react-hot-toast";
@@ -15,8 +15,6 @@ interface ZonaModalsProps {
   onClose: () => void;
   isloading: boolean;
   onSubmit: (data: CreateRegionDto) => void;
-  createPaisMutation: (name: string) => void;
-  createPronvinciaMutation: (name: string) => void;
 }
 
 const ZonaModals: React.FC<ZonaModalsProps> = ({
@@ -27,24 +25,22 @@ const ZonaModals: React.FC<ZonaModalsProps> = ({
   provincias,
   onClose,
   onSubmit,
-  createPaisMutation,
-  createPronvinciaMutation,
 }) => {
   const isEmpty = (val?: string | null) => !val || val.trim().length === 0;
 
   const [paisSeleccionado, setPaisSeleccionado] = useState<string | null>(null);
-  const [provSeleccionada, setProvSeleccionada] = useState<string | null>(null);
+  const [provSeleccionadas, setProvSeleccionadas] = useState<string[]>([]);
 
   const nombreZona = useInput();
-  const nombrePais = useInput();
-  const nombreProvincia = useInput();
 
   const handleSeleccionPais = (id: string) => {
     setPaisSeleccionado(id);
   };
 
   const handleSeleccionProvincia = (id: string) => {
-    setProvSeleccionada(id);
+    setProvSeleccionadas((prev) =>
+      prev.includes(id) ? prev.filter((provId) => provId !== id) : [...prev, id]
+    );
   };
 
   const handleCrear = () => {
@@ -55,25 +51,8 @@ const ZonaModals: React.FC<ZonaModalsProps> = ({
     onSubmit({
       name: nombreZona.value,
       paisId: paisSeleccionado!,
-      provincias: provSeleccionada ? [provSeleccionada] : [],
+      provincias: provSeleccionadas ? provSeleccionadas : [],
     });
-  };
-
-  const handleCrearPais = () => {
-    const nombreFinal = nombrePais.value.trim().toUpperCase();
-    if (!nombreFinal) return;
-
-    console.log("🛰️ Enviando país:", nombreFinal);
-
-    createPaisMutation(nombreFinal);
-    nombrePais.clear();
-  };
-
-  const handleCrearProvincia = () => {
-    const nombreFinal = nombreProvincia.value.trim().toUpperCase();
-    if (!nombreFinal) return;
-    createPronvinciaMutation(nombreFinal);
-    nombreProvincia.clear();
   };
 
   if (!isOpen) return null;
@@ -83,9 +62,12 @@ const ZonaModals: React.FC<ZonaModalsProps> = ({
       <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto dark:bg-gray-900">
         <div className="p-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-400">
-              {mode === "create" && "Crear Nueva Zona"}
-            </h2>
+            <div className="flex items-center space-x-2 mb-4">
+              <MapPinPlus className="text-red-500 dark:text-red-400" size={26}/>
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-400">
+                {mode === "create" && "Crear Nueva Zona"}
+              </h2>
+            </div>
             <button
               onClick={onClose}
               className="text-gray-400 hover:text-gray-600"
@@ -93,6 +75,7 @@ const ZonaModals: React.FC<ZonaModalsProps> = ({
               <X />
             </button>
           </div>
+
           <div className="p-6 space-y-4">
             {/* {zona} */}
             <div>
@@ -109,8 +92,8 @@ const ZonaModals: React.FC<ZonaModalsProps> = ({
             </div>
 
             {/* seleccion de pais */}
-            <div className="flex justify-around gap-10">
-              <div>
+            <div className="flex justify-between gap-1">
+              <div className="w-1/5">
                 <label className="block text-sm font-medium text-gray-700 mb-2 dark:text-gray-400">
                   Seleccioná el país
                 </label>
@@ -141,17 +124,17 @@ const ZonaModals: React.FC<ZonaModalsProps> = ({
                 <label className="block text-sm font-medium text-gray-700 mb-2 dark:text-gray-400">
                   Selecciona las provincias
                 </label>
-                <div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-1">
                   {provincias.map((provincia) => (
                     <label
                       key={provincia.id}
-                      className="flex items-center gap-2 cursor-pointer text-gray-800 dark:text-gray-400"
+                      className="flex items-center gap-2 cursor-pointer text-[12.5px] text-gray-800 dark:text-gray-400"
                     >
                       <input
                         type="checkbox"
                         name="provincia"
                         value={provincia.id}
-                        checked={provSeleccionada === provincia.id}
+                        checked={provSeleccionadas.includes(provincia.id)}
                         onChange={() => handleSeleccionProvincia(provincia.id)}
                         className="accent-blue-600 dark:accent-violet-600"
                       />
@@ -180,66 +163,6 @@ const ZonaModals: React.FC<ZonaModalsProps> = ({
                 {isloading ? "Creando..." : "Crear Zona"}
               </button>
             </div>
-
-            <hr className="border-gray-800 dark:border-gray-500" />
-
-            {/* pais */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-400 mb-1 ">
-                Crear Pais
-              </label>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  className="w-full border rounded px-3 py-2 focus:outline-none focus:ring focus:border-blue-500 uppercase dark:bg-gray-700 dark:focus:border-blue-800"
-                  value={nombrePais.value}
-                  onChange={nombrePais.onChange}
-                  placeholder="Argentina"
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      handleCrearPais();
-                    }
-                  }}
-                />
-                <button
-                  onClick={handleCrearPais}
-                  className="px-3 py-2 w-1/5 bg-green-600 text-white text-sm rounded hover:bg-green-700 cursor-pointer"
-                  disabled={!nombrePais}
-                >
-                  Crear País
-                </button>
-              </div>
-            </div>
-
-            {/* provincia */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-400 mb-1 ">
-                Crear Provincia
-              </label>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  className="w-full border rounded px-3 py-2 focus:outline-none focus:ring focus:border-blue-500 uppercase dark:bg-gray-700 dark:focus:border-blue-800"
-                  value={nombreProvincia.value}
-                  onChange={nombreProvincia.onChange}
-                  placeholder="Buenos Aires"
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      handleCrearProvincia();
-                    }
-                  }}
-                />
-                <button
-                  onClick={handleCrearProvincia}
-                  className="px-3 py-2 w-1/5 bg-green-600 text-white text-sm rounded hover:bg-green-700 cursor-pointer"
-                  disabled={!nombreProvincia}
-                >
-                  Crear Provincia
-                </button>
-              </div>
-            </div>
           </div>
         </div>
       </div>
@@ -250,7 +173,7 @@ const ZonaModals: React.FC<ZonaModalsProps> = ({
 export default ZonaModals;
 
 //hook para inputs
-function useInput(initial = "") {
+export function useInput(initial = "") {
   const [value, setValue] = useState(initial);
   const clear = () => setValue("");
   return {

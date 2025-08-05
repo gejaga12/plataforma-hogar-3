@@ -1,25 +1,3 @@
-export interface CreateUserData {
-  nombreCompleto: string;
-  contrasena?: string;
-  telefono?: string;
-  zona?: {
-    id: string;
-    name: string;
-  };
-  fechaNacimiento: string;
-  mail: string;
-  direccion: string;
-  roles: string[]; // solo los IDs
-  notificaciones?: {
-    mail: boolean;
-    push: boolean;
-  };
-  puesto: string;
-  sucursalHogar: string; // sucursal.name
-  activo: boolean;
-  jerarquiaId?: string;
-}
-
 //usuario adaptado
 export interface UserAdapted {
   id: number;
@@ -46,6 +24,28 @@ export interface UserAdapted {
     push: boolean;
   };
   labor?: Labor;
+}
+
+export interface CreateUserData {
+  nombreCompleto: string;
+  contrasena?: string;
+  telefono?: string;
+  zona?: {
+    id: string;
+    name: string;
+  };
+  fechaNacimiento: string;
+  mail: string;
+  direccion: string;
+  roles: string[]; // solo los IDs
+  notificaciones?: {
+    mail: boolean;
+    push: boolean;
+  };
+  puesto: string;
+  sucursalHogar: string; // sucursal.name
+  activo: boolean;
+  jerarquiaId?: string;
 }
 
 export interface Jerarquia {

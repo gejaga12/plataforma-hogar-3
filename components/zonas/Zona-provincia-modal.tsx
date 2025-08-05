@@ -1,9 +1,10 @@
-import { Provincia } from "@/utils/types";
+import { Provincia, Zona } from "@/utils/types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { X } from "lucide-react";
+import { MapPinCheck, X } from "lucide-react";
 import React, { useEffect, useState } from "react";
 
 interface Props {
+  zonas: Zona[];
   isOpen: boolean;
   onClose: () => void;
   zonaId: string | null;
@@ -17,14 +18,21 @@ const ProvinciaModal: React.FC<Props> = ({
   zonaId,
   provincias,
   onSubmit,
+  zonas,
 }) => {
   const [seleccionadas, setSeleccionadas] = useState<string[]>([]);
+  const [preAsignadas, setPreAsignadas] = useState<string[]>([]);
 
   useEffect(() => {
-    if (!isOpen) {
-      setSeleccionadas([]); // limpiar al cerrar
+    if (isOpen && zonaId) {
+      const zonaActual = zonas.find((zona) => zona.id === zonaId);
+      if (zonaActual?.provincias) {
+        const ids = zonaActual.provincias.map((prov) => prov.id);
+        setSeleccionadas(ids);
+         setPreAsignadas(ids);
+      }
     }
-  }, [isOpen]);
+  }, [isOpen, zonaId, zonas]);
 
   const handleConfirmar = () => {
     if (zonaId && seleccionadas.length > 0) {
@@ -43,12 +51,19 @@ const ProvinciaModal: React.FC<Props> = ({
 
   return (
     <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg w-full max-w-md">
-        <div className="p-6 bg-white dark:bg-gray-900 rounded-lg shadow-lg w-full max-w-md mx-auto">
+      <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg w-full max-w-2xl">
+        <div className="p-6 bg-white dark:bg-gray-900 rounded-lg shadow-lg w-full max-w-2xl mx-auto">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-800 dark:text-white">
-              Asignar Provincias
-            </h2>
+            <div className="flex items-center space-x-2 mb-4">
+              <MapPinCheck
+                size={26}
+                className="text-red-500 dark:text-red-400"
+              />
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                Asignar Provincias a:{" "}
+                {zonas.find((zona) => zona.id === zonaId)?.name}
+              </h2>
+            </div>
             <button
               onClick={onClose}
               className="text-gray-400 hover:text-gray-600"
@@ -57,28 +72,39 @@ const ProvinciaModal: React.FC<Props> = ({
             </button>
           </div>
 
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-400 mb-2">
+          <label className="block text-sm font-medium text-gray-900 dark:text-gray-400 mb-2">
             Selecciona las provincias:
           </label>
-          <div className="space-y-2 max-h-60 overflow-y-auto pr-2">
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 max-h-60 overflow-y-auto pr-2">
             {provincias.length === 0 ? (
               <p className="text-gray-500">No hay provincias disponibles.</p>
             ) : (
-              provincias.map((provincia) => (
-                <label
-                  key={provincia.id}
-                  className="flex items-center gap-2 cursor-pointer text-gray-800 dark:text-gray-300"
-                >
-                  <input
-                    type="checkbox"
-                    value={provincia.id}
-                    checked={seleccionadas.includes(provincia.id)}
-                    onChange={() => handleSeleccionProvincia(provincia.id)}
-                    className="accent-blue-600 dark:accent-violet-600"
-                  />
-                  <span>{provincia.name}</span>
-                </label>
-              ))
+              provincias.map((provincia) => {
+                const isPreAsignada = preAsignadas.includes(provincia.id);
+                const isSeleccionada = seleccionadas.includes(provincia.id);
+
+                return (
+                  <label
+                    key={provincia.id}
+                    className={`flex items-center gap-2 cursor-pointer text-[13px] text-gray-900 dark:text-gray-400 ${
+                      isPreAsignada ? "opacity-60 cursor-not-allowed" : ""
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      value={provincia.id}
+                      checked={isPreAsignada || isSeleccionada}
+                      disabled={isPreAsignada}
+                      onChange={() =>
+                        !isPreAsignada && handleSeleccionProvincia(provincia.id)
+                      }
+                      className="accent-blue-600 dark:accent-violet-600"
+                    />
+                    <span>{provincia.name}</span>
+                  </label>
+                );
+              })
             )}
           </div>
 

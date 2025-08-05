@@ -10,6 +10,7 @@ export interface CreateRegionDto {
   paisId: string;
   provincias?: string[];
 }
+
 interface RegionResponse {
   id: string;
   nombre: string;
@@ -104,21 +105,14 @@ export class ZonaService {
     });
   }
 
-  static async addProvince(
-    regionId: string,
-    provinceIds: string[]
-  ): Promise<void> {
+  static async deleteZona(id: string): Promise<void> {
     const token = getAuthToken();
 
-    await axios.patch(
-      `/api/region/add/province/${regionId}`,
-      { provinces: provinceIds },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+    await axios.delete(`${BASE_URL}/region/${id}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
   }
 
   //POST para pais
@@ -146,5 +140,23 @@ export class ZonaService {
     });
 
     return response.data;
+  }
+
+  //PATCH para agregar provincias a una zona creada
+  static async addProvince(
+    regionId: string,
+    provinceIds: string[]
+  ): Promise<void> {
+    const token = getAuthToken();
+
+    await axios.patch(
+      `${BASE_URL}/region/add/province/${regionId}`,
+      { provinces: provinceIds },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
   }
 }

@@ -29,7 +29,7 @@ const ZonaPage = () => {
   const paises = data?.paises ?? [];
   const provincias = data?.provincias ?? [];
 
-  // console.log("zonas:", zonas);
+   console.log("zonas:", zonas);
   // console.log('paises:', paises);
   //  console.log('provincias:', provincias);
 
@@ -70,6 +70,35 @@ const ZonaPage = () => {
     },
   });
 
+  const addPronviceMutation = useMutation({
+    mutationFn: (data: { zonaId: string; provinciaIds: string[] }) => {
+      console.log("agregando provincias a zona:", data);
+      return ZonaService.addProvince(data.zonaId, data.provinciaIds);
+    },
+    onSuccess: () => {
+      toast.success("Provincias(s) agregadas con éxito.");
+      queryClient.invalidateQueries({ queryKey: ["zonas"] });
+    },
+    onError: () => {
+      toast.error("No se pudo agregar la(s) provincia(s). Intente nuevamente.");
+    },
+  });
+
+  const deleteZonaMutation = useMutation({
+    mutationFn: (data: { zonaId: string }) => {
+      console.log("Eliminando zona:", data);
+      return ZonaService.deleteZona(data.zonaId);
+    },
+    onSuccess: () => {
+      toast.success("Zona eliminada con exito.");
+      queryClient.invalidateQueries({ queryKey: ["zonas"] });
+    },
+    onError: (error) => {
+      console.log('Error:', error);
+      toast.error("Ocurrio un error al eliminar la zona");
+    },
+  });
+
   // Actualizar zona
   const onToggleZona = useMutation({
     mutationFn: (id: string) => ZonaService.toggleZona(id),
@@ -94,6 +123,11 @@ const ZonaPage = () => {
         createPronvinciaMutation={(name) =>
           createProvinciaMutation.mutate(name)
         }
+        addPronviceMutation={(data: {
+          zonaId: string;
+          provinciaIds: string[];
+        }) => addPronviceMutation.mutate(data)}
+        deleteZona={(data: {zonaId: string}) => deleteZonaMutation.mutate(data)}
       />
     </ProtectedLayout>
   );
