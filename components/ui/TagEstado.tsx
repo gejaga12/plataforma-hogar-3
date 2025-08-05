@@ -1,7 +1,7 @@
 'use client';
 
 import { CheckCircle, AlertTriangle, XCircle } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/utils/cn';
 
 interface TagEstadoProps {
   estado: 'activo' | 'inactivo' | 'en_reparacion' | 'dado_de_baja';

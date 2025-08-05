@@ -12,7 +12,7 @@ import {
   CheckCircle
 } from 'lucide-react';
 import { AgendaEvent } from '@/utils/types';
-import { cn } from '@/lib/utils';
+import { cn } from '@/utils/cn';
 
 interface AgendaListProps {
   events: AgendaEvent[];

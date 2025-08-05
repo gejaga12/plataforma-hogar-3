@@ -15,8 +15,8 @@ export function Header() {
 
   return (
     <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-6 py-4 transition-colors">
-      <div className="flex items-center justify-between">
-        <div className="flex-1 max-w-lg">
+      <div className="flex items-center justify-end">
+        {/* <div className="flex-1 max-w-lg">
           <div className="relative">
             <Search
               className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500"
@@ -28,8 +28,7 @@ export function Header() {
               className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 transition-colors"
             />
           </div>
-        </div>
-
+        </div> */}
         <div className="flex items-center space-x-4">
           <ThemeToggle />
 
