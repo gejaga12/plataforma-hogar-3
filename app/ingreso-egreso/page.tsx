@@ -22,7 +22,8 @@ import {
 } from 'lucide-react';
 import { ProtectedLayout } from '@/components/layout/protected-layout';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { cn } from '@/lib/utils';
+import { cn } from '@/utils/cn';
+
 
 interface MovimientoIngresoEgreso {
   id: string;

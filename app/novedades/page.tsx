@@ -22,7 +22,8 @@ import { NovedadCard } from '@/components/dashboard/novedad-card';
 import { NovedadModal } from '@/components/dashboard/novedad-modal';
 import { NovedadFormModal } from '@/components/dashboard/novedad-form-modal';
 import { Novedad } from '@/utils/types';
-import { cn } from '@/lib/utils';
+import { cn } from '@/utils/cn';
+
 
 // Mock data
 const mockNovedades: Novedad[] = [

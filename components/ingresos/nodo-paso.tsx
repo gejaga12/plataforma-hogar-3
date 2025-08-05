@@ -13,7 +13,7 @@ import {
   Building
 } from 'lucide-react';
 import { PasoIngreso, EstadoPaso } from '@/utils/types';
-import { cn } from '@/lib/utils';
+import { cn } from '@/utils/cn';
 
 interface NodoPasoProps {
   data: PasoIngreso & {

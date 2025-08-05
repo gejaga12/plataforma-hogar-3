@@ -14,7 +14,8 @@ import {
   ChevronDown
 } from 'lucide-react';
 import { ProcesoIngreso } from '@/utils/types';
-import { cn } from '@/lib/utils';
+import { cn } from '@/utils/cn';
+
 
 interface IngresoDetailSidebarProps {
   proceso: ProcesoIngreso;

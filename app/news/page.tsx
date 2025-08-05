@@ -17,7 +17,8 @@ import {
 import { ProtectedLayout } from '@/components/layout/protected-layout';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { News } from '@/utils/types';
-import { cn } from '@/lib/utils';
+import { cn } from '@/utils/cn';
+
 
 // Mock data - replace with actual API calls
 const mockNews: News[] = [

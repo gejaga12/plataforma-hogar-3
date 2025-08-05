@@ -20,7 +20,8 @@ import { ProtectedLayout } from '@/components/layout/protected-layout';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { EquipoQR } from '@/components/equipos/equipo-qr';
 import { EquipoUbicacion } from '@/components/equipos/equipo-ubicacion';
-import { cn } from '@/lib/utils';
+import { cn } from '@/utils/cn';
+
 
 interface Equipo {
   id: string;

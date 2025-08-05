@@ -18,7 +18,8 @@ import { ProtectedLayout } from '@/components/layout/protected-layout';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { EquipoForm } from '@/components/equipos/equipo-form';
 import { EquipoQR } from '@/components/equipos/equipo-qr';
-import { cn } from '@/lib/utils';
+import { cn } from '@/utils/cn';
+
 
 interface Equipo {
   id: string;

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { CheckCircle, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { cn } from '@/lib/utils';
+import { cn } from '@/utils/cn';
 
 interface OrderStatusSectionProps {
   orden: {
