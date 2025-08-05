@@ -25,7 +25,7 @@ import { OrderMapsSection } from '@/components/order-detail/order-maps-section';
 import { OrderStatusSection } from '@/components/order-detail/order-status-section';
 import { OrderWorkTimeSection } from '@/components/order-detail/order-work-time-section';
 import { OrderFormSection } from '@/components/order-detail/order-form-section';
-import { cn } from '@/lib/utils';
+import { cn } from '@/utils/cn';
 
 interface OrdenDetalle {
   id: string;

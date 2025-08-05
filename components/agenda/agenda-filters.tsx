@@ -2,7 +2,7 @@
 
 import { Calendar, ChevronLeft, ChevronRight, Filter, Search } from 'lucide-react';
 import { AgendaView, AgendaEventType } from '@/utils/types';
-import { cn } from '@/lib/utils';
+import { cn } from '@/utils/cn';
 
 interface AgendaFiltersProps {
   searchTerm: string;

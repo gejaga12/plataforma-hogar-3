@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { File, Download, ExternalLink, MoreVertical, Copy, Reply, Trash2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/utils/cn';
 
 export interface Message {
   id: string;

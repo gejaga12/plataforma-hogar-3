@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Search, Filter, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
 import { FiltrosSucursales } from '@/app/panoramica/page';
-import { cn } from '@/lib/utils';
+import { cn } from '@/utils/cn';
 
 interface FiltrosPanoramicaProps {
   filtros: FiltrosSucursales;

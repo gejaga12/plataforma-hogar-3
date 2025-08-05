@@ -23,7 +23,7 @@ import { Sucursal } from '@/app/panoramica/page';
 import { EquiposTabla } from './EquiposTabla';
 import { SucursalDashboard } from './SucursalDashboard';
 import { TagEstado } from '@/components/ui/TagEstado';
-import { cn } from '@/lib/utils';
+import { cn } from '@/utils/cn';
 
 interface SucursalPanelProps {
   sucursal: Sucursal;

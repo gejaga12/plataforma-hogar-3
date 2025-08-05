@@ -14,7 +14,7 @@ import {
 import { Equipo } from '@/app/panoramica/page';
 import { QRButton } from '@/components/ui/QRButton';
 import { TagEstado } from '@/components/ui/TagEstado';
-import { cn } from '@/lib/utils';
+import { cn } from '@/utils/cn';
 
 interface EquiposTablaProps {
   equipos: Equipo[];

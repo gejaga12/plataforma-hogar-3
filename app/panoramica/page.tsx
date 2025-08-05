@@ -19,7 +19,7 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { MapaSucursales } from '@/components/panoramica/MapaSucursales';
 import { SucursalPanel } from '@/components/panoramica/SucursalPanel';
 import { FiltrosPanoramica } from '@/components/panoramica/FiltrosPanoramica';
-import { cn } from '@/lib/utils';
+import { cn } from '@/utils/cn';
 
 // Tipos
 export interface Sucursal {
