@@ -1,16 +1,12 @@
 import { getAuthToken } from "@/utils/authToken";
 import { BASE_URL } from "@/utils/baseURL";
+import { SucursalHogar } from "@/utils/types";
+
 import axios from "axios";
 
-export interface NuevaSucursalHogar {
-  lan?: number;
-  lng?: number;
-  direction?: string;
-  name: string;
-}
-
 export class SucursalHogarService {
-  static async crearSucursalHogar(data: NuevaSucursalHogar) {
+
+  static async crearSucursalHogar(data: SucursalHogar) {
     try {
       const token = getAuthToken();
 

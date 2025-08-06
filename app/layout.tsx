@@ -8,7 +8,6 @@ import { ThemeProvider } from "@/components/theme/theme-provider";
 import { useEffect } from "react";
 import { AuthProvider } from "@/context/AuthContext";
 import { Toaster } from "react-hot-toast";
-import { JerarquiaProvider } from "@/context/JerarquiaContext";
 
 const inter = Inter({ subsets: ["latin"] });
 

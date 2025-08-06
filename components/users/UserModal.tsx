@@ -54,6 +54,7 @@ const UserModal: React.FC<UserModalProps> = ({
   zonas,
 }) => {
   const [formData, setFormData] = useState<CreateUserData>(initialFormData);
+
   const [formDataLabor, setFormDataLabor] =
     useState<FormDataLabor>(initialLabor);
 
@@ -83,7 +84,7 @@ const UserModal: React.FC<UserModalProps> = ({
         direccion: user.address || "",
         roles: roleIds,
         notificaciones: user.notificaciones || { mail: true, push: true },
-        sucursalHogar: user.sucursalHogar || "",
+        sucursalHogar: user.sucursalHogar?.id ?? "",
         activo: user.isActive ?? true,
         puesto: user.labor?.puestos?.[0]?.name || "",
       });

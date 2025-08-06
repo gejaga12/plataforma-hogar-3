@@ -1,8 +1,10 @@
 import React, { useState } from "react";
 import { LoadingSpinner } from "../ui/loading-spinner";
-import { CreateUserData, UserAdapted, Zona } from "@/utils/types";
+import { CreateUserData, SucursalHogar, UserAdapted, Zona } from "@/utils/types";
 import { Eye, EyeOff } from "lucide-react";
 import FormDatosLaborales, { FormDataLabor } from "./FormDatosLaborales";
+import { SucursalHogarService } from "@/api/apiSucursalHogar";
+import { useQuery } from "@tanstack/react-query";
 
 interface FormUsersProps {
   user: UserAdapted | undefined;
@@ -36,6 +38,11 @@ const FormUsers: React.FC<FormUsersProps> = ({
   user,
 }) => {
   const [showPassword, setShowPassword] = useState(false);
+
+  const { data: sucursales, isLoading: isLoadingSucursales } = useQuery({
+    queryKey: ["sucursalesHogar"],
+    queryFn: SucursalHogarService.getAllSucursalesHogar,
+  });
 
   return (
     <>
@@ -231,14 +238,15 @@ const FormUsers: React.FC<FormUsersProps> = ({
                 }
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-800 dark:border-gray-800"
                 required={mode === "create"}
-                disabled={isReadOnly}
+                 disabled={isReadOnly || isLoadingSucursales}
               >
                 <option value="">Seleccionar sucursal</option>
-                <option value="Sede Central">Sede Central</option>
-                <option value="Sucursal Norte">Sucursal Norte</option>
-                <option value="Sucursal Sur">Sucursal Sur</option>
-                <option value="Sucursal Este">Sucursal Este</option>
-                <option value="Sucursal Oeste">Sucursal Oeste</option>
+
+                {sucursales?.map((sucursal: SucursalHogar) => (
+                  <option key={sucursal.id} value={sucursal.id}>
+                    {sucursal.name}
+                  </option>
+                ))}
               </select>
             </div>
           </div>
@@ -324,7 +332,7 @@ const FormUsers: React.FC<FormUsersProps> = ({
                           },
                         }))
                       }
-                     className="accent-blue-600 dark:accent-violet-700"
+                      className="accent-blue-600 dark:accent-violet-700"
                       disabled={isReadOnly}
                     />
                     <span className="ml-2 text-sm text-gray-700 dark:text-gray-400">

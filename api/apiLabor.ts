@@ -96,8 +96,6 @@ export class LaborService {
         },
       });
 
-      console.log("enviando puesto:", data);
-
       return response.data;
     } catch (error: any) {
       const message = error?.response?.data?.message || "Error al crear puesto";

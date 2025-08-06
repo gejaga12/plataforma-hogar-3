@@ -3,8 +3,8 @@ import { BASE_URL } from "@/utils/baseURL";
 import axios from "axios";
 
 interface CrearPuestoPayload {
-  puesto: string;
-  laborid: string;
+  name: string;
+  laborId: string;
 }
 interface PuestoResponse {
   id: string;

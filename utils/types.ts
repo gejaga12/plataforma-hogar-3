@@ -17,7 +17,10 @@ export interface UserAdapted {
   relacionLaboral: string;
   photoURL?: string;
   certificacionesTitulo: string;
-  sucursalHogar: string;
+  sucursalHogar: {
+    id: string;
+    name: string;
+  };
   isActive: boolean;
   notificaciones: {
     mail: boolean;
@@ -43,7 +46,7 @@ export interface CreateUserData {
     push: boolean;
   };
   puesto: string;
-  sucursalHogar: string; // sucursal.name
+  sucursalHogar: string;
   activo: boolean;
   jerarquiaId?: string;
 }
@@ -80,10 +83,10 @@ export interface Role {
 }
 
 export interface SucursalHogar {
-  lan: number;
-  lng: number;
-  direction: string;
-  id: string;
+  lan?: number;
+  lng?: number;
+  address?: string;
+  id?: string;
   name: string;
 }
 
