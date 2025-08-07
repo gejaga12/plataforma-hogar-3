@@ -97,10 +97,13 @@ export interface GeoGeneric {
 }
 
 export interface Pais extends GeoGeneric {}
+
 export interface Provincia extends GeoGeneric {
   regionId?: string;
   code?: number;
+  paisId?: string;
 }
+
 export interface Zona extends GeoGeneric {
   Coords?: string[];
   pais?: Pais;

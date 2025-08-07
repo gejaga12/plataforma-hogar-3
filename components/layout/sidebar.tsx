@@ -185,13 +185,7 @@ const menuItems: MenuItem[] = [
     href: "/roles",
     roles: ["Admin"],
   },
-  {
-    id: "zonas",
-    label: "Zonas",
-    icon: "MapPinned",
-    href: "/zonas",
-    roles: ["Admin"],
-  },
+
   {
     id: "organigrama",
     label: "Organigrama Empresarial",
@@ -265,6 +259,13 @@ const menuItems: MenuItem[] = [
     icon: "Building2",
     href: "/sucursales",
     roles: ["Supervisor", "Admin"],
+  },
+  {
+    id: "zonas",
+    label: "Zonas",
+    icon: "MapPinned",
+    href: "/zonas",
+    roles: ["Admin"],
   },
   {
     id: "paises",
@@ -426,7 +427,6 @@ const menuCategories = [
     items: [
       "users",
       "roles",
-      "zonas",
       "organigrama",
       "tecnicos",
       "ingreso-egreso",
@@ -443,6 +443,7 @@ const menuCategories = [
       "grupos",
       "servicios",
       "sucursales",
+      "zonas",
       "paises",
       "provincias",
       "ciudades",

@@ -129,11 +129,39 @@ export class ZonaService {
     return response.data;
   }
 
+  static async deletePais(id: string): Promise<void> {
+    const token = getAuthToken();
+
+    const response = await axios.delete(`${BASE_URL}/pais/${id}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    return response.data;
+  }
+
   //POST para provincia
-  static async crearProvincia(data: { name: string }): Promise<Provincia> {
+  static async crearProvincia(data: {
+    name: string;
+    paisId: string;
+    regionId: string;
+  }): Promise<Provincia> {
     const token = getAuthToken();
 
     const response = await axios.post(`${BASE_URL}/provincia`, data, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    return response.data;
+  }
+
+  static async deleteProvincia(id: string): Promise<void> {
+    const token = getAuthToken();
+
+    const response = await axios.delete(`${BASE_URL}/provincia/${id}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },

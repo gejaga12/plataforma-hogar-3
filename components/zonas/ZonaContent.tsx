@@ -5,7 +5,6 @@ import { Pais, Provincia, Zona } from "@/utils/types";
 import ZonaModals from "./ZonaModals";
 import { CreateRegionDto } from "@/api/apiZonas";
 import ProvinciaModal from "./Zona-provincia-modal";
-import ZonaCrearProvPais from "./ZonaCrearProvPais";
 import ConfirmDeleteModal from "../ui/ConfirmDeleteModal";
 
 interface Props {
@@ -27,8 +26,6 @@ interface Props {
   >;
   toggleMutation: (id: string) => void;
   createZona: (data: CreateRegionDto) => void;
-  createPaisMutation: (name: string) => void;
-  createPronvinciaMutation: (name: string) => void;
   addPronviceMutation: (data: {
     zonaId: string;
     provinciaIds: string[];
@@ -46,18 +43,12 @@ const ZonaContent: React.FC<Props> = ({
   setModalState,
   createZona,
   toggleMutation,
-  createPaisMutation,
-  createPronvinciaMutation,
   addPronviceMutation,
 }) => {
   const [showModalProvincias, setShowModalProvincias] = useState(false);
   const [zonaSeleccionada, setZonaSeleccionada] = useState<Zona | null>(null);
   const [selectedZonaId, setSelectedZonaId] = useState<string | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [modalCreatePaisProv, setModalCreatePaisProv] = useState<{
-    isOpen: boolean;
-    mode: "provincia" | "pais" | undefined;
-  }>({ isOpen: false, mode: undefined });
 
   const handleAbrirModalProvincias = (zonaId: string) => {
     setSelectedZonaId(zonaId);
@@ -91,33 +82,13 @@ const ZonaContent: React.FC<Props> = ({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-400">Zonas</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-400">
+            Zonas
+          </h1>
           <p className="text-gray-600 mt-1">Gestiona las zonas del sistema</p>
         </div>
 
         <div className="flex gap-4 justify-between">
-          <button
-            onClick={() =>
-              setModalCreatePaisProv({
-                isOpen: true,
-                mode: "provincia",
-              })
-            }
-            className="bg-orange-600 hover:bg-orange-700 dark:bg-orange-500 dark:hover:bg-orange-400 text-white text-sm px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
-          >
-            <Plus size={20} />
-            <span>Crear Provincia</span>
-          </button>
-
-          <button
-            onClick={() =>
-              setModalCreatePaisProv({ isOpen: true, mode: "pais" })
-            }
-            className="bg-orange-600 hover:bg-orange-700 dark:bg-orange-500 dark:hover:bg-orange-400 text-white text-sm px-3 py-2 rounded-lg flex items-center space-x-2 transition-colors"
-          >
-            <Plus size={20} />
-            <span>Crear Pais</span>
-          </button>
           <button
             onClick={() => setModalState({ isOpen: true, mode: "create" })}
             className="bg-orange-600 hover:bg-orange-700 dark:bg-orange-500 dark:hover:bg-orange-400 text-white text-sm px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
@@ -183,8 +154,7 @@ const ZonaContent: React.FC<Props> = ({
                       <span className="text-xs font-light text-gray-900 dark:text-gray-400 truncate">
                         {zona.provincias
                           ?.map((provincia) => provincia.name)
-                          .join(", ") || "Sin provincias asignadas"
-                        }
+                          .join(", ") || "Sin provincias asignadas"}
                       </span>
                     </div>
                   </td>
@@ -272,13 +242,6 @@ const ZonaContent: React.FC<Props> = ({
           zonas={zonas}
         />
       )}
-
-      <ZonaCrearProvPais
-        modalCreatePaisProv={modalCreatePaisProv}
-        setModalCreatePaisProv={setModalCreatePaisProv}
-        createPaisMutation={createPaisMutation}
-        createPronvinciaMutation={createPronvinciaMutation}
-      />
 
       <ConfirmDeleteModal
         isOpen={isDeleteModalOpen}

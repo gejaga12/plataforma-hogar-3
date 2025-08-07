@@ -4,7 +4,7 @@ import ZonaContent from "@/components/zonas/ZonaContent";
 import { CreateRegionDto, ZonaService } from "@/api/apiZonas";
 import { Zona } from "@/utils/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import toast from "react-hot-toast";
 
 const ZonaPage = () => {
@@ -30,7 +30,6 @@ const ZonaPage = () => {
   const provincias = data?.provincias ?? [];
 
   //  console.log("zonas:", zonas);
-  // console.log('paises:', paises);
   //  console.log('provincias:', provincias);
 
   const createZonaMutation = useMutation({
@@ -42,31 +41,6 @@ const ZonaPage = () => {
       toast.success("Zona creada con exito");
       queryClient.invalidateQueries({ queryKey: ["zonas"] });
       setModalState({ isOpen: false, mode: "create", zona: undefined });
-    },
-  });
-
-  const createPaisMutation = useMutation({
-    mutationFn: (name: string) => ZonaService.crearPais({ name }),
-    onSuccess: () => {
-      toast.success("País creado con éxito");
-      queryClient.invalidateQueries({ queryKey: ["zonas"] });
-    },
-    onError: () => {
-      toast.error("Hubo un error al crear el país");
-    },
-  });
-
-  const createProvinciaMutation = useMutation({
-    mutationFn: (name: string) => {
-      console.log("creando pronvicia", name);
-      return ZonaService.crearProvincia({ name });
-    },
-    onSuccess: () => {
-      toast.success("Provincia creada con éxito");
-      queryClient.invalidateQueries({ queryKey: ["zonas"] });
-    },
-    onError: () => {
-      toast.error("Hubo un error al crear la provincia");
     },
   });
 
@@ -119,10 +93,7 @@ const ZonaPage = () => {
         setModalState={setModalState}
         createZona={(data) => createZonaMutation.mutate(data)}
         toggleMutation={(id) => onToggleZona.mutate(id)}
-        createPaisMutation={(name) => createPaisMutation.mutate(name)}
-        createPronvinciaMutation={(name) =>
-          createProvinciaMutation.mutate(name)
-        }
+        
         addPronviceMutation={(data: {
           zonaId: string;
           provinciaIds: string[];
