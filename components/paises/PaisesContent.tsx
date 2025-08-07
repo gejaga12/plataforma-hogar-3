@@ -20,7 +20,7 @@ const PaisesContent: React.FC<PaisesContentProps> = ({
   });
   const paises = data?.paises ?? [];
 
-  console.log('paises:', paises);
+  // console.log('paises:', paises);
 
   const [modalCreate, setModalCreate] = useState({
     isOpen: false,

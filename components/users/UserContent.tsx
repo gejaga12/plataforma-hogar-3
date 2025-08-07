@@ -14,7 +14,6 @@ import {
   LaborService,
 } from "@/api/apiLabor";
 import { PuestoService } from "@/api/apiPuesto";
-import Swal from "sweetalert2";
 import toast from "react-hot-toast";
 import { LoadingSpinner } from "../ui/loading-spinner";
 import {
@@ -232,24 +231,11 @@ const UsersContent = () => {
     onSuccess: async () => {
       await refetchUsuarios();
       setDeleteModal({ isOpen: false });
-
-      Swal.fire({
-        title: "Eliminado",
-        text: "El usuario fue eliminado correctamente.",
-        icon: "success",
-        confirmButtonText: "Aceptar",
-        confirmButtonColor: "#3085d6",
-      });
+      toast.success("Usuario eliminado con exito.");
     },
     onError: (error: any) => {
       console.error("Error al eliminar el usuario:", error.message);
-      Swal.fire({
-        title: "Error",
-        text: error?.message || "Ocurrió un error al eliminar el usuario.",
-        icon: "error",
-        confirmButtonText: "Cerrar",
-        confirmButtonColor: "#d33",
-      });
+      toast.error("Ocurrio un error al eliminar el usuario");
     },
   });
 
@@ -302,7 +288,6 @@ const UsersContent = () => {
 
   const confirmDelete = () => {
     if (deleteModal.user) {
-      console.log(deleteModal.user.id);
       deleteMutation.mutate(deleteModal.user.id);
     }
   };
