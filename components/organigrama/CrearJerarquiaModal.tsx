@@ -1,6 +1,6 @@
 // components/organigrama/CrearJerarquiaModal.tsx
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { X } from "lucide-react";
+import { Info, InfoIcon, X } from "lucide-react";
 import {
   CrearJerarquiaConUsuario,
   crearJerarquiaData,
@@ -17,7 +17,7 @@ interface Props {
   nodoId?: string;
   initialData?: {
     id: string;
-    name: string;
+    cargo: string;
     area: string;
   };
   areas?: string[];
@@ -34,7 +34,7 @@ export const CrearJerarquiaModal = ({
   areasLoading,
 }: Props) => {
   const [form, setForm] = useState<crearJerarquiaData>({
-    name: initialData?.name ?? "",
+    cargo: initialData?.cargo ?? "",
     area: initialData?.area ?? "",
     parent: nodoId,
   });
@@ -44,12 +44,12 @@ export const CrearJerarquiaModal = ({
 
   const resetForm = useCallback(() => {
     setForm({
-      name: initialData?.name ?? "",
+      cargo: initialData?.cargo ?? "",
       area: initialData?.area ?? "",
       parent: nodoId,
     });
     setSelectedArea(initialData?.area ?? null);
-  }, [nodoId, initialData?.name, initialData?.area]);
+  }, [nodoId, initialData?.cargo, initialData?.area]);
 
   // 👉 al abrir (o si cambian nodoId/initialData) resetea
   useEffect(() => {
@@ -90,12 +90,12 @@ export const CrearJerarquiaModal = ({
 
         <div className="space-y-2">
           <label className="block text-sm text-gray-700 dark:text-gray-300">
-            Puesto *
+            Cargo *
           </label>
           <input
             type="text"
-            value={form.name ?? ""}
-            onChange={(e) => setForm({ ...form, name: e.target.value })}
+            value={form.cargo ?? ""}
+            onChange={(e) => setForm({ ...form, cargo: e.target.value })}
             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
             required
           />
@@ -119,10 +119,12 @@ export const CrearJerarquiaModal = ({
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
               required
             />
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              Tip: si marcás una, se autocompleta arriba; si la desmarcás, podés
-              escribir una nueva.
-            </p>
+            <span className="flex gap-2 items-center">
+              <InfoIcon size={15} className="text-red-500"/>
+              <p className="text-xs text-gray-800 dark:text-gray-400">
+                Selecciona un area existente o crea una nueva
+              </p>
+            </span>
             {/* Lista de áreas con checkbox (single-select behavior) */}
             <div className="mt-2 max-h-40 overflow-auto rounded border border-gray-200 dark:border-gray-700 p-2">
               {areasLoading ? (
@@ -165,8 +167,8 @@ export const CrearJerarquiaModal = ({
         <div className="flex justify-end">
           <button
             onClick={() => onSubmit({ ...form })}
-            className="bg-orange-600 text-white px-4 py-2 rounded hover:bg-orange-700"
-            disabled={!form.name || !form.area}
+            className="bg-orange-600 text-white px-4 py-2 rounded hover:bg-orange-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+            disabled={!form.cargo || !form.area}
           >
             {initialData ? "Asignar Usuario" : "Crear"}
           </button>

@@ -11,7 +11,6 @@ export const useJerarquia = () => {
   } = useQuery({
     queryKey: ["jerarquia"],
     queryFn: async () => {
-      console.log("✅ Ejecutando getJerarquiaCompleta");
       return JerarquiaService.getJerarquiaCompleta();
     },
     staleTime: 1000 * 60 * 5, // 5 minutos

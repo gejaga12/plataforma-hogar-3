@@ -1,23 +1,27 @@
 import { JerarquiaNodo } from "@/api/apiJerarquia";
 import { areaColors } from "@/app/organigrama/page";
 import { cn } from "@/utils/cn";
-import { UserPlus } from "lucide-react";
+import { UserPlus, UserRoundX, X } from "lucide-react";
 
 interface OrgNodeProps {
   node: JerarquiaNodo;
   onNodeClick: (node: JerarquiaNodo) => void;
   onOpenCrearModal: (parentId: string) => void;
+  onSolicitarEliminarNodo: (id: string) => void;
+  onSolicitarEliminarAsociacion: (id: string, userid: number) => void;
   level?: number;
 }
 
 const OrgNode = ({
   node,
-  onNodeClick,
   level = 0,
+  onNodeClick,
   onOpenCrearModal,
+  onSolicitarEliminarNodo,
+  onSolicitarEliminarAsociacion,
 }: OrgNodeProps) => {
   const initial = node.fullName?.charAt(0)?.toUpperCase() || "?";
-  const puesto = node.puesto?.join(" / ") || node.cargo || "Sin puesto";
+  const puesto = node.cargo || "Sin puesto";
 
   return (
     <div className="flex flex-col items-center">
@@ -26,10 +30,27 @@ const OrgNode = ({
         <div
           onClick={() => onNodeClick(node)}
           className={cn(
-            "cursor-pointer rounded-lg shadow-sm border p-3 w-48 hover:shadow-md transition-all mb-4",
-            "bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:ring-2 hover:ring-orange-500"
+            "cursor-pointer rounded-lg shadow-sm p-3 w-48 transition-all mb-4",
+            "bg-white dark:bg-gray-800",
+            "animate-in fade-in zoom-in duration-500",
+            node.user
+              ? "border border-gray-200 dark:border-gray-700 hover:shadow-md hover:ring-2 hover:ring-orange-500"
+              : "border-2 border-dashed border-orange-400 hover:border-orange-500"
           )}
         >
+          {/* Botón X (esquina superior derecha) */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onSolicitarEliminarNodo(node.id);
+            }}
+            className="absolute top-1 right-1 text-red-600 hover:bg-red-100 hover:rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-10"
+            title="Eliminar este nodo"
+          >
+            <X size={16} />
+          </button>
+
+          {/* Contenido del nodo */}
           <div className="flex items-center space-x-3">
             {/* Avatar o inicial */}
             <div className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
@@ -40,9 +61,9 @@ const OrgNode = ({
               <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
                 {node.fullName}
               </p>
-              <p 
-              className="text-xs text-gray-600 dark:text-gray-400 truncate"
-              title={puesto}
+              <p
+                className="text-xs text-gray-600 dark:text-gray-400 truncate"
+                title={puesto}
               >
                 {puesto}
               </p>
@@ -63,17 +84,44 @@ const OrgNode = ({
           </div>
         </div>
 
-        {/* Botón para agregar subordinado */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onOpenCrearModal(node.id); // <- llama al padre
-          }}
-          className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 bg-green-500 hover:bg-green-600 text-white rounded-full p-1 shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
-          title="Agregar subordinado"
-        >
-          <UserPlus size={16} />
-        </button>
+        {/* Botones flotantes debajo del nodo */}
+        <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity animate-in slide-in-from-top-2 duration-800">
+          {/* Botón Agregar */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onOpenCrearModal(node.id);
+            }}
+            className="bg-green-500 hover:bg-green-600 text-white rounded-full p-1 shadow-md"
+            title="Agregar subordinado"
+          >
+            <UserPlus size={16} />
+          </button>
+
+          {/* Botón Eliminar */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              if (typeof node.userid === "number") {
+                onSolicitarEliminarAsociacion(node.id, node.userid);
+              }
+            }}
+            disabled={typeof node.userid !== "number"}
+            className={cn(
+              "rounded-full p-1 shadow-md transition-opacity",
+              typeof node.userid !== "number"
+                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                : "bg-red-500 hover:bg-red-600 text-white"
+            )}
+            title={
+              typeof node.userid === "number"
+                ? "Liberar nodo"
+                : "No hay usuario asociado"
+            }
+          >
+            <UserRoundX size={16} />
+          </button>
+        </div>
       </div>
 
       {/* Subordinados */}
@@ -95,6 +143,8 @@ const OrgNode = ({
                   node={child}
                   onNodeClick={onNodeClick}
                   onOpenCrearModal={onOpenCrearModal}
+                  onSolicitarEliminarNodo={onSolicitarEliminarNodo}
+                  onSolicitarEliminarAsociacion={onSolicitarEliminarAsociacion}
                   level={level + 1}
                 />
               </div>

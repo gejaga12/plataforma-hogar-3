@@ -15,11 +15,13 @@ import { AddEmployeeModal } from "./add-employee-modal";
 import { CrearJerarquiaModal } from "./CrearJerarquiaModal";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
+import ConfirmDeleteModal from "../ui/ConfirmDeleteModal";
 
 const OrganigramaContent = () => {
-  const { jerarquia, areas, isLoading, refetchJerarquia } = useJerarquia();
 
   const queryClient = useQueryClient();
+
+  const { jerarquia, areas, isLoading } = useJerarquia();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedArea, setSelectedArea] = useState<string>("");
@@ -32,6 +34,14 @@ const OrganigramaContent = () => {
   const [showCrearModal, setShowCrearModal] = useState(false);
   const [nodoId, setNodoId] = useState<string | undefined>(undefined);
   const [zoom, setZoom] = useState(1);
+  const [modalDeleteType, setModalDeleteType] = useState<
+    "nodo" | "asociacion" | null
+  >(null);
+  const [itemToDelete, setItemToDelete] = useState<{
+    id: string;
+    userid?: number;
+    fullName?: string;
+  } | null>(null);
 
   const chartContainerRef = useRef<HTMLDivElement>(null);
 
@@ -88,7 +98,7 @@ const OrganigramaContent = () => {
   });
 
   const asociarUsuarioMutation = useMutation({
-    mutationFn: ({ orgid, userid }: { orgid: string; userid: string }) =>
+    mutationFn: ({ orgid, userid }: { orgid: string; userid: number }) =>
       JerarquiaService.asociarUsuarioANodo(orgid, userid),
     onSuccess: () => {
       toast.success("Usuario asignado al nuevo nodo");
@@ -97,6 +107,33 @@ const OrganigramaContent = () => {
     onError: (error: any) => {
       console.error("Error al asociar usuario:", error?.message);
       toast.error("No se pudo asociar el usuario");
+    },
+  });
+
+  const eliminarNodo = useMutation({
+    mutationFn: (id: string) => {
+      return JerarquiaService.removerNodoDeJerarquia(id);
+    },
+    onSuccess: () => {
+      toast.success("Nodo eliminado con exito.");
+      queryClient.invalidateQueries({ queryKey: ["jerarquia"] });
+    },
+    onError: (error: any) => {
+      toast.error("Ocurrio un error al eliminar el nodo.");
+      console.log("Error:", error.message);
+    },
+  });
+
+  const eliminarAsociacion = useMutation({
+    mutationFn: ({ id, userid }: { id: string; userid: number }) => {
+      return JerarquiaService.removerUsuarioDeNodo(userid, id);
+    },
+    onSuccess: () => {
+      toast.success("Se elimino el usuario del nodo con exito.");
+      queryClient.invalidateQueries({ queryKey: ["jerarquia"] });
+    },
+    onError: () => {
+      toast.error("Ocurrio un error al eliminar el usuario.");
     },
   });
 
@@ -202,6 +239,7 @@ const OrganigramaContent = () => {
       {/* Filtros compactos */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-3">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
+          {/* filtro de area */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Área
@@ -219,7 +257,7 @@ const OrganigramaContent = () => {
               ))}
             </select>
           </div>
-
+          {/* input busqueda */}
           <div className="relative flex gap-5">
             <Search
               className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500"
@@ -285,6 +323,14 @@ const OrganigramaContent = () => {
                       setNodoId(parentId);
                       setShowCrearModal(true);
                     }}
+                    onSolicitarEliminarNodo={(id) => {
+                      setModalDeleteType("nodo");
+                      setItemToDelete({ id });
+                    }}
+                    onSolicitarEliminarAsociacion={(id, userid) => {
+                      setModalDeleteType("asociacion");
+                      setItemToDelete({ id, userid });
+                    }}
                   />
                 ))}
               </div>
@@ -305,7 +351,7 @@ const OrganigramaContent = () => {
               </span>
             </div>
             <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 bg-white border-2 border-dashed border-orange-300 rounded"></div>
+              <div className="w-3 h-3 bg-white border-2 border-dashed border-orange-500 dark:border-orange-400 dark:bg-gray-800 rounded"></div>
               <span className="text-xs text-gray-600 dark:text-gray-400">
                 Vacante
               </span>
@@ -341,6 +387,36 @@ const OrganigramaContent = () => {
         onSubmit={handleCrearJerarquia}
         areas={areas}
         areasLoading={isLoading}
+      />
+
+      <ConfirmDeleteModal
+        isOpen={modalDeleteType !== null}
+        onClose={() => {
+          setModalDeleteType(null);
+          setItemToDelete(null);
+        }}
+        onConfirm={() => {
+          if (!itemToDelete) return;
+
+          if (modalDeleteType === "nodo") {
+            eliminarNodo.mutate(itemToDelete.id);
+          } else if (modalDeleteType === "asociacion" && itemToDelete.userid) {
+            eliminarAsociacion.mutate({
+              id: itemToDelete.id,
+              userid: itemToDelete.userid,
+            });
+          }
+          setModalDeleteType(null);
+          setItemToDelete(null);
+        }}
+        title={modalDeleteType === "nodo" ? "Eliminar nodo" : "Liberar nodo"}
+        message={
+          modalDeleteType === "nodo"
+            ? "¿Seguro que deseas eliminar este nodo?"
+            : "¿Deseas liberar este nodo? El usuario ya no estará asociado a esta posición."
+        }
+        confirmText={modalDeleteType === "nodo" ? "Eliminar" : "Liberar"}
+        cancelText="Cancelar"
       />
     </div>
   );

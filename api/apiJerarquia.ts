@@ -3,7 +3,7 @@ import { BASE_URL } from "@/utils/baseURL";
 import axios from "axios";
 
 export interface crearJerarquiaData {
-  name: string;
+  cargo: string;
   parent?: string; //opcional para padre
   area: string;
 }
@@ -32,7 +32,6 @@ export interface JerarquiaCompletaResponse {
 }
 
 export class JerarquiaService {
-  
   static async crearJerarquia(data: crearJerarquiaData): Promise<any> {
     try {
       const token = getAuthToken();
@@ -73,10 +72,10 @@ export class JerarquiaService {
 
   static async asociarUsuarioANodo(
     orgid: string,
-    userid: string
+    userid: number
   ): Promise<any> {
     try {
-      const token = getAuthToken();;
+      const token = getAuthToken();
 
       const response = await axios.post(
         `${BASE_URL}/jerarquia/${orgid}/${userid}`,
@@ -119,14 +118,14 @@ export class JerarquiaService {
   }
 
   static async removerUsuarioDeNodo(
-    orgid: string,
-    userid: number
+    userid: number,
+    id: string
   ): Promise<{ id: string; name: string }> {
     try {
-      const token = localStorage.getItem("token");
+      const token = getAuthToken();
 
       const response = await axios.delete(
-        `${BASE_URL}/jerarquia/${orgid}/${userid}`,
+        `${BASE_URL}/jerarquia/${id}/${userid}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
