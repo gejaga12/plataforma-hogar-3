@@ -2,7 +2,15 @@ import React, { useRef, useState } from "react";
 import NodeDetailModal from "./NodeDetailModal";
 import JobSearchModal from "./JobsSearchModal";
 import OrgNode from "./OrgNode";
-import { Minus, Plus, RotateCcw, Search, UserPlus, Users } from "lucide-react";
+import {
+  Minus,
+  Plus,
+  RotateCcw,
+  Route,
+  Search,
+  UserPlus,
+  Users,
+} from "lucide-react";
 import { LoadingSpinner } from "../ui/loading-spinner";
 import {
   CrearJerarquiaConUsuario,
@@ -18,7 +26,6 @@ import toast from "react-hot-toast";
 import ConfirmDeleteModal from "../ui/ConfirmDeleteModal";
 
 const OrganigramaContent = () => {
-
   const queryClient = useQueryClient();
 
   const { jerarquia, areas, isLoading } = useJerarquia();
@@ -207,9 +214,12 @@ const OrganigramaContent = () => {
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-            Organigrama Empresarial
-          </h1>
+          <div className="flex gap-2 items-center">
+            <Route size={26} className="text-red-600 dark:text-red-500 -rotate-45"/>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+              Organigrama Empresarial
+            </h1>
+          </div>
           <p className="text-gray-600 dark:text-gray-400 mt-1">
             Visualiza la estructura organizacional de la empresa
           </p>
@@ -283,7 +293,7 @@ const OrganigramaContent = () => {
       </div>
 
       {/* Organigrama */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden relative">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-600 overflow-hidden relative">
         {/* Controles de Zoom */}
         <div className="absolute top-4 right-4 z-10 flex space-x-2">
           <button

@@ -44,7 +44,7 @@ const OrgNode = ({
               e.stopPropagation();
               onSolicitarEliminarNodo(node.id);
             }}
-            className="absolute top-1 right-1 text-red-600 hover:bg-red-100 hover:rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-10"
+            className="absolute top-1 right-1 text-red-600 hover:bg-red-100 dark:text-red-500 dark:hover:bg-red-200 hover:rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-10"
             title="Eliminar este nodo"
           >
             <X size={16} />
@@ -128,17 +128,17 @@ const OrgNode = ({
       {node.subordinados && node.subordinados.length > 0 && (
         <div className="relative">
           {/* Línea vertical superior */}
-          <div className="absolute left-1/2 transform -translate-x-1/2 w-px h-6 bg-gray-300 dark:bg-gray-600 -top-4" />
+          <div className="absolute left-1/2 transform -translate-x-1/2 w-px h-6 bg-gray-900 dark:bg-gray-600 -top-4" />
 
           {/* Línea horizontal si hay más de uno */}
           {node.subordinados.length > 1 && (
-            <div className="absolute top-2 left-0 right-0 h-px bg-gray-300 dark:bg-gray-600" />
+            <div className="absolute top-2 left-0 right-0 h-px bg-gray-900 dark:bg-gray-600" />
           )}
 
           <div className="flex space-x-8 pt-6">
             {node.subordinados.map((child) => (
               <div key={child.id} className="relative">
-                <div className="absolute left-1/2 transform -translate-x-1/2 w-px h-6 bg-gray-300 dark:bg-gray-600 -top-6" />
+                <div className="absolute left-1/2 transform -translate-x-1/2 w-px h-6 bg-gray-900 dark:bg-gray-600 -top-4" />
                 <OrgNode
                   node={child}
                   onNodeClick={onNodeClick}
