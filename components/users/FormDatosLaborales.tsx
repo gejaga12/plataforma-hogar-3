@@ -9,7 +9,7 @@ interface FormDatosLaboralesProps {
   user: UserAdapted | undefined;
 }
 
-export type EstadoContractual = "Periodo de Prueba" | "Contratado";
+export type EstadoContractual = "Periodo de Prueba" | "Contratado" | undefined;
 
 export interface FormDataLabor {
   cuil?: number;

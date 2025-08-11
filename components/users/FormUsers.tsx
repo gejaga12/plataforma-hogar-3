@@ -1,10 +1,17 @@
 import React, { useState } from "react";
 import { LoadingSpinner } from "../ui/loading-spinner";
-import { CreateUserData, SucursalHogar, UserAdapted, Zona } from "@/utils/types";
-import { Eye, EyeOff } from "lucide-react";
+import {
+  CreateUserData,
+  SucursalHogar,
+  UserAdapted,
+  Zona,
+} from "@/utils/types";
+import { Eye, EyeOff, Plus } from "lucide-react";
 import FormDatosLaborales, { FormDataLabor } from "./FormDatosLaborales";
 import { SucursalHogarService } from "@/api/apiSucursalHogar";
 import { useQuery } from "@tanstack/react-query";
+import { PhoneForm, PhoneType } from "@/api/apiTel";
+import TelefonosModal from "./TelefonosModal";
 
 interface FormUsersProps {
   user: UserAdapted | undefined;
@@ -22,27 +29,70 @@ interface FormUsersProps {
   setFormDataLabor: React.Dispatch<React.SetStateAction<FormDataLabor>>;
 }
 
+// helper para mostrar el tipo lindo
+const phoneTypeLabel: Record<PhoneType, string> = {
+  [PhoneType.PRIMARY]: "Principal",
+  [PhoneType.SEC]: "Secundario",
+  [PhoneType.EM]: "Emergencia",
+};
+
 const FormUsers: React.FC<FormUsersProps> = ({
   handleSubmit,
   setFormData,
   onClose,
   handleRoleChange,
+  setFormDataLabor,
   formData,
   isReadOnly,
   isloading,
   mode,
   rolesDisponibles,
   formDataLabor,
-  setFormDataLabor,
   zonas,
   user,
 }) => {
   const [showPassword, setShowPassword] = useState(false);
+  const [showPhoneModal, setShowPhoneModal] = useState(false);
+  const [phoneDraft, setPhoneDraft] = useState<PhoneForm[]>([]);
 
   const { data: sucursales, isLoading: isLoadingSucursales } = useQuery({
     queryKey: ["sucursalesHogar"],
     queryFn: SucursalHogarService.getAllSucursalesHogar,
   });
+
+  // abrir modal, precargando con lo existente o una fila vacía
+  const openPhoneModal = () => {
+    if (Array.isArray(formData.telefono) && formData.telefono.length > 0) {
+      setPhoneDraft(formData.telefono);
+    } else {
+      setPhoneDraft([{ tel: "", phoneType: PhoneType.PRIMARY }]);
+    }
+    setShowPhoneModal(true);
+  };
+
+  const addPhoneRow = () => {
+    setPhoneDraft((prev) => [...prev, { tel: "", phoneType: PhoneType.SEC }]);
+  };
+
+  const removePhoneRow = (idx: number) => {
+    setPhoneDraft((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  const savePhones = () => {
+    const clean = phoneDraft
+      .map((p) => ({
+        ...p,
+        tel: p.tel.trim(),
+      }))
+      .filter((p) => p.tel !== "");
+
+    setFormData((prev) => ({
+      ...prev,
+      telefono: clean, // ya es PhoneForm[]
+    }));
+
+    setShowPhoneModal(false);
+  };
 
   return (
     <>
@@ -79,21 +129,48 @@ const FormUsers: React.FC<FormUsersProps> = ({
 
             {/* Teléfono */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-400">
-                Teléfono
-              </label>
-              <input
-                type="tel"
-                value={formData.telefono ?? ""}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    telefono: e.target.value,
-                  }))
-                }
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:border-gray-700 dark:bg-gray-800"
-                disabled={isReadOnly}
-              />
+              <div className="flex items-center gap-3">
+                <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-400">
+                  Teléfonos
+                </label>
+
+                {!isReadOnly && (
+                  <button
+                    type="button"
+                    onClick={openPhoneModal}
+                    className="mb-1 rounded-full border text-green-500 hover:text-green-600 dark:text-green-400"
+                    title="Agregar teléfono"
+                  >
+                    <Plus size={16} />
+                  </button>
+                )}
+              </div>
+
+              {/* Contenedor que muestra la lista guardada */}
+              <div className="max-h-32 overflow-y-auto space-y-2 border border-gray-200 dark:border-gray-700 rounded-md p-2">
+                {Array.isArray(formData.telefono) &&
+                formData.telefono.length > 0 ? (
+                  formData.telefono.map((p, i) => (
+                    <div
+                      key={`${p.tel}-${i}`}
+                      className="flex items-center justify-between px-3 py-2 rounded-md border border-gray-200 dark:border-gray-700 dark:bg-gray-800"
+                    >
+                      <span className="text-sm dark:text-gray-200">
+                        {p.tel}
+                      </span>
+                      <span className="text-xs px-2 py-1 rounded-full bg-orange-100 text-orange-700 dark:bg-orange-300 dark:text-orange-900">
+                        {phoneTypeLabel[p.phoneType]}
+                      </span>
+                    </div>
+                  ))
+                ) : (
+                  <div className="px-3 py-2 rounded-md border border-dashed border-gray-300 text-gray-500 dark:border-gray-700 dark:text-gray-400">
+                    {isReadOnly
+                      ? "Sin teléfonos"
+                      : "No hay teléfonos. Clic en Agregar."}
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Email */}
@@ -238,7 +315,7 @@ const FormUsers: React.FC<FormUsersProps> = ({
                 }
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-800 dark:border-gray-800"
                 required={mode === "create"}
-                 disabled={isReadOnly || isLoadingSucursales}
+                disabled={isReadOnly || isLoadingSucursales}
               >
                 <option value="">Seleccionar sucursal</option>
 
@@ -396,6 +473,18 @@ const FormUsers: React.FC<FormUsersProps> = ({
           </div>
         )}
       </form>
+
+      {/* --- Modal chico para gestionar teléfonos --- */}
+      {showPhoneModal && (
+        <TelefonosModal
+          setShowPhoneModal={setShowPhoneModal}
+          phoneDraft={phoneDraft}
+          setPhoneDraft={setPhoneDraft}
+          savePhones={savePhones}
+          addPhoneRow={addPhoneRow}
+          removePhoneRow={removePhoneRow}
+        />
+      )}
     </>
   );
 };

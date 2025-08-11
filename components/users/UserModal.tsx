@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import FormUsers from "./FormUsers";
 import { EstadoContractual, FormDataLabor } from "./FormDatosLaborales";
 import { formatDateInput } from "@/utils/formatDate";
+import { PhoneForm, PhoneType } from "@/api/apiTel";
 
 interface UserModalProps {
   isOpen: boolean;
@@ -23,6 +24,7 @@ const initialFormData: CreateUserData = {
   mail: "",
   direccion: "",
   roles: [],
+  telefono: [],
   notificaciones: { mail: true, push: true },
   puesto: "",
   sucursalHogar: "",
@@ -31,7 +33,7 @@ const initialFormData: CreateUserData = {
 
 const initialLabor: FormDataLabor = {
   tipoDeContrato: "",
-  relacionLaboral: "Periodo de Prueba",
+  relacionLaboral: undefined,
   fechaIngreso: "",
   fechaAlta: "",
   cuil: undefined,
@@ -68,10 +70,15 @@ const UserModal: React.FC<UserModalProps> = ({
     }
 
     if (user) {
+      const telefonosFromApi: PhoneForm[] = Array.isArray((user as any).phoneNumber)
+      ? (user as any).phoneNumber.map((p: any) => ({
+          tel: p?.tel ?? "",
+          phoneType: (p?.phoneType as PhoneType) ?? PhoneType.PRIMARY, // "principal" | "secundario" | "emergencia"
+        }))
+      : [];
+
       // intentar encontrar la zona por nombre (en tu Adapted guardás el name)
       const zonaObj = zonas?.find((z) => z.id === user.zona?.id);
-
-      // roles: en UserAdapted pueden venir como string o {id, name}
       const roleIds = (user.roles || []).map((r: any) =>
         typeof r === "string" ? r : r.id
       );
@@ -79,13 +86,14 @@ const UserModal: React.FC<UserModalProps> = ({
       setFormData({
         nombreCompleto: user.fullName || "",
         zona: zonaObj,
-        fechaNacimiento: formatDateInput(user.fechaNacimiento) || "", 
+        fechaNacimiento: formatDateInput(user.fechaNacimiento) || "",
         mail: user.email || "",
         direccion: user.address || "",
         roles: roleIds,
         notificaciones: user.notificaciones || { mail: true, push: true },
         sucursalHogar: user.sucursalHogar?.id ?? "",
         activo: user.isActive ?? true,
+        telefono: telefonosFromApi,
         puesto: user.labor?.puestos?.[0]?.name || "",
       });
 
@@ -102,7 +110,10 @@ const UserModal: React.FC<UserModalProps> = ({
           categoryArca: laborDeUser?.categoryArca || "",
           antiguedad: laborDeUser?.antiguedad || "",
           horasTrabajo: laborDeUser?.horasTrabajo || "",
-          sueldo: laborDeUser?.sueldo != null ? Number(laborDeUser.sueldo) : undefined,
+          sueldo:
+            laborDeUser?.sueldo != null
+              ? Number(laborDeUser.sueldo)
+              : undefined,
           puestos: laborDeUser?.puestos,
           area: user.jerarquia?.area || "",
           jerarquiaId: user.jerarquia?.id || "",

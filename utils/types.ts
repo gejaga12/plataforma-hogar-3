@@ -1,3 +1,5 @@
+import { PhoneForm } from "@/api/apiTel";
+
 //usuario adaptado
 export interface UserAdapted {
   id: number;
@@ -13,7 +15,7 @@ export interface UserAdapted {
   createdAt: string;
   deletedAt: string | null;
   address: string;
-  telefono: string;
+  telefono: PhoneForm[];
   relacionLaboral: string;
   photoURL?: string;
   certificacionesTitulo: string;
@@ -32,7 +34,7 @@ export interface UserAdapted {
 export interface CreateUserData {
   nombreCompleto: string;
   contrasena?: string;
-  telefono?: string;
+  telefono?: PhoneForm[];
   zona?: {
     id: string;
     name: string;

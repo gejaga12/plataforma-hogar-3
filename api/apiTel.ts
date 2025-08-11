@@ -1,0 +1,51 @@
+import { getAuthToken } from "@/utils/authToken";
+import { BASE_URL } from "@/utils/baseURL";
+import axios from "axios";
+import toast from "react-hot-toast";
+
+export type PhoneForm = { tel: string; phoneType: PhoneType };
+
+export type TelPayload = {
+  tel: string;
+  phoneType: PhoneType; // o usar tu enum
+  userId: number;
+};
+
+export enum PhoneType {
+  PRIMARY = "principal",
+  SEC = "secundario",
+  EM = "emergencia",
+}
+
+export class TelService {
+  static async crearTelefono(data: TelPayload) {
+    const token = getAuthToken();
+
+    try {
+      const response = await axios.post(`${BASE_URL}/tel`, data, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      return response.data;
+    } catch (error: any) {
+      toast.error("Ocurrio un error al crear el telefono.");
+      console.log("Error:", error);
+      throw error;
+    }
+  }
+
+  static async eliminarTelefono(id: string) {
+    const token = getAuthToken();
+
+    const response = await axios.delete(`${BASE_URL}/tel/${id}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    return response.data;
+  }
+}

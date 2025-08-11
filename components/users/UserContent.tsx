@@ -29,6 +29,19 @@ import {
 import { cn } from "@/utils/cn";
 import UserModal from "./UserModal";
 import DeleteUSerModal from "./DeleteUserModal";
+import { PhoneForm, PhoneType, TelPayload, TelService } from "@/api/apiTel";
+
+const mapPhonesToPayload = (
+  userId: number,
+  phones: PhoneForm[]
+): TelPayload[] =>
+  phones
+    .map((p) => ({
+      tel: (p.tel ?? "").replace(/\D/g, "").trim(),
+      phoneType: p.phoneType,
+      userId,
+    }))
+    .filter((p) => p.tel !== "");
 
 const UsersContent = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -48,6 +61,7 @@ const UsersContent = () => {
   >({});
 
   const { usuarios, loading, refetchUsuarios } = useAuth();
+
   const userActual = usuarios?.find((u) => u.id === modalState.user?.id);
 
   const { data: zonasResponse, isLoading: isLoadingZonas } = useQuery({
@@ -101,7 +115,6 @@ const UsersContent = () => {
         email: user.mail,
         password: user.contrasena || "Abc123", // por defecto si no se carga
         fullName: user.nombreCompleto,
-        phoneNumber: user.telefono,
         roles: user.roles,
         address: user.direccion ?? "",
         puesto: user.puesto ?? "",
@@ -112,8 +125,23 @@ const UsersContent = () => {
       };
 
       console.log("payload de usuario:", userPayload);
-      // 👉 POST a /auth/register
       const newUser = await AuthService.registerUser(userPayload);
+
+      // 2) Teléfonos
+      const telefonos: PhoneForm[] = Array.isArray(user.telefono)
+        ? user.telefono
+        : [];
+      const telPayloads: TelPayload[] = mapPhonesToPayload(
+        newUser.id,
+        telefonos
+      );
+
+      if (telPayloads.length) {
+        console.log("📤 [POST /tel] Enviando teléfonos:", telPayloads);
+        await Promise.all(
+          telPayloads.map((tp) => TelService.crearTelefono(tp))
+        );
+      }
 
       // 👉 POST a /labor si hay datos cargados
       if (hasLaborData(labor)) {
@@ -137,7 +165,6 @@ const UsersContent = () => {
           };
 
           console.log("📤 Payload de puesto:", puestoPayload);
-
           await PuestoService.crearPuesto(puestoPayload);
         }
       }
@@ -243,7 +270,6 @@ const UsersContent = () => {
     user: CreateUserData;
     labor?: FormDataLabor;
   }) => {
-    console.log("🔥 handleSubmit ejecutado");
     const { user, labor } = payload;
 
     if (modalState.mode === "create") {
