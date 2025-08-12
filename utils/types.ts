@@ -1,6 +1,6 @@
 import { PhoneForm } from "@/api/apiTel";
 
-//usuario adaptado
+//USUARIOS
 export interface UserAdapted {
   id: number;
   email: string;
@@ -52,7 +52,9 @@ export interface CreateUserData {
   activo: boolean;
   jerarquiaId?: string;
 }
+//---------------------------------------//
 
+//DATOS LABORALES
 export interface Jerarquia {
   id: string;
   name: string;
@@ -91,13 +93,13 @@ export interface SucursalHogar {
   id?: string;
   name: string;
 }
+//----------------------------------------//
 
-//generico y zonas
+//ZONAS
 export interface GeoGeneric {
   id: string;
   name: string;
 }
-
 export interface Pais extends GeoGeneric {}
 
 export interface Provincia extends GeoGeneric {
@@ -112,6 +114,8 @@ export interface Zona extends GeoGeneric {
   provincias?: Provincia[];
   active: boolean;
 }
+
+//-----------------------------------------//
 
 export interface Order {
   id: string;
@@ -301,4 +305,44 @@ export interface AgendaEvent {
   relatedOrder?: string;
   recurrence: "daily" | "weekly" | "monthly" | "quarterly" | "yearly" | null;
   color: string;
+}
+
+//FORMULARIOS
+export interface Task {
+  id?: string;
+  code: string;
+  priority: "alta" | "media" | "baja"; // si hay más, agregalos
+  duration: {
+    horas: number;
+    minutos: number;
+  };
+  paro?: {
+    horas: number;
+    minutos: number;
+  };
+  Activator: Activador[];
+  subtasks: Subtasks[];
+  ptId?: string; // UUID
+}
+
+export interface Subtasks {
+  description: string;
+  type?: any; //editar
+  options: {
+    title: string;
+    depends: Subtasks[];
+  }[];
+  group: string;
+  required: boolean;
+  FilesRequired: boolean;
+};
+
+export interface Activador {
+  cadencia: number;
+  repition: number;
+  lastRepitionDay: string; // formato ISO: "YYYY-MM-DDTHH:mm:ssZ"
+  frecuencia: "day" | "week" | "month" | string;
+  repiter: number;
+  repiterCount: number;
+  fijo: boolean;
 }
