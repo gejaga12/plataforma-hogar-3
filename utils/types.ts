@@ -308,6 +308,12 @@ export interface AgendaEvent {
 }
 
 //FORMULARIOS
+export interface PlanTasks {
+  id?: string;
+  name: string;
+  description: string;
+}
+
 export interface Task {
   id?: string;
   code: string;

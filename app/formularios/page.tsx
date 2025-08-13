@@ -5,7 +5,7 @@ import FormulariosContent from "@/components/formularios/FormulariosContent";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { TaskServices } from "@/api/apiFormularios";
-import { Task } from "@/utils/types";
+import { PlanTasks, Task } from "@/utils/types";
 
 export default function FormulariosPage() {
   const [limit, setLimit] = useState<number>(10);
@@ -14,24 +14,31 @@ export default function FormulariosPage() {
   const queryClient = useQueryClient();
 
   const {
-    data: tasks,
-    isLoading: isLoadingTasks,
+    data: planTasks,
+    isLoading: isLoadingPlanTasks,
     refetch,
   } = useQuery({
-    queryKey: ["tasks", { limit, offset }],
-    queryFn: () => TaskServices.getTasks(limit, offset),
+    queryKey: ["planTasks", { limit, offset }],
+    queryFn: () => TaskServices.fetchPlanTask(limit, offset),
   });
 
+  console.log("plan-tasks:", planTasks);
+
   const createTaskMutation = useMutation({
-    mutationFn: (payload: Task) => TaskServices.crearTask(payload),
+    mutationFn: (payload: PlanTasks) => {
+      console.log("📤 Enviando payload a /plan-task:", payload);
+      return TaskServices.crearPlanTasks(payload);
+    },
     onSuccess: () => {
-      // refrescamos la lista
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ["planTasks"] });
+    },
+    onError: (err: any) => {
+      console.error(err);
     },
   });
 
   // handlers a pasar al hijo
-  const handleCreateTask = (payload: Task) => {
+  const handleCreateTask = (payload: PlanTasks) => {
     createTaskMutation.mutate(payload);
   };
 
@@ -40,19 +47,11 @@ export default function FormulariosPage() {
 
   return (
     <ProtectedLayout>
-     <FormulariosContent
-        // datos
-        formularios={tasks ?? []}
-        isLoadingTasks={isLoadingTasks}
-        // crear
+      <FormulariosContent
+        formularios={planTasks ?? []}
+        isLoadingPlanTasks={isLoadingPlanTasks}
         onCreateTask={handleCreateTask}
-        // paginación
-        limit={limit}
-        offset={offset}
-        setLimit={setLimit}
-        onNextPage={handleNextPage}
-        onPrevPage={handlePrevPage}
-        refetchTasks={refetch}
+        isCreating={createTaskMutation.isPending}
       />
     </ProtectedLayout>
   );

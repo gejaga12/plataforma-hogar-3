@@ -43,7 +43,7 @@ export function ProtectedLayout({ children }: ProtectedLayoutProps) {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
       <Sidebar />
       <div
-        className="lg:ml-64 transition-all duration-300 ease-in-out"
+       className="transition-all duration-300 ease-in-out lg:ml-[var(--sidebar-width)]"
         id="main-content"
       >
         <Header />
