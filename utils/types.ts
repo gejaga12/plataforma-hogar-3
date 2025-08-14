@@ -318,6 +318,9 @@ export interface Task {
   id?: string;
   code: string;
   priority: "alta" | "media" | "baja"; // si hay más, agregalos
+  Activator: Activador[];
+  subtasks: Subtasks[];
+  ptId?: string; // UUID
   duration: {
     horas: number;
     minutos: number;
@@ -326,14 +329,12 @@ export interface Task {
     horas: number;
     minutos: number;
   };
-  Activator: Activador[];
-  subtasks: Subtasks[];
-  ptId?: string; // UUID
 }
 
 export interface Subtasks {
   description: string;
   type?: any; //editar
+  order?: number;
   options: {
     title: string;
     depends: Subtasks[];

@@ -1,17 +1,14 @@
 "use client";
 
-import { Task, Subtasks } from "@/utils/types";
 import { useState } from "react";
-import { Plus } from "lucide-react";
+import type { Task, Subtasks } from "@/utils/types";
+import FlowArea from "@/components/task-flow/FlowArea";
 
 interface TaskFormModalProps {
   campo?: Task;
 }
 
 const TaskCrearDos = ({ campo }: TaskFormModalProps) => {
-  // -----------------------------
-  // Estado del formulario de Task raíz
-  // -----------------------------
   const [formData, setFormData] = useState<Task>(() => ({
     id: campo?.id,
     code: campo?.code ?? "",
@@ -23,10 +20,20 @@ const TaskCrearDos = ({ campo }: TaskFormModalProps) => {
     ptId: campo?.ptId,
   }));
 
+  const [showCanvas, setShowCanvas] = useState(false);
+
+  const handleBuildSubtasks = (subtasks: Subtasks[]) => {
+    setFormData((p) => ({ ...p, subtasks }));
+    console.log("Subtasks construidos →", subtasks);
+    const payload: Task = { ...formData, subtasks };
+    console.log("Payload Task listo →", payload);
+    // TaskServices.crearPlanTasks(payload)
+  };
+
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 w-full">
       {/* Header */}
-      <div className="p-6 border-b border-gray-200">
+      <div className="p-4 border-b border-gray-200">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-semibold text-gray-900">
             Crear Nueva Task (Canvas)
@@ -34,9 +41,14 @@ const TaskCrearDos = ({ campo }: TaskFormModalProps) => {
         </div>
       </div>
 
-      {/* Form raíz + Quick add SubTask */}
-      <form onSubmit={() => console.log("clicked")} className="p-6 space-y-4">
-        {/* Encabezado compacto: Task raíz */}
+      {/* Form raíz */}
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          setShowCanvas(true);
+        }}
+        className="p-3"
+      >
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {/* Código */}
           <div>
@@ -183,16 +195,18 @@ const TaskCrearDos = ({ campo }: TaskFormModalProps) => {
             </div>
           </div>
         </div>
-
-        <div className="flex gap-3">
-          <button
-            type="submit"
-            className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors"
-          >
-            Guardar Task (mostrar en lienzo)
-          </button>
-        </div>
       </form>
+
+      {showCanvas && (
+        <div className="p-3">
+          <FlowArea
+            onBuildSubtasks={(subs) => {
+              handleBuildSubtasks(subs);
+            }}
+            rootLabel={""}
+          />
+        </div>
+      )}
     </div>
   );
 };
