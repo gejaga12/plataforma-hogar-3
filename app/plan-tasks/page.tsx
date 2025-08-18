@@ -6,6 +6,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { TaskServices } from "@/api/apiFormularios";
 import { PlanTasks, Task } from "@/utils/types";
+import toast from "react-hot-toast";
 
 export default function FormulariosPage() {
   const [limit, setLimit] = useState<number>(10);
@@ -30,6 +31,7 @@ export default function FormulariosPage() {
       return TaskServices.crearPlanTasks(payload);
     },
     onSuccess: () => {
+      toast.success("Plan Task creado con exito.")
       queryClient.invalidateQueries({ queryKey: ["planTasks"] });
     },
     onError: (err: any) => {

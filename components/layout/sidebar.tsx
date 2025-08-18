@@ -320,10 +320,10 @@ const menuItems: MenuItem[] = [
     roles: ["Supervisor", "Admin"],
   },
   {
-    id: "formularios",
-    label: "Formularios",
+    id: "plan-tasks",
+    label: "Plan Tasks",
     icon: "FileCheck",
-    href: "/formularios",
+    href: "/plan-tasks",
     roles: ["Supervisor", "Admin"],
   },
   {
@@ -334,10 +334,10 @@ const menuItems: MenuItem[] = [
     roles: ["Supervisor", "Admin"],
   },
   {
-    id: "campos",
-    label: "Campos",
+    id: "task",
+    label: "Tasks",
     icon: "Type",
-    href: "/campos",
+    href: "/task",
     roles: ["Supervisor", "Admin"],
   },
   {
@@ -450,7 +450,7 @@ const menuCategories = [
   {
     id: "forms",
     label: "Formularios",
-    items: ["formularios", "modulos", "campos"],
+    items: ["plan-tasks", "modulos", "task"],
   },
   {
     id: "config",

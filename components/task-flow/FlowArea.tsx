@@ -30,8 +30,8 @@ type UIType = "text" | "existencia" | "multi";
 type UIOption = { id: string; title: string };
 type RootData = { label: string };
 type FlowEdgeData = {
-  optionId: string | null; // id del handle (opción) que origina el edge
-  kind: "auto" | "user"; // auto = generado por order, user = conectado manualmente
+  optionId: string | null;
+  kind: "auto" | "user";
 };
 
 type FlowNodeData = UINodeData | RootData;
@@ -41,16 +41,13 @@ type RFEdge = Edge<FlowEdgeData>;
 /** Subtasks para UI: agrega id de nodo y opciones con id para handles */
 type UINodeData = Omit<Subtasks, "options"> & {
   id: string;
-  /** opcional: si querés, exporto esto al back (tu Subtasks lo permite con type?: any) */
   type?: UIType;
-  /** opciones con id solo para UI (luego mapeo a {title, depends}) */
   options: UIOption[];
-  setOrder?: (order: number) => void;
 };
 
 /** ===== Constantes/Utils ===== **/
 const ROOT_ID = "__root__";
-// NUEVO: handle dedicado para la continuación vertical (mainline)
+//handle dedicado para la continuación vertical (mainline)
 const CONT_HANDLE = "__cont__";
 
 const uid = () =>
@@ -114,15 +111,6 @@ function SubtaskNode({ data }: NodeProps<UINodeData>) {
           <span className="font-medium">Archivos:</span>{" "}
           {data.FilesRequired ? "Sí" : "No"}
         </div>
-        <div className="flex items-center gap-2">
-          <span className="font-medium">Orden:</span>
-          <input
-            type="number"
-            className="w-16 border rounded px-2 py-1"
-            value={data.order ?? 0}
-            onChange={(e) => data.setOrder?.(Number(e.target.value))}
-          />
-        </div>
         {!!opts.length && (
           <div>
             <span className="font-medium">Opciones:</span>{" "}
@@ -134,9 +122,6 @@ function SubtaskNode({ data }: NodeProps<UINodeData>) {
       {/* --- Handle de CONTINUACIÓN (mainline) SIEMPRE abajo --- */}
       <div className="absolute left-1/2 -translate-x-1/2 bottom-[-6px] flex items-center gap-1">
         <Handle type="source" position={Position.Bottom} id={CONT_HANDLE} />
-        <span className="text-[10px] bg-black/5 px-1 rounded">
-          continuación
-        </span>
       </div>
 
       {/* --- Handles de OPCIONES --- */}
@@ -277,14 +262,6 @@ function FlowAreaInner({ onBuildSubtasks, rootLabel }: FlowAreaProps) {
       const pos = dropPosition(e);
       const src = JSON.parse(raw) as Partial<UINodeData>;
 
-      // calcular siguiente orden sugerido
-      const currentOrders = nodes
-        .filter((n) => n.type === "subtask")
-        .map((n) => (n.data as UINodeData).order ?? 0);
-      const nextOrder = currentOrders.length
-        ? Math.max(...currentOrders) + 1
-        : 1;
-
       const normalizedOptions =
         src.type === "multi"
           ? optionsFor("multi", src.options as UIOption[] | undefined)
@@ -304,19 +281,14 @@ function FlowAreaInner({ onBuildSubtasks, rootLabel }: FlowAreaProps) {
           FilesRequired: !!src.FilesRequired,
           type: (src.type as UIType) ?? "text",
           options: normalizedOptions,
-          order: src.order ?? nextOrder,
           setOrder: (o: number) => setNodeOrder(id, o),
         } as UINodeData,
       };
 
       setNodes((prev) => [...prev, newNode]);
     },
-    [nodes, setNodes, dropPosition, setNodeOrder]
+    [setNodes, dropPosition]
   );
-
-  /** ----- Conexiones/validaciones ----- **/
-  const isSubtaskNode = (n: RFNode): n is Node<UINodeData> =>
-    n.type === "subtask";
 
   const wouldCreateCycle = useCallback(
     (source: string, target: string) => {
@@ -413,33 +385,6 @@ function FlowAreaInner({ onBuildSubtasks, rootLabel }: FlowAreaProps) {
       .filter((n) => n.type === "subtask")
       .map((n) => ({ n, y: n.position.y, data: n.data as UINodeData }))
       .sort((a, b) => a.y - b.y);
-
-    let changedOrder = false;
-    subtasks.forEach((entry, idx) => {
-      const desiredOrder = idx + 1;
-      if ((entry.data.order ?? 0) !== desiredOrder) {
-        entry.data.order = desiredOrder;
-        changedOrder = true;
-      }
-    });
-    if (changedOrder) {
-      setNodes((prev) =>
-        prev.map((n) => {
-          if (n.type !== "subtask") return n;
-          const found = subtasks.find((e) => e.n.id === n.id);
-          if (!found) return n;
-          const d = n.data as UINodeData;
-          return {
-            ...n,
-            data: {
-              ...d,
-              order: found.data.order,
-              setOrder: (o: number) => setNodeOrder(n.id, o),
-            } as UINodeData,
-          };
-        })
-      );
-    }
 
     // 2) contar entradas MANUALES (kind: "user")
     const incomingUser = new Map<string, number>();
@@ -558,7 +503,6 @@ function FlowAreaInner({ onBuildSubtasks, rootLabel }: FlowAreaProps) {
           group: "",
           required: false,
           FilesRequired: false,
-          order: 0,
         };
       }
       const data = node.data as UINodeData;
@@ -570,7 +514,6 @@ function FlowAreaInner({ onBuildSubtasks, rootLabel }: FlowAreaProps) {
           group: data.group,
           required: !!data.required,
           FilesRequired: !!data.FilesRequired,
-          order: data.order ?? 0,
           ...(data.type ? { type: data.type } : {}),
         };
       }
@@ -600,45 +543,155 @@ function FlowAreaInner({ onBuildSubtasks, rootLabel }: FlowAreaProps) {
         group: data.group,
         required: data.required,
         FilesRequired: data.FilesRequired,
-        order: data.order ?? 0,
         ...(data.type ? { type: data.type } : {}),
       };
     };
 
-    // Ordenamos raíces por `order` antes de exportar
-    const sortedRoots = roots
-      .map((r) => r.data as UINodeData)
-      .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-
+    // si querés ordenarlas, hacelo por Y (visual), no por order:
+    const sortedRoots = roots.sort((a, b) => a.position.y - b.position.y);
     return sortedRoots.map((r) => build(r.id, new Set()));
   };
 
-  /** ----- Layout simple en árbol ----- **/
+  /** ----- Layout simple en árbol (mainline + ramas a la derecha) ----- **/
   const layoutTree = () => {
-    const subtasks = nodes
+    // --- constantes de layout ---
+    const xCenter = 600; // columna central (mainline)
+    const yStart = 140; // y inicial de la mainline
+    const yGap = 160; // separación vertical mainline
+    const xGap = 280; // separación horizontal por profundidad de rama
+    const branchGap = 120; // separación vertical entre ramas “hermanas” de un mismo nodo
+
+    // --- helpers ---
+    const norm = (s: string) =>
+      s
+        .trim()
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
+
+    const optionKind = (
+      sourceId: string,
+      optionId: string | null
+    ): "yes" | "no" | "other" => {
+      if (!optionId) return "other";
+      const node = nodes.find((n) => n.id === sourceId);
+      if (!node || node.type !== "subtask") return "other";
+      const data = node.data as UINodeData;
+      const opt = data.options.find((o) => o.id === optionId);
+      if (!opt?.title) return "other";
+      const t = norm(opt.title);
+      if (t === "si") return "yes";
+      if (t === "no") return "no";
+      return "other"; // momentáneamente: tratamos “other” igual que “yes” (arriba)
+    };
+
+    // Sólo edges manuales para ramas
+    const userEdges = edges.filter((e) => e.data?.kind === "user");
+
+    // incoming manual para detectar mainline (nodos sin entrada manual)
+    const incomingUser = new Map<string, number>();
+    nodes.forEach(
+      (n) =>
+        n.id !== ROOT_ID && n.type === "subtask" && incomingUser.set(n.id, 0)
+    );
+    userEdges.forEach((e) => {
+      if (incomingUser.has(e.target)) {
+        incomingUser.set(e.target, (incomingUser.get(e.target) || 0) + 1);
+      }
+    });
+
+    // mainline = subtasks sin entrada manual, ordenados por Y actual
+    const subtasksByY = nodes
       .filter((n) => n.type === "subtask")
-      .map((n) => n as RFNode)
-      .sort(
-        (a, b) =>
-          ((a.data as UINodeData).order ?? 0) -
-          ((b.data as UINodeData).order ?? 0)
+      .sort((a, b) => a.position.y - b.position.y);
+
+    const mainline = subtasksByY.filter(
+      (n) => (incomingUser.get(n.id) || 0) === 0
+    );
+
+    // Mapa de posiciones a aplicar
+    const pos = new Map<string, { x: number; y: number }>();
+
+    // Root fijo
+    pos.set(ROOT_ID, { x: xCenter, y: 20 });
+
+    // Ubicar mainline en columna central
+    mainline.forEach((n, idx) => {
+      pos.set(n.id, { x: xCenter, y: yStart + idx * yGap });
+    });
+
+    // Helper: edges manuales salientes de un nodo dado
+    const outUserEdges = (id: string) =>
+      userEdges.filter((e) => e.source === id && e.data?.optionId);
+
+    // Layout recursivo de una rama a la derecha.
+    // band = -1 (arriba), +1 (abajo).
+    const placeBranch = (
+      nodeId: string,
+      depth: number,
+      baseY: number,
+      band: -1 | 1,
+      visited: Set<string>
+    ) => {
+      if (visited.has(nodeId)) return; // evitar ciclos
+      visited.add(nodeId);
+
+      const x = xCenter + depth * xGap;
+      // Si el nodo ya tiene posición asignada, no la pisamos:
+      if (!pos.has(nodeId)) {
+        pos.set(nodeId, { x, y: baseY });
+      }
+
+      // Recorremos hijos manuales y los ubicamos a la derecha, manteniendo el mismo Y de la rama
+      const outs = outUserEdges(nodeId);
+      outs.forEach((e, idx) => {
+        const childId = e.target;
+        // Para sub-ramificaciones, mantenemos el mismo baseY (línea de la rama).
+        // Si querés “desparramar” más subramas, podés usar: baseY + band * (idx+1) * (branchGap/2)
+        placeBranch(childId, depth + 1, baseY, band, new Set(visited));
+      });
+    };
+
+    // Para cada nodo de la mainline, ubicar sus ramas derechas:
+    mainline.forEach((m) => {
+      const anchor = pos.get(m.id)!; // ya posicionado
+      const outs = outUserEdges(m.id);
+
+      // separo por tipo de opción (sí / no / otras)
+      const yesEdges = outs.filter(
+        (e) => optionKind(m.id, e.data?.optionId ?? null) === "yes"
+      );
+      const noEdges = outs.filter(
+        (e) => optionKind(m.id, e.data?.optionId ?? null) === "no"
+      );
+      const otherEdges = outs.filter(
+        (e) =>
+          !["yes", "no"].includes(optionKind(m.id, e.data?.optionId ?? null))
       );
 
-    const xCenter = 600;
-    const xGap = 280; // si querés separar más ramas a derecha
-    const yStart = 140;
-    const yGap = 160;
+      // “Sí” y “otras” arriba, “No” abajo
+      const groups: Array<{ list: typeof outs; band: -1 | 1 }> = [
+        { list: yesEdges, band: -1 },
+        { list: otherEdges, band: -1 },
+        { list: noEdges, band: +1 },
+      ];
 
+      groups.forEach(({ list, band }) => {
+        list.forEach((e, idx) => {
+          // cada rama hermana se separa en Y
+          const branchY = anchor.y + band * (idx + 1) * branchGap;
+          const childId = e.target;
+          // Coloco el primer nodo de la rama una columna a la derecha
+          placeBranch(childId, /*depth*/ 1, branchY, band, new Set());
+        });
+      });
+    });
+
+    // Aplicar posiciones calculadas; mantener lo que no fue movido
     setNodes((prev) =>
       prev.map((n) => {
-        if (n.id === ROOT_ID) return { ...n, position: { x: xCenter, y: 20 } };
-        if (n.type !== "subtask") return n;
-        const order = (n.data as UINodeData).order ?? 0;
-        const idx = order - 1;
-        // mainline vertical centrado:
-        const x = xCenter;
-        const y = yStart + idx * yGap;
-        return { ...n, position: { x, y } };
+        const p = pos.get(n.id);
+        return p ? { ...n, position: p } : n;
       })
     );
   };
