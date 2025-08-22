@@ -308,6 +308,17 @@ export interface AgendaEvent {
 }
 
 //FORMULARIOS
+
+export enum Tipos {
+  texto = "text",
+  foto = "foto",
+  existencia = "si/no",
+  select = "select",
+  numero = "number",
+  fecha = "fecha",
+  titulo = "titulo",
+}
+
 export interface PlanTasks {
   id?: string;
   name: string;
@@ -333,14 +344,15 @@ export interface Task {
 
 export interface Subtasks {
   description: string;
-  type?: any; //editar
-  options: {
+  type?: Tipos;
+  options?: {
     title: string;
     depends: Subtasks[];
   }[];
   group: string;
   required: boolean;
   FilesRequired: boolean;
+  repeat?: number;
 };
 
 export interface Activador {

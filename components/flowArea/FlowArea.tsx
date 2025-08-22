@@ -22,56 +22,53 @@ import type {
   NodeTypes,
 } from "reactflow";
 
-import type { Subtasks } from "@/utils/types"; // ✅ usamos tus interfaces
+import type { Subtasks, Task } from "@/utils/types";
+import { Tipos } from "@/utils/types";
 import "reactflow/dist/style.css";
 
 /** ===== Tipos UI mínimos (no tocan al back) ===== **/
-type UIType = "text" | "existencia" | "multi";
 type UIOption = { id: string; title: string };
 type RootData = { label: string };
 type FlowEdgeData = {
-  optionId: string | null;
-  kind: "auto" | "user";
+  optionId?: string | null; // id del handle (opción) que origina el edge
+  kind: "auto" | "user"; // auto = generado por mainline, user = conectado manualmente
 };
 
 type FlowNodeData = UINodeData | RootData;
 type RFNode = Node<FlowNodeData>;
 type RFEdge = Edge<FlowEdgeData>;
 
-/** Subtasks para UI: agrega id de nodo y opciones con id para handles */
 type UINodeData = Omit<Subtasks, "options"> & {
   id: string;
-  type?: UIType;
-  options: UIOption[];
+  type?: Tipos;
+  options: UIOption[]; // solo para UI; al export mappeamos a {title, depends}
+  repeat?: number;
+  isMainline?: boolean;
+  isSecondary?: boolean;
 };
 
 /** ===== Constantes/Utils ===== **/
 const ROOT_ID = "__root__";
-//handle dedicado para la continuación vertical (mainline)
-const CONT_HANDLE = "__cont__";
 
 const uid = () =>
   typeof crypto !== "undefined" && "randomUUID" in crypto
     ? crypto.randomUUID()
     : Math.random().toString(36).slice(2);
 
-const DEFAULT_OPTIONS: Record<UIType, UIOption[]> = {
-  text: [{ id: uid(), title: "Continuar" }],
-  existencia: [
-    { id: uid(), title: "Sí" },
-    { id: uid(), title: "No" },
-  ],
-  multi: [
-    { id: uid(), title: "Opción 1" },
-    { id: uid(), title: "Opción 2" },
-  ],
-};
-
-function optionsFor(type: UIType, keep?: UIOption[]): UIOption[] {
-  if (type === "text" || type === "existencia")
-    return DEFAULT_OPTIONS[type].map((o) => ({ ...o, id: uid() }));
-  if (keep && keep.length) return keep;
-  return DEFAULT_OPTIONS.multi.map((o) => ({ ...o, id: uid() }));
+function optionsFor(type?: Tipos, keep?: UIOption[]): UIOption[] {
+  if (type === Tipos.existencia) {
+    // regenero Sí/No con nuevos ids
+    return [
+      { id: uid(), title: "Sí" },
+      { id: uid(), title: "No" },
+    ];
+  }
+  if (type === Tipos.select) {
+    // mantiene existentes o arranca vacío
+    return keep && keep.length ? keep : [];
+  }
+  // Tipos.numero y demás → sin opciones
+  return [];
 }
 
 /** ====== Nodes UI ====== **/
@@ -86,13 +83,28 @@ function RootNode({ data }: NodeProps<RootData>) {
 
 function SubtaskNode({ data }: NodeProps<UINodeData>) {
   const opts = data.options ?? [];
-  const isRightSide = data.type === "existencia" || data.type === "multi";
+  const isRightSide =
+    data.type === Tipos.existencia || data.type === Tipos.select;
+
+  const isSecondary = data.isSecondary;
+  const bgClass = isSecondary ? "bg-yellow-100" : "bg-blue-50";
+  const borderClass = isSecondary
+    ? "border-2 border-dashed border-yellow-400"
+    : "border-blue-400";
 
   return (
-    <div className="relative rounded-xl border bg-white w-[260px] shadow">
-      {/* entrada */}
-      <Handle type="target" position={Position.Top} id="in" />
+    <div
+      className={`relative rounded-xl border w-[260px] shadow ${bgClass} ${borderClass}`}
+    >
+      {/* ENTRADA por la izquierda */}
+      <Handle
+        type="target"
+        position={Position.Left}
+        id="left"
+        className="w-2 h-2 bg-gray-400 rounded-full -left-1"
+      />
 
+      {/* CONTENIDO */}
       <div className="px-3 py-2 border-b text-sm font-semibold">
         {data.description || "Subtarea sin título"}
       </div>
@@ -106,12 +118,17 @@ function SubtaskNode({ data }: NodeProps<UINodeData>) {
         </div>
         <div>
           <span className="font-medium">Requerida:</span>{" "}
-          {data.required ? "Sí" : "No"}
-          {" • "}
+          {data.required ? "Sí" : "No"} •{" "}
           <span className="font-medium">Archivos:</span>{" "}
           {data.FilesRequired ? "Sí" : "No"}
         </div>
-        {!!opts.length && (
+        {data.type === Tipos.numero && (
+          <div>
+            <span className="font-medium">Repeat:</span>{" "}
+            {typeof data.repeat === "number" ? data.repeat : "-"}
+          </div>
+        )}
+        {!!(isRightSide && opts.length) && (
           <div>
             <span className="font-medium">Opciones:</span>{" "}
             {opts.map((o) => o.title).join(" / ")}
@@ -119,33 +136,20 @@ function SubtaskNode({ data }: NodeProps<UINodeData>) {
         )}
       </div>
 
-      {/* --- Handle de CONTINUACIÓN (mainline) SIEMPRE abajo --- */}
-      <div className="absolute left-1/2 -translate-x-1/2 bottom-[-6px] flex items-center gap-1">
-        <Handle type="source" position={Position.Bottom} id={CONT_HANDLE} />
-      </div>
-
-      {/* --- Handles de OPCIONES --- */}
-      {isRightSide ? (
-        // existencia/multi: a la derecha
+      {/* OPCIONES A LA DERECHA */}
+      {isRightSide && opts.length > 0 && (
         <div className="absolute right-[-6px] top-1/2 -translate-y-1/2 flex flex-col gap-2 items-end">
           {opts.map((o) => (
             <div key={o.id} className="relative flex items-center">
               <span className="text-[10px] mr-1 bg-black/5 px-1 rounded">
                 {o.title}
               </span>
-              <Handle type="source" position={Position.Right} id={o.id} />
-            </div>
-          ))}
-        </div>
-      ) : (
-        // text: abajo (además del cont)
-        <div className="absolute left-1/2 -translate-x-1/2 bottom-[-28px] flex gap-2">
-          {opts.map((o) => (
-            <div key={o.id} className="relative flex items-center">
-              <Handle type="source" position={Position.Bottom} id={o.id} />
-              <span className="text-[10px] ml-1 bg-black/5 px-1 rounded">
-                {o.title}
-              </span>
+              <Handle
+                type="source"
+                position={Position.Right}
+                id={o.id}
+                className="w-2 h-2 bg-gray-500 rounded-full"
+              />
             </div>
           ))}
         </div>
@@ -174,24 +178,24 @@ function FlowAreaInner({ onBuildSubtasks, rootLabel }: FlowAreaProps) {
     {
       id: uid(),
       description: "Verificar conexión eléctrica",
-      type: "text",
+      type: Tipos.texto,
       group: "Electricidad",
       required: true,
       FilesRequired: false,
-      options: optionsFor("text"),
+      options: optionsFor(Tipos.texto),
     },
     {
       id: uid(),
       description: "¿Existe fuga de combustible?",
-      type: "existencia",
+      type: Tipos.existencia,
       group: "Seguridad",
       required: true,
       FilesRequired: true,
-      options: optionsFor("existencia"),
+      options: optionsFor(Tipos.existencia),
     },
   ]);
 
-  // Grafo — ¡OJO! arrays en genéricos
+  // Grafo
   const [nodes, setNodes, onNodesChange] = useNodesState<FlowNodeData>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<FlowEdgeData>([]);
 
@@ -216,26 +220,6 @@ function FlowAreaInner({ onBuildSubtasks, rootLabel }: FlowAreaProps) {
     });
   }, [rootLabel, setNodes]);
 
-  const setNodeOrder = useCallback(
-    (nodeId: string, order: number) => {
-      setNodes((prev) =>
-        prev.map((n) => {
-          if (n.id !== nodeId) return n;
-          const d = n.data as UINodeData;
-          return {
-            ...n,
-            data: {
-              ...d,
-              order,
-              setOrder: (o: number) => setNodeOrder(nodeId, o),
-            } as UINodeData,
-          };
-        })
-      );
-    },
-    [setNodes]
-  );
-
   /** ----- Drag&Drop desde paleta ----- **/
   const onDragStart = (e: React.DragEvent, item: UINodeData) => {
     e.dataTransfer.setData("application/reactflow", JSON.stringify(item));
@@ -247,11 +231,11 @@ function FlowAreaInner({ onBuildSubtasks, rootLabel }: FlowAreaProps) {
     e.dataTransfer.dropEffect = "move";
   }, []);
 
-  const dropPosition = (e: React.DragEvent): XYPosition => {
+  const dropPosition = useCallback((e: React.DragEvent): XYPosition => {
     const rect = canvasRef.current?.getBoundingClientRect();
     if (!rect) return { x: 100, y: 150 };
     return { x: e.clientX - rect.left, y: e.clientY - rect.top };
-  };
+  }, []);
 
   const onDrop = useCallback(
     (e: React.DragEvent) => {
@@ -261,12 +245,6 @@ function FlowAreaInner({ onBuildSubtasks, rootLabel }: FlowAreaProps) {
 
       const pos = dropPosition(e);
       const src = JSON.parse(raw) as Partial<UINodeData>;
-
-      const normalizedOptions =
-        src.type === "multi"
-          ? optionsFor("multi", src.options as UIOption[] | undefined)
-          : optionsFor((src.type as UIType) ?? "text");
-
       const id = uid();
 
       const newNode: RFNode = {
@@ -279,289 +257,124 @@ function FlowAreaInner({ onBuildSubtasks, rootLabel }: FlowAreaProps) {
           group: src.group ?? "",
           required: !!src.required,
           FilesRequired: !!src.FilesRequired,
-          type: (src.type as UIType) ?? "text",
-          options: normalizedOptions,
-          setOrder: (o: number) => setNodeOrder(id, o),
-        } as UINodeData,
+          type: src.type ?? Tipos.texto,
+          options: optionsFor(src.type, src.options as UIOption[] | undefined),
+          repeat:
+            src.type === Tipos.numero ? (src.repeat as number) : undefined,
+          isSecondary: false, // por defecto main
+        },
       };
 
       setNodes((prev) => [...prev, newNode]);
+
+      // 🔑 Conectar automáticamente al root como main
+      setEdges((prev) => [
+        ...prev,
+        {
+          id: uid(),
+          source: ROOT_ID,
+          target: id,
+          sourceHandle: "root",
+          data: { kind: "auto", optionId: null },
+          markerEnd: { type: MarkerType.ArrowClosed },
+        },
+      ]);
     },
-    [setNodes, dropPosition]
+    [setNodes, setEdges, dropPosition]
   );
 
-  const wouldCreateCycle = useCallback(
-    (source: string, target: string) => {
-      const adj = new Map<string, string[]>();
-      edges.forEach((e) => {
-        const arr = adj.get(e.source) || [];
-        arr.push(e.target);
-        adj.set(e.source, arr);
-      });
+  const onConnect = (params: Connection) => {
+    const sourceNode = nodes.find((n) => n.id === params.source);
+    const targetNode = nodes.find((n) => n.id === params.target);
+    if (!sourceNode || !targetNode) return;
+    if (sourceNode.type !== "subtask" || targetNode.type !== "subtask") return;
 
-      if (!adj.has(source)) adj.set(source, []);
-      adj.get(source)!.push(target);
+    const sourceHasOptions =
+      "type" in sourceNode.data &&
+      (sourceNode.data.type === Tipos.existencia ||
+        sourceNode.data.type === Tipos.select);
 
-      const stack = [target];
-      const seen = new Set<string>();
-      while (stack.length) {
-        const cur = stack.pop()!;
-        if (cur === source) return true;
-        if (seen.has(cur)) continue;
-        seen.add(cur);
-        (adj.get(cur) || []).forEach((n) => stack.push(n));
-      }
-      return false;
-    },
-    [edges]
-  );
+    const isLeftConnection = params.targetHandle === "left";
 
-  const onConnect = useCallback(
-    (params: Connection) => {
-      const { source, target, sourceHandle } = params;
-      if (!source || !target) return;
-
-      // ❌ No permitir que el usuario use el handle de continuación
-      if (sourceHandle === CONT_HANDLE) {
-        alert(
-          "La 'continuación' se gestiona automáticamente. Usá los handles de opciones para ramificar."
-        );
-        return;
-      }
-
-      // un hijo por handle (válido para opciones)
-      if (source !== ROOT_ID && sourceHandle) {
-        const already = edges.some(
-          (e) => e.source === source && e.sourceHandle === sourceHandle
-        );
-        if (already) {
-          alert("Ese handle ya tiene un hijo asignado.");
-          return;
-        }
-      }
-
-      if (wouldCreateCycle(source, target)) {
-        alert("No se permiten ciclos en el flujo.");
-        return;
-      }
-
-      let label = "";
-      let optionId: string | null = null;
-
-      if (source !== ROOT_ID) {
-        const srcNode = nodes.find((n) => n.id === source);
-        if (!srcNode || srcNode.type !== "subtask") return;
-
-        const data = srcNode.data as UINodeData;
-        const opt = sourceHandle
-          ? data.options.find((o) => o.id === sourceHandle)
-          : undefined;
-        if (!opt) {
-          alert("Handle inválido para este nodo.");
-          return;
-        }
-        optionId = sourceHandle!;
-        label = opt.title;
-      }
-
-      const newEdge: RFEdge = {
-        id: uid(),
-        source,
-        target,
-        sourceHandle: sourceHandle ?? undefined,
-        data: { optionId, kind: "user" }, // 👈 manual
-        label,
-        markerEnd: { type: MarkerType.ArrowClosed },
-      };
-
-      setEdges((prev) => addEdge(newEdge, prev));
-    },
-    [edges, nodes, setEdges, wouldCreateCycle]
-  );
-
-  useEffect(() => {
-    // 1) ordenar subtasks por Y y sincronizar order en data
-    const subtasks = nodes
-      .filter((n) => n.type === "subtask")
-      .map((n) => ({ n, y: n.position.y, data: n.data as UINodeData }))
-      .sort((a, b) => a.y - b.y);
-
-    // 2) contar entradas MANUALES (kind: "user")
-    const incomingUser = new Map<string, number>();
-    nodes.forEach(
-      (n) =>
-        n.id !== ROOT_ID && n.type === "subtask" && incomingUser.set(n.id, 0)
-    );
-    edges.forEach((e) => {
-      if (e.data?.kind !== "user") return;
-      if (incomingUser.has(e.target)) {
-        incomingUser.set(e.target, (incomingUser.get(e.target) || 0) + 1);
-      }
-    });
-
-    // 3) mainline = nodos sin entrada manual (excluye ramas como "No")
-    const mainline = subtasks
-      .map((s) => s.n)
-      .filter((n) => (incomingUser.get(n.id) || 0) === 0);
-
-    // 4) preparar autos, preservando manuales
-    const autoEdges: RFEdge[] = [];
-    const userEdges = edges.filter((e) => e.data?.kind === "user");
-
-    if (mainline.length > 0) {
-      // root → primero
-      autoEdges.push({
-        id: uid(),
-        source: ROOT_ID,
-        target: mainline[0].id,
-        sourceHandle: "root",
-        data: { optionId: null, kind: "auto" },
-        label: "",
-        markerEnd: { type: MarkerType.ArrowClosed },
-      });
-    }
-
-    // 5) encadenar i → i+1 con CONT_HANDLE (no usa opciones)
-    for (let i = 0; i < mainline.length - 1; i++) {
-      const srcId = mainline[i].id;
-      const dstId = mainline[i + 1].id;
-
-      // si el handle de continuación ya está utilizado manualmente, no generamos auto
-      const contUsedManual = userEdges.some(
-        (e) => e.source === srcId && e.sourceHandle === CONT_HANDLE
+    // 🔑 Caso especial: rama secundaria
+    if (isLeftConnection && sourceHasOptions) {
+      // marcar target como secundario
+      setNodes((nds) =>
+        nds.map((n) =>
+          n.id === params.target
+            ? { ...n, data: { ...n.data, isSecondary: true } }
+            : n
+        )
       );
-      if (contUsedManual) continue;
 
-      autoEdges.push({
-        id: uid(),
-        source: srcId,
-        target: dstId,
-        sourceHandle: CONT_HANDLE,
-        data: { optionId: CONT_HANDLE, kind: "auto" },
-        label: "",
-        markerEnd: { type: MarkerType.ArrowClosed },
-      });
-    }
-
-    const nextEdges = [...userEdges, ...autoEdges];
-
-    const changedEdges =
-      nextEdges.length !== edges.length ||
-      nextEdges.some((ne, i) => {
-        const e = edges[i];
-        return (
-          !e ||
-          e.source !== ne.source ||
-          e.target !== ne.target ||
-          e.sourceHandle !== ne.sourceHandle ||
-          e.data?.kind !== ne.data?.kind ||
-          e.data?.optionId !== ne.data?.optionId
-        );
-      });
-
-    if (changedEdges) {
-      setEdges(nextEdges);
-    }
-  }, [nodes, edges, setNodes, setEdges, setNodeOrder]);
-
-  const onNodeDragStop = useCallback(() => {
-    // El efecto anterior ya reordena y regenera edges al detectar cambios,
-    // así que acá no hace falta hacer nada más.
-    // Solo forzamos un setNodes trivial para disparar el effect si hiciera falta:
-    setNodes((prev) => [...prev]);
-  }, [setNodes]);
-
-  /** ----- Serialización exacta a Subtasks[] del back ----- **/
-  const toSubtasks = (): Subtasks[] => {
-    const byId = new Map(nodes.map((n) => [n.id, n]));
-
-    // raíces (ignoramos el root) = nodos sin incoming "user" (manual)
-    const incomingUser = new Map<string, number>();
-    nodes.forEach(
-      (n) =>
-        n.id !== ROOT_ID && n.type === "subtask" && incomingUser.set(n.id, 0)
-    );
-    edges.forEach((e) => {
-      if (e.data?.kind !== "user") return; // solo edges manuales afectan la jerarquía exportada
-      if (incomingUser.has(e.target))
-        incomingUser.set(e.target, (incomingUser.get(e.target) || 0) + 1);
-    });
-
-    const roots = nodes.filter(
-      (n) =>
-        n.id !== ROOT_ID &&
-        n.type === "subtask" &&
-        (incomingUser.get(n.id) || 0) === 0
-    );
-
-    const build = (id: string, seen: Set<string>): Subtasks => {
-      const node = byId.get(id);
-      if (!node || node.type !== "subtask") {
-        return {
-          description: "",
-          options: [],
-          group: "",
-          required: false,
-          FilesRequired: false,
-        };
-      }
-      const data = node.data as UINodeData;
-
-      if (seen.has(id)) {
-        return {
-          description: data.description,
-          options: [],
-          group: data.group,
-          required: !!data.required,
-          FilesRequired: !!data.FilesRequired,
-          ...(data.type ? { type: data.type } : {}),
-        };
-      }
-      seen.add(id);
-
-      // Para exportar, SOLO tomamos edges "user" (manuales) como depende
-      const outs = edges.filter(
-        (e) => e.source === id && e.data?.kind === "user" && e.data?.optionId
+      // eliminar conexión root -> target
+      setEdges((eds) =>
+        eds
+          .filter((e) => !(e.source === ROOT_ID && e.target === params.target))
+          .concat([
+            {
+              ...params,
+              id: uid(),
+              source: params.source ?? "",
+              target: params.target ?? "",
+              sourceHandle: params.sourceHandle ?? undefined,
+              targetHandle: params.targetHandle ?? undefined,
+              data: { kind: "user", optionId: params.sourceHandle ?? null },
+              markerEnd: { type: MarkerType.ArrowClosed },
+            },
+          ])
       );
-      const byOption = new Map<string, string[]>();
-      outs.forEach((e) => {
-        const key = e.data!.optionId as string;
-        const list = byOption.get(key) || [];
-        list.push(e.target);
-        byOption.set(key, list);
-      });
+      return;
+    }
 
-      const options = (data.options || []).map((opt) => {
-        const targets = byOption.get(opt.id) || [];
-        const depends = targets.map((t) => build(t, new Set(seen)));
-        return { title: opt.title, depends };
-      });
-
-      return {
-        description: data.description,
-        options,
-        group: data.group,
-        required: data.required,
-        FilesRequired: data.FilesRequired,
-        ...(data.type ? { type: data.type } : {}),
-      };
-    };
-
-    // si querés ordenarlas, hacelo por Y (visual), no por order:
-    const sortedRoots = roots.sort((a, b) => a.position.y - b.position.y);
-    return sortedRoots.map((r) => build(r.id, new Set()));
+    // conexión normal
+    setEdges((eds) =>
+      addEdge(
+        {
+          ...params,
+          data: { kind: "user", optionId: params.sourceHandle ?? null },
+        },
+        eds
+      )
+    );
   };
 
-  /** ----- Layout simple en árbol (mainline + ramas a la derecha) ----- **/
-  const layoutTree = () => {
-    // --- constantes de layout ---
-    const xCenter = 600; // columna central (mainline)
-    const yStart = 140; // y inicial de la mainline
-    const yGap = 160; // separación vertical mainline
-    const xGap = 280; // separación horizontal por profundidad de rama
-    const branchGap = 120; // separación vertical entre ramas “hermanas” de un mismo nodo
+  /** ----- Mainline automática ----- **/
+  useEffect(() => {
+    const secondaryIds = new Set<string>();
 
-    // --- helpers ---
+    edges.forEach((e) => {
+      const sourceNode = nodes.find((n) => n.id === e.source);
+      if (
+        sourceNode?.type === "subtask" &&
+        "type" in sourceNode.data &&
+        (sourceNode.data.type === Tipos.existencia ||
+          sourceNode.data.type === Tipos.select) &&
+        e.targetHandle === "left"
+      ) {
+        secondaryIds.add(e.target);
+      }
+    });
+
+    setNodes((prev) =>
+      prev.map((node) => {
+        if (node.type !== "subtask") return node;
+        return {
+          ...node,
+          data: { ...node.data, isSecondary: secondaryIds.has(node.id) },
+        };
+      })
+    );
+  }, [edges, nodes, setNodes]);
+
+  /** ----- Layout: mainline centrada + ramas a la derecha (Sí arriba / No abajo) ----- **/
+  const layoutTree = () => {
+    const xCenter = 600;
+    const yStart = 140;
+    const yGap = 160;
+    const xGap = 280;
+    const branchGap = 120;
+
     const norm = (s: string) =>
       s
         .trim()
@@ -582,13 +395,13 @@ function FlowAreaInner({ onBuildSubtasks, rootLabel }: FlowAreaProps) {
       const t = norm(opt.title);
       if (t === "si") return "yes";
       if (t === "no") return "no";
-      return "other"; // momentáneamente: tratamos “other” igual que “yes” (arriba)
+      return "other";
     };
 
-    // Sólo edges manuales para ramas
+    // edges manuales (ramas)
     const userEdges = edges.filter((e) => e.data?.kind === "user");
 
-    // incoming manual para detectar mainline (nodos sin entrada manual)
+    // incoming manual para detectar mainline
     const incomingUser = new Map<string, number>();
     nodes.forEach(
       (n) =>
@@ -600,32 +413,28 @@ function FlowAreaInner({ onBuildSubtasks, rootLabel }: FlowAreaProps) {
       }
     });
 
-    // mainline = subtasks sin entrada manual, ordenados por Y actual
+    // mainline por Y
     const subtasksByY = nodes
       .filter((n) => n.type === "subtask")
       .sort((a, b) => a.position.y - b.position.y);
 
     const mainline = subtasksByY.filter(
-      (n) => (incomingUser.get(n.id) || 0) === 0
+      (n) =>
+        (incomingUser.get(n.id) || 0) === 0 &&
+        !("isSecondary" in n.data && n.data.isSecondary)
     );
 
-    // Mapa de posiciones a aplicar
     const pos = new Map<string, { x: number; y: number }>();
-
-    // Root fijo
     pos.set(ROOT_ID, { x: xCenter, y: 20 });
 
-    // Ubicar mainline en columna central
+    // colocar mainline
     mainline.forEach((n, idx) => {
       pos.set(n.id, { x: xCenter, y: yStart + idx * yGap });
     });
 
-    // Helper: edges manuales salientes de un nodo dado
     const outUserEdges = (id: string) =>
       userEdges.filter((e) => e.source === id && e.data?.optionId);
 
-    // Layout recursivo de una rama a la derecha.
-    // band = -1 (arriba), +1 (abajo).
     const placeBranch = (
       nodeId: string,
       depth: number,
@@ -633,31 +442,23 @@ function FlowAreaInner({ onBuildSubtasks, rootLabel }: FlowAreaProps) {
       band: -1 | 1,
       visited: Set<string>
     ) => {
-      if (visited.has(nodeId)) return; // evitar ciclos
+      if (visited.has(nodeId)) return;
       visited.add(nodeId);
-
       const x = xCenter + depth * xGap;
-      // Si el nodo ya tiene posición asignada, no la pisamos:
-      if (!pos.has(nodeId)) {
-        pos.set(nodeId, { x, y: baseY });
-      }
+      if (!pos.has(nodeId)) pos.set(nodeId, { x, y: baseY });
 
-      // Recorremos hijos manuales y los ubicamos a la derecha, manteniendo el mismo Y de la rama
       const outs = outUserEdges(nodeId);
-      outs.forEach((e, idx) => {
+      outs.forEach((e) => {
         const childId = e.target;
-        // Para sub-ramificaciones, mantenemos el mismo baseY (línea de la rama).
-        // Si querés “desparramar” más subramas, podés usar: baseY + band * (idx+1) * (branchGap/2)
+        // mismo Y (horizontal) para sub-rama; podés variar si querés “escalonar”
         placeBranch(childId, depth + 1, baseY, band, new Set(visited));
       });
     };
 
-    // Para cada nodo de la mainline, ubicar sus ramas derechas:
     mainline.forEach((m) => {
-      const anchor = pos.get(m.id)!; // ya posicionado
+      const anchor = pos.get(m.id)!;
       const outs = outUserEdges(m.id);
 
-      // separo por tipo de opción (sí / no / otras)
       const yesEdges = outs.filter(
         (e) => optionKind(m.id, e.data?.optionId ?? null) === "yes"
       );
@@ -669,7 +470,6 @@ function FlowAreaInner({ onBuildSubtasks, rootLabel }: FlowAreaProps) {
           !["yes", "no"].includes(optionKind(m.id, e.data?.optionId ?? null))
       );
 
-      // “Sí” y “otras” arriba, “No” abajo
       const groups: Array<{ list: typeof outs; band: -1 | 1 }> = [
         { list: yesEdges, band: -1 },
         { list: otherEdges, band: -1 },
@@ -678,22 +478,104 @@ function FlowAreaInner({ onBuildSubtasks, rootLabel }: FlowAreaProps) {
 
       groups.forEach(({ list, band }) => {
         list.forEach((e, idx) => {
-          // cada rama hermana se separa en Y
           const branchY = anchor.y + band * (idx + 1) * branchGap;
           const childId = e.target;
-          // Coloco el primer nodo de la rama una columna a la derecha
-          placeBranch(childId, /*depth*/ 1, branchY, band, new Set());
+          placeBranch(childId, 1, branchY, band, new Set());
         });
       });
     });
 
-    // Aplicar posiciones calculadas; mantener lo que no fue movido
     setNodes((prev) =>
       prev.map((n) => {
         const p = pos.get(n.id);
         return p ? { ...n, position: p } : n;
       })
     );
+  };
+
+  /** ----- Serialización a Subtasks[] (solo edges manuales) ----- **/
+  const toSubtasks = (): Subtasks[] => {
+    const byId = new Map(nodes.map((n) => [n.id, n]));
+
+    const isSecondary = (id: string): boolean => {
+      const node = byId.get(id);
+      return (
+        node?.type === "subtask" &&
+        "isSecondary" in node.data &&
+        !!node.data.isSecondary
+      );
+    };
+
+    const mainNodes = nodes
+      .filter((n) => n.type === "subtask" && !isSecondary(n.id))
+      .sort((a, b) => a.position.y - b.position.y); // Orden vertical
+
+    const buildSubtask = (id: string, seen: Set<string>): Subtasks => {
+      const node = byId.get(id);
+      if (!node || node.type !== "subtask" || !("type" in node.data)) {
+        return {
+          description: "",
+          group: "",
+          required: false,
+          FilesRequired: false,
+        };
+      }
+
+      const data = node.data as UINodeData;
+
+      if (seen.has(id)) {
+        return {
+          description: data.description,
+          group: data.group,
+          required: data.required,
+          FilesRequired: data.FilesRequired,
+        };
+      }
+
+      const newSeen = new Set(seen);
+      newSeen.add(id);
+
+      const outgoingEdges = edges.filter(
+        (e) => e.source === id && e.data?.kind === "user" && e.data?.optionId
+      );
+
+      const byOption = new Map<string, string[]>();
+      outgoingEdges.forEach((e) => {
+        const key = e.data!.optionId!;
+        const list = byOption.get(key) || [];
+        list.push(e.target);
+        byOption.set(key, list);
+      });
+
+      let mappedOptions: Subtasks["options"] | undefined = undefined;
+
+      if (
+        (data.type === Tipos.existencia || data.type === Tipos.select) &&
+        data.options.length > 0
+      ) {
+        mappedOptions = data.options.map((opt) => {
+          const dependsIds = byOption.get(opt.id) || [];
+          const depends = dependsIds.map((depId) =>
+            buildSubtask(depId, newSeen)
+          );
+          return { title: opt.title, depends };
+        });
+      }
+
+      return {
+        description: data.description,
+        group: data.group,
+        required: data.required,
+        FilesRequired: data.FilesRequired,
+        ...(data.type ? { type: data.type } : {}),
+        ...(data.type === Tipos.numero && typeof data.repeat === "number"
+          ? { repeat: data.repeat }
+          : {}),
+        ...(mappedOptions ? { options: mappedOptions } : {}),
+      };
+    };
+
+    return mainNodes.map((n) => buildSubtask(n.id, new Set()));
   };
 
   /** ----- Acciones paleta ----- **/
@@ -703,11 +585,11 @@ function FlowAreaInner({ onBuildSubtasks, rootLabel }: FlowAreaProps) {
       {
         id: uid(),
         description: "",
-        type: "text",
+        type: Tipos.texto,
         group: "",
         required: false,
         FilesRequired: false,
-        options: optionsFor("text"),
+        options: optionsFor(Tipos.texto),
       },
     ]);
   };
@@ -777,22 +659,29 @@ function FlowAreaInner({ onBuildSubtasks, rootLabel }: FlowAreaProps) {
                     Tipo
                     <select
                       className="w-full border rounded px-2 py-1"
-                      value={s.type ?? "text"}
+                      value={s.type ?? Tipos.texto}
                       onChange={(e) => {
-                        const newType = e.target.value as UIType;
+                        const newType = e.target.value as Tipos;
                         const newOpts =
-                          newType === "multi"
+                          newType === Tipos.select
                             ? optionsFor(newType, s.options)
                             : optionsFor(newType);
                         patchPaletteItem(s.id, {
                           type: newType,
                           options: newOpts,
+                          ...(newType !== Tipos.numero
+                            ? { repeat: undefined }
+                            : {}),
                         });
                       }}
                     >
-                      <option value="text">text</option>
-                      <option value="existencia">existencia (Sí/No)</option>
-                      <option value="multi">multi (opciones)</option>
+                      <option value={Tipos.texto}>texto</option>
+                      <option value={Tipos.foto}>foto</option>
+                      <option value={Tipos.existencia}>si/no</option>
+                      <option value={Tipos.select}>select</option>
+                      <option value={Tipos.numero}>number</option>
+                      <option value={Tipos.fecha}>fecha</option>
+                      <option value={Tipos.titulo}>titulo</option>
                     </select>
                   </label>
                   <label className="text-[11px]">
@@ -832,7 +721,11 @@ function FlowAreaInner({ onBuildSubtasks, rootLabel }: FlowAreaProps) {
                   </label>
                 </div>
 
-                {s.type === "multi" && (
+                {/* Edición de opciones:
+                    - existencia: fijo Sí/No (no muestro editor para mantener consistencia)
+                    - select: editable (multi-opciones)
+                    - otros: podría ser fijo "Continuar" (no muestro editor) */}
+                {s.type === Tipos.select ? (
                   <div className="space-y-1">
                     <div className="text-[11px] font-medium">Opciones</div>
                     {s.options.map((o, idx) => (
@@ -840,15 +733,19 @@ function FlowAreaInner({ onBuildSubtasks, rootLabel }: FlowAreaProps) {
                         <input
                           className="flex-1 border rounded px-2 py-1"
                           value={o.title}
-                          onChange={(e) =>
+                          onChange={(e) => {
+                            const newType = e.target.value as Tipos;
+                            const newOpts =
+                              newType === Tipos.select ||
+                              newType === Tipos.numero
+                                ? optionsFor(newType, s.options) // mantiene existentes o vacío
+                                : optionsFor(newType); // existencia regenera Sí/No, resto []
+
                             patchPaletteItem(s.id, {
-                              options: s.options.map((opt, i) =>
-                                i === idx
-                                  ? { ...opt, title: e.target.value }
-                                  : opt
-                              ),
-                            })
-                          }
+                              type: newType,
+                              options: newOpts,
+                            });
+                          }}
                         />
                         <button
                           className="text-[11px] px-2 py-1 border rounded"
@@ -871,7 +768,24 @@ function FlowAreaInner({ onBuildSubtasks, rootLabel }: FlowAreaProps) {
                       + Opción
                     </button>
                   </div>
-                )}
+                ) : null}
+
+                {s.type === Tipos.numero ? (
+                  <label className="text-[11px] block">
+                    Repeat
+                    <input
+                      type="number"
+                      min={0}
+                      className="w-full border rounded px-2 py-1"
+                      value={s.repeat ?? 0}
+                      onChange={(e) =>
+                        patchPaletteItem(s.id, {
+                          repeat: Number(e.target.value),
+                        })
+                      }
+                    />
+                  </label>
+                ) : null}
 
                 <div className="text-[11px] opacity-70">
                   Arrastrá esta card al lienzo para conectarla.
@@ -890,7 +804,17 @@ function FlowAreaInner({ onBuildSubtasks, rootLabel }: FlowAreaProps) {
           </button>
           <button
             className="w-full px-3 py-2 text-xs rounded-lg bg-orange-600 text-white"
-            onClick={() => onBuildSubtasks(toSubtasks())}
+            onClick={() => {
+              const subtasks = toSubtasks();
+              const task: Task = {
+                code: rootLabel,
+                priority: "media",
+                subtasks,
+                duration: { horas: 0, minutos: 0 },
+              };
+              console.log("Task exportada:", task);
+              onBuildSubtasks(subtasks); // o podés pasar directamente el objeto Task
+            }}
           >
             Exportar subtasks (payload)
           </button>
@@ -917,7 +841,6 @@ function FlowAreaInner({ onBuildSubtasks, rootLabel }: FlowAreaProps) {
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
-          onNodeDragStop={onNodeDragStop}
           fitView
         >
           <MiniMap pannable zoomable />

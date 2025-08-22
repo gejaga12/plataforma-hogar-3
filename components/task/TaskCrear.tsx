@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import type { Task, Subtasks, PlanTasks } from "@/utils/types";
-import FlowArea from "@/components/task-flow/FlowArea";
+import FlowArea from "@/components/flowArea/FlowArea";
 import { TaskServices } from "@/api/apiFormularios";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import toast from "react-hot-toast";

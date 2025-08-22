@@ -1,13 +1,13 @@
 'use client';
 
 import { ProtectedLayout } from '@/components/layout/protected-layout';
-import TaskCrearDos from '@/components/task/TaskCrear';
+import TaskCrear from '@/components/task/TaskCrear';
 
 
 export default function TaskPage() {
   return (
     <ProtectedLayout>
-      <TaskCrearDos />
+      <TaskCrear />
     </ProtectedLayout>
   );
 }
