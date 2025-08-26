@@ -73,4 +73,22 @@ export class TaskServices {
       throw new Error(message);
     }
   }
+
+  static async getTaskbyId(id: string) {
+    try {
+      const token = getAuthToken();
+
+      const response = await axios.get(`${BASE_URL}/task/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      return response.data;
+    } catch (err: any) {
+      const message =
+        err?.response?.data?.message || "Error al obtener la tarea";
+      throw new Error(message);
+    }
+  }
 }
