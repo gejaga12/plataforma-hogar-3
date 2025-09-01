@@ -17,13 +17,10 @@ export default function FormulariosPage() {
   const {
     data: planTasks,
     isLoading: isLoadingPlanTasks,
-    refetch,
   } = useQuery({
     queryKey: ["planTasks", { limit, offset }],
     queryFn: () => TaskServices.fetchPlanTask(limit, offset),
   });
-
-  console.log("plan-tasks:", planTasks);
 
   const createTaskMutation = useMutation({
     mutationFn: (payload: PlanTasks) => {
@@ -43,9 +40,6 @@ export default function FormulariosPage() {
   const handleCreateTask = (payload: PlanTasks) => {
     createTaskMutation.mutate(payload);
   };
-
-  const handleNextPage = () => setOffset((prev) => prev + limit);
-  const handlePrevPage = () => setOffset((prev) => Math.max(0, prev - limit));
 
   return (
     <ProtectedLayout>

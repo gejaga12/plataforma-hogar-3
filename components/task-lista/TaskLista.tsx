@@ -1,16 +1,28 @@
 "use client";
 import React, { useEffect, useMemo, useState } from "react";
-import { Search, Filter, Plus, Layers, X } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { Search, Filter, Plus, Layers, X, Trash2 } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ReactFlowProvider } from "reactflow";
 import { FlowLienzo } from "./FlowLienzo";
 import { TaskServices } from "@/api/apiFormularios";
 import { Task } from "@/utils/types";
+import toast from "react-hot-toast";
+import ConfirmDeleteModal from "../ui/ConfirmDeleteModal";
+import { LoadingSpinner } from "../ui/loading-spinner";
+
+type Item = {
+  id: string;
+  nombre: string;
+};
 
 export function TaskLista() {
+  const queryClient = useQueryClient();
+
   const [searchTerm, setSearchTerm] = useState("");
   const [closing, setClosing] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<Item | null>(null);
 
   const {
     data: taskListData,
@@ -26,6 +38,22 @@ export function TaskLista() {
     () => (Array.isArray(taskListData) ? taskListData : []),
     [taskListData]
   );
+
+  const deleteTaskMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await TaskServices.deleteTask(id);
+    },
+    onSuccess: () => {
+      toast.success("Tarea eliminada.");
+      setModalOpen(false);
+      setSelectedItem(null);
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+    },
+    onError: (error: any) => {
+      toast.error("Error al eliminar la tarea. Intenten nuevamente");
+      console.log("mensaje del error:", error);
+    },
+  });
 
   const filtered = useMemo(
     () =>
@@ -45,7 +73,6 @@ export function TaskLista() {
     queryFn: () => TaskServices.getTaskbyId(selectedTaskId!),
     enabled: !!selectedTaskId,
   });
-  //   console.log('arbol:', selectedTask);
 
   useEffect(() => {
     if (selectedTaskId && !closing) {
@@ -69,6 +96,11 @@ export function TaskLista() {
       setSelectedTaskId(null);
       setClosing(false);
     }, 300); // debe coincidir con duration-300
+  };
+
+  const handleClickEliminar = (item: Item) => {
+    setSelectedItem(item);
+    setModalOpen(true);
   };
 
   return (
@@ -120,33 +152,53 @@ export function TaskLista() {
             <div
               key={task.id}
               onClick={() => handleOpen(task.id!)}
-              className={`cursor-pointer border border-gray-200 rounded-lg p-4 bg-white hover:bg-orange-50 transition shadow-sm ${
+              className={`cursor-pointer border border-gray-200 rounded-lg bg-white hover:bg-orange-50 transition shadow-sm ${
                 isSelected ? "ring-2 ring-orange-400" : ""
               }`}
             >
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <Layers className="text-orange-500" size={20} />
-                    <h2 className="text-lg font-semibold text-gray-800">
-                      {task.code}
-                    </h2>
-                  </div>
-                  <p className="text-sm text-gray-500 mt-1 capitalize">
-                    Prioridad: {task.priority}
-                  </p>
-                </div>
-                <div className="text-right text-sm text-gray-600 space-y-1">
-                  <div>
-                    Duracion: {task.duration?.horas ?? 0}h{" "}
-                    {task.duration?.minutos ?? 0}m
-                  </div>
-                  {task.paro && (
+              {/* Fila principal: panel rojo (peer) + contenido */}
+              <div className="flex items-stretch">
+                {/* Contenido: se corre a la izquierda SOLO cuando la franja está en hover */}
+                <div className="flex-1 p-4 transition-all duration-300 ease-out peer-hover:mr-20 sm:peer-hover:mr-24">
+                  <div className="flex items-center justify-between gap-4">
                     <div>
-                      Paro: {task.paro.horas}h {task.paro.minutos}m
+                      <div className="flex items-center gap-2">
+                        <Layers className="text-orange-500" size={20} />
+                        <h2 className="text-lg font-semibold text-gray-800">
+                          {task.code}
+                        </h2>
+                      </div>
+                      <p className="text-sm text-gray-500 mt-1 capitalize">
+                        Prioridad: {task.priority}
+                      </p>
                     </div>
-                  )}
+
+                    <div className="text-right text-sm text-gray-600 space-y-1">
+                      <div>
+                        Duración: {task.duration?.horas ?? 0}h{" "}
+                        {task.duration?.minutos ?? 0}m
+                      </div>
+                      {task.paro && (
+                        <div>
+                          Paro: {task.paro.horas}h {task.paro.minutos}m
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
+                {/* Panel rojo: franja fija que se expande SOLO al hover del propio botón */}
+                <button
+                  type="button"
+                  aria-label="Eliminar tarea"
+                  title="Eliminar tarea"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleClickEliminar({ id: task.id!, nombre: task.code });
+                  }}
+                  className="peer group relative bg-red-600 text-white transition-[width] duration-300 ease-out w-4 hover:w-20 sm:hover:w-24 min-w-[1rem] overflow-visible rounded-r-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300"
+                >
+                  <Trash2 className="absolute inset-0 m-auto w-5 h-5 opacity-0 group-hover:opacity-100 transition-opacity duration-200 ease-out pointer-events-none" />
+                </button>
               </div>
             </div>
           );
@@ -212,6 +264,19 @@ export function TaskLista() {
           </div>
         </div>
       )}
+
+      <ConfirmDeleteModal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onConfirm={() => {
+          if (selectedItem) {
+            console.log("Eliminando tarea con ID:", selectedItem.id);
+            deleteTaskMutation.mutate(selectedItem.id);
+          }
+        }}
+        title={`Eliminar "${selectedItem?.nombre}"`}
+        message="¿Estás seguro? Esta acción no se puede deshacer."
+      />
     </div>
   );
 }

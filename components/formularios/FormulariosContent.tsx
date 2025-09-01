@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   ChevronDown,
   ChevronUp,
@@ -10,15 +10,17 @@ import {
 import { LoadingSpinner } from "../ui/loading-spinner";
 import { PlanTasks } from "@/utils/types";
 import FormulariosModal from "./FormulariosModal";
+import { useQuery } from "@tanstack/react-query";
+import { TaskServices } from "@/api/apiFormularios";
 
 type SortField = "nombre" | "descripcion";
 type SortDirection = "asc" | "desc";
 
 interface FormulariosContentProps {
-  formularios: PlanTasks[]; // { id, nombre, descripcion, ... }
+  formularios: PlanTasks[];
   isLoadingPlanTasks: boolean;
-  onCreateTask?: (payload: PlanTasks) => void; // se envía {nombre, descripcion}
-  isCreating?: boolean; // opcional: deshabilita botón Crear mientras muta
+  onCreateTask?: (payload: PlanTasks) => void;
+  isCreating?: boolean;
 }
 
 const FormulariosContent: React.FC<FormulariosContentProps> = ({
@@ -30,11 +32,16 @@ const FormulariosContent: React.FC<FormulariosContentProps> = ({
   const [searchTerm, setSearchTerm] = useState("");
   const [sortField, setSortField] = useState<SortField>("nombre");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
-
-  // Modal creación
   const [createOpen, setCreateOpen] = useState(false);
-  const [nuevoNombre, setNuevoNombre] = useState("");
-  const [nuevaDescripcion, setNuevaDescripcion] = useState("");
+  const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
+
+  const { data: tasks, isLoading: isLoadingtasks } = useQuery({
+    queryKey: ["tasks", expandedTaskId],
+    queryFn: () => TaskServices.getPlanTaskbyId(expandedTaskId!),
+    enabled: !!expandedTaskId,
+  });
+
+  // console.log('data task traida:', tasks);
 
   const filtered = useMemo(() => {
     const q = searchTerm.trim().toLowerCase();
@@ -156,24 +163,64 @@ const FormulariosContent: React.FC<FormulariosContentProps> = ({
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {sorted.map((f: any) => (
-                <tr key={f?.id ?? `${f?.name}-${f?.description}`}>
-                  <td className="px-4 py-3 align-top">
-                    <div className="flex items-start">
-                      <FileCheck
-                        className="text-orange-500 mr-2 mt-0.5"
-                        size={16}
-                      />
-                      <span className="text-sm font-medium text-gray-900">
-                        {f?.name ?? "—"}
+                <React.Fragment key={f?.id}>
+                  <tr
+                    className="cursor-pointer hover:bg-orange-50 transition"
+                    onClick={() => {
+                      setExpandedTaskId(
+                        expandedTaskId === f?.id ? null : f?.id
+                      );
+                    }}
+                  >
+                    <td className="px-4 py-3 align-top">
+                      <div className="flex items-start">
+                        <FileCheck
+                          className="text-orange-500 mr-2 mt-0.5"
+                          size={16}
+                        />
+                        <span className="text-sm font-medium text-gray-900">
+                          {f?.name ?? "—"}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="text-sm text-gray-700">
+                        {f?.description ?? "—"}
                       </span>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className="text-sm text-gray-700">
-                      {f?.description ?? "—"}
-                    </span>
-                  </td>
-                </tr>
+                    </td>
+                  </tr>
+
+                  {/* Subtasks */}
+                  {expandedTaskId === f?.id && (
+                    <tr>
+                      <td colSpan={2} className="bg-gray-50 px-6 py-4">
+                        {isLoadingtasks ? (
+                          <div className="text-sm text-gray-500">
+                            Cargando tareas asociadas...
+                          </div>
+                        ) : (
+                          <div className="space-y-3">
+                            {(tasks?.tasks ?? []).map((task: any) => (
+                              <div
+                                key={task.id}
+                                className="ml-6 border-l-4 border-orange-500 pl-4 py-2 bg-white shadow-sm rounded-md"
+                              >
+                                <div className="text-sm font-semibold text-gray-800">
+                                  🧩 {task.code}
+                                </div>
+                                <div className="text-sm text-gray-600">
+                                  Prioridad: {task.priority} -- Duración:{" "}
+                                  {task.duration.horas}h {task.duration.minutos}
+                                  m
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
               ))}
             </tbody>
           </table>
@@ -202,9 +249,7 @@ const FormulariosContent: React.FC<FormulariosContentProps> = ({
         onClose={() => setCreateOpen(false)}
         mode="create"
         onSubmit={(payload) => {
-          // este callback viene del padre
           onCreateTask?.(payload);
-          // si preferís cerrar solo al terminar la mutación, quitá este close
           setCreateOpen(false);
         }}
         isSubmitting={isCreating ?? false}

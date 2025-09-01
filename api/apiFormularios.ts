@@ -175,4 +175,16 @@ export class TaskServices {
       throw new Error(message);
     }
   }
+
+  static async deleteTask(id: string) {
+    const token = getAuthToken();
+
+    const response = await axios.delete(`${BASE_URL}/task/${id}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    return response.data;
+  }
 }
