@@ -321,21 +321,21 @@ const menuItems: MenuItem[] = [
   },
   {
     id: "plan-tasks",
-    label: "Plan Tasks",
+    label: "Plan de Tareas",
     icon: "FileCheck",
     href: "/plan-tasks",
     roles: ["Supervisor", "Admin"],
   },
   {
-    id: "modulos",
-    label: "Módulos",
+    id: "listaTareas",
+    label: "Lista de Tareas",
     icon: "Layers",
-    href: "/modulos",
+    href: "/lista-tareas",
     roles: ["Supervisor", "Admin"],
   },
   {
     id: "task",
-    label: "Tasks",
+    label: "Tareas",
     icon: "Type",
     href: "/task",
     roles: ["Supervisor", "Admin"],
@@ -450,7 +450,7 @@ const menuCategories = [
   {
     id: "forms",
     label: "Formularios",
-    items: ["plan-tasks", "modulos", "task"],
+    items: ["plan-tasks", "listaTareas", "task"],
   },
   {
     id: "config",

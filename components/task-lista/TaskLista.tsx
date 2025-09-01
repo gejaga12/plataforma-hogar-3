@@ -1,6 +1,6 @@
 "use client";
-import React, { useState } from "react";
-import { Search, Filter, Plus, Layers } from "lucide-react";
+import React, { useEffect, useMemo, useState } from "react";
+import { Search, Filter, Plus, Layers, X } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { ReactFlowProvider } from "reactflow";
 import { FlowLienzo } from "./FlowLienzo";
@@ -9,19 +9,30 @@ import { Task } from "@/utils/types";
 
 export function TaskLista() {
   const [searchTerm, setSearchTerm] = useState("");
+  const [closing, setClosing] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
 
-  const { data } = useQuery({
+  const {
+    data: taskListData,
+    isLoading: loadingTasks,
+    isError,
+    error,
+  } = useQuery({
     queryKey: ["tasks"],
     queryFn: () => TaskServices.getTasks(20, 0),
   });
 
-  const tasks: Task[] = data || [];
+  const tasks: Task[] = useMemo(
+    () => (Array.isArray(taskListData) ? taskListData : []),
+    [taskListData]
+  );
 
-  console.log("tasks traidas:", tasks);
-
-  const filtered = tasks.filter((t) =>
-    t.code.toLowerCase().includes(searchTerm.toLowerCase())
+  const filtered = useMemo(
+    () =>
+      tasks.filter((t) =>
+        (t.code ?? "").toLowerCase().includes(searchTerm.toLowerCase())
+      ),
+    [tasks, searchTerm]
   );
 
   const {
@@ -34,8 +45,31 @@ export function TaskLista() {
     queryFn: () => TaskServices.getTaskbyId(selectedTaskId!),
     enabled: !!selectedTaskId,
   });
+  //   console.log('arbol:', selectedTask);
 
-  console.log('arbol:', selectedTask);
+  useEffect(() => {
+    if (selectedTaskId && !closing) {
+      const prev = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = prev;
+      };
+    }
+  }, [selectedTaskId, closing]);
+
+  const handleOpen = (id: string) => {
+    setSelectedTaskId(id);
+    setClosing(false);
+  };
+
+  const handleClose = () => {
+    // animación de salida: deslizar a la derecha y luego desmontar
+    setClosing(true);
+    setTimeout(() => {
+      setSelectedTaskId(null);
+      setClosing(false);
+    }, 300); // debe coincidir con duration-300
+  };
 
   return (
     <div className="space-y-6">
@@ -44,26 +78,18 @@ export function TaskLista() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">🧩 Tareas</h1>
           <p className="text-gray-600 mt-1">
-            Estructura visual de tareas con subtareas principales y secundarias
+            Visualizá el flujo de subtareas por árbol
           </p>
         </div>
-
-        <button
-          onClick={() => console.log("clicked")}
-          className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
-        >
-          <Plus size={20} />
-          <span>Nueva Tarea</span>
-        </button>
       </div>
 
       {/* Search */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-        <div className="flex flex-col md:flex-row md:items-center space-y-4 md:space-y-0 md:space-x-4">
+        <div className="flex flex-col md:flex-row md:items-center gap-4">
           <div className="flex-1">
             <div className="relative">
               <Search
-                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
                 size={20}
               />
               <input
@@ -75,62 +101,115 @@ export function TaskLista() {
               />
             </div>
           </div>
-
-          <button className="flex items-center space-x-2 px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-            <Filter size={16} />
-            <span>Filtros</span>
-          </button>
         </div>
       </div>
 
-      {/* Cards */}
+      {/* Estado de carga / error */}
+      {loadingTasks && <p className="text-gray-500">Cargando tareas...</p>}
+      {isError && (
+        <p className="text-red-500">
+          Error al cargar tareas: {(error as any)?.message}
+        </p>
+      )}
+
+      {/* LISTA (full width; el modal se superpone, no deforma el layout) */}
       <div className="space-y-4">
-        {filtered.map((task) => (
-          <div
-            key={task.id}
-            onClick={() => setSelectedTaskId(task.id!)}
-            className="cursor-pointer border border-gray-200 rounded-lg p-4 bg-white hover:bg-orange-50 transition-colors shadow-sm"
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="flex items-center space-x-2">
-                  <Layers className="text-orange-500" size={20} />
-                  <h2 className="text-lg font-semibold text-gray-800">
-                    {task.code}
-                  </h2>
-                </div>
-                <p className="text-sm text-gray-500 mt-1 capitalize">
-                  Prioridad: {task.priority}
-                </p>
-              </div>
-              <div className="text-right text-sm text-gray-600 space-y-1">
+        {filtered.map((task) => {
+          const isSelected = task.id === selectedTaskId && !closing;
+          return (
+            <div
+              key={task.id}
+              onClick={() => handleOpen(task.id!)}
+              className={`cursor-pointer border border-gray-200 rounded-lg p-4 bg-white hover:bg-orange-50 transition shadow-sm ${
+                isSelected ? "ring-2 ring-orange-400" : ""
+              }`}
+            >
+              <div className="flex items-center justify-between">
                 <div>
-                  ⏱️ Duración: {task.duration?.horas ?? 0}h{" "}
-                  {task.duration?.minutos ?? 0}m
-                </div>
-                {task.paro && (
-                  <div>
-                    ✂️ Corte: {task.paro.horas}h {task.paro.minutos}m
+                  <div className="flex items-center gap-2">
+                    <Layers className="text-orange-500" size={20} />
+                    <h2 className="text-lg font-semibold text-gray-800">
+                      {task.code}
+                    </h2>
                   </div>
-                )}
+                  <p className="text-sm text-gray-500 mt-1 capitalize">
+                    Prioridad: {task.priority}
+                  </p>
+                </div>
+                <div className="text-right text-sm text-gray-600 space-y-1">
+                  <div>
+                    Duracion: {task.duration?.horas ?? 0}h{" "}
+                    {task.duration?.minutos ?? 0}m
+                  </div>
+                  {task.paro && (
+                    <div>
+                      Paro: {task.paro.horas}h {task.paro.minutos}m
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
+        {filtered.length === 0 && !loadingTasks && (
+          <p className="text-gray-500">No hay tareas para mostrar.</p>
+        )}
       </div>
 
-      {/* React Flow Canvas */}
+      {/* MODAL Lienzo */}
       {selectedTaskId && (
-        <div className="mt-6 border-t pt-6">
-          <ReactFlowProvider>
-            {loadingDetail ? (
-              <p className="text-gray-500">Cargando estructura...</p>
-            ) : errorDetail ? (
-              <p className="text-red-500">Error: {errorTask?.message}</p>
-            ) : selectedTask ? (
-              <FlowLienzo task={selectedTask} />
-            ) : null}
-          </ReactFlowProvider>
+        <div className="fixed inset-0 z-50">
+          {/* Backdrop */}
+          <button
+            aria-label="Cerrar"
+            onClick={handleClose}
+            className={`absolute inset-0 bg-black/40 transition-opacity duration-300 ${
+              closing ? "opacity-0" : "opacity-100"
+            }`}
+          />
+
+          {/* Panel deslizante */}
+          <div
+            className={`fixed right-0 top-0 h-screen w-full lg:w-1/2 bg-white border-l border-gray-200 shadow-lg transform transition-transform duration-300 ${
+              closing ? "translate-x-full" : "translate-x-0"
+            }`}
+          >
+            {/* Header del panel */}
+            <div className="flex items-center justify-between px-3 py-2 border-b">
+              <h3 className="text-base font-semibold text-gray-800">
+                {loadingDetail
+                  ? "Cargando estructura..."
+                  : "Estructura de la tarea"}
+              </h3>
+              <button
+                onClick={handleClose}
+                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-gray-800 text-white hover:bg-gray-700 shadow"
+              >
+                <X size={16} />
+                Ocultar
+              </button>
+            </div>
+
+            {/* Contenido scrollable a toda altura */}
+            <div className="h-[calc(100vh-42px)] overflow-auto p-3">
+              {loadingDetail ? (
+                <div className="h-full grid place-items-center text-gray-500">
+                  Cargando…
+                </div>
+              ) : errorDetail ? (
+                <div className="h-full grid place-items-center text-red-500">
+                  Error: {(errorTask as any)?.message}
+                </div>
+              ) : selectedTask ? (
+                <ReactFlowProvider>
+                  <div className="h-[80vh] lg:h-[calc(100vh-90px)]">
+                    {/* FlowLienzo llenará 100% de este contenedor */}
+                    <FlowLienzo task={selectedTask} />
+                  </div>
+                </ReactFlowProvider>
+              ) : null}
+            </div>
+          </div>
         </div>
       )}
     </div>
