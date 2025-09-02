@@ -16,7 +16,7 @@ export interface RoleList extends Role {
 }
 
 export interface CreateRoleData {
-  id?: string;
+  id?: string | number;
   name: string;
   permissions?: Permiso[]; // puedes cambiarlo a string[] si lo manejás como keys directamente
   users: string[];

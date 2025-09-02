@@ -1,7 +1,7 @@
 import { JerarquiaNodo } from "@/api/apiJerarquia";
-import { areaColors } from "@/app/organigrama/page";
 import { cn } from "@/utils/cn";
 import { UserPlus, UserRoundX, X } from "lucide-react";
+import { areaColors } from "../ui/AreaColors";
 
 interface OrgNodeProps {
   node: JerarquiaNodo;

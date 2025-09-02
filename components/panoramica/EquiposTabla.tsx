@@ -89,10 +89,17 @@ export function EquiposTabla({ equipos }: EquiposTablaProps) {
     let bValue = b[sortField];
     
     if (sortField === 'fechaInstalacion' || sortField === 'ultimoMantenimiento' || sortField === 'proximoMantenimiento') {
-      aValue = aValue ? new Date(aValue).getTime() : 0;
-      bValue = bValue ? new Date(bValue).getTime() : 0;
+      const aTime = aValue ? new Date(aValue as string).getTime() : 0;
+      const bTime = bValue ? new Date(bValue as string).getTime() : 0;
+      if (aTime < bTime) return sortDirection === 'asc' ? -1 : 1;
+      if (aTime > bTime) return sortDirection === 'asc' ? 1 : -1;
+      return 0;
     }
     
+    // Manejar undefined explícitamente
+    if (aValue === undefined && bValue === undefined) return 0;
+    if (aValue === undefined) return sortDirection === 'asc' ? 1 : -1;
+    if (bValue === undefined) return sortDirection === 'asc' ? -1 : 1;
     if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
     if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
     return 0;

@@ -201,7 +201,7 @@ const RoleFormModal = ({
                   ) : (
                     <ul className="space-y-2">
                       {filteredUsuarios
-                        ?.filter((user) => formData.users.includes(user.id))
+                        ?.filter((user) => formData.users.includes(String(user.id)))
                         .map((user) => (
                           <li key={user.id} className="text-sm text-gray-900">
                             <span className="text-sm text-gray-700 dark:text-gray-300">
@@ -220,9 +220,9 @@ const RoleFormModal = ({
                     <label key={user.id} className="flex items-center py-2">
                       <input
                         type="checkbox"
-                        checked={formData.users.includes(user.id)}
+                        checked={formData.users.includes(String(user.id))}
                         onChange={(e) =>
-                          handleUserChange(user.id, e.target.checked)
+                          handleUserChange(String(user.id), e.target.checked)
                         }
                         className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
                         disabled={isReadOnly}

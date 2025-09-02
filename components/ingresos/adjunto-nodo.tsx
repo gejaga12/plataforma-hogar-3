@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Paperclip, Download, Trash2, Eye, File, X } from 'lucide-react';
 import { Archivo } from '@/utils/types';
-import { cn } from '@/lib/utils';
+import { cn } from '@/utils/cn';
 
 interface AdjuntoNodoProps {
   archivos: Archivo[];

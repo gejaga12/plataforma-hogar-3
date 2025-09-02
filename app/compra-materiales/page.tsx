@@ -181,8 +181,11 @@ function CompraMaterialesContent() {
       bValue = b.minutosTrabajado || 0;
     }
     
-    if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
-    if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
+    // Ensure aValue and bValue are not null or undefined
+    const aComp = aValue ?? '';
+    const bComp = bValue ?? '';
+    if (aComp < bComp) return sortDirection === 'asc' ? -1 : 1;
+    if (aComp > bComp) return sortDirection === 'asc' ? 1 : -1;
     return 0;
   });
 

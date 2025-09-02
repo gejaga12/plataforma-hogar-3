@@ -482,7 +482,7 @@ export function Sidebar({ className }: SidebarProps) {
 
   const filteredMenuItems = menuItems.filter((item) =>
     Array.isArray(user?.roles)
-      ? user.roles.some((role) => item.roles.includes(role.name))
+      ? user?.roles.some((role) => item.roles.includes(role.name))
       : false
   );
 

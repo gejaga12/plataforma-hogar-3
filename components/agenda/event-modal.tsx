@@ -6,18 +6,14 @@ import {
   Clock, 
   MapPin, 
   Users, 
-  AlertCircle, 
   X,
-  Plus,
-  RefreshCw,
   FileText,
   Search,
   Filter,
   ChevronDown
 } from 'lucide-react';
-import { AgendaEvent, AgendaEventType } from '@/utils/types';
+import { AgendaEvent } from '@/utils/types';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { cn } from '@/lib/utils';
 
 interface EventModalProps {
   isOpen: boolean;
@@ -155,7 +151,8 @@ export function EventModal({
 
   // Handle date changes
   const handleDateChange = (field: 'startDate' | 'endDate', value: string) => {
-    const currentDate = new Date(formData[field]);
+    const dateValue = formData[field] ?? new Date().toISOString();
+    const currentDate = new Date(dateValue);
     const [year, month, day] = value.split('-').map(Number);
     
     currentDate.setFullYear(year);
@@ -167,7 +164,7 @@ export function EventModal({
 
   // Handle time changes
   const handleTimeChange = (field: 'startDate' | 'endDate', value: string) => {
-    const currentDate = new Date(formData[field]);
+    const currentDate = new Date(formData[field] ?? new Date().toISOString());
     const [hours, minutes] = value.split(':').map(Number);
     
     currentDate.setHours(hours);

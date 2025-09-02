@@ -262,7 +262,6 @@ export function IngresoFlow({ pasos, onEstadoCambio, onComentario, onUploadArchi
             fitViewOptions={{ padding: 0.2 }}
             minZoom={0.2}
             maxZoom={2.5}
-            defaultZoom={0.8}
             attributionPosition="bottom-right"
             onInit={(instance) => setReactFlowInstance(instance)}
             nodesDraggable={true}

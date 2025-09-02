@@ -101,13 +101,13 @@ function SettingsContent() {
             {user?.photoURL ? (
               <img
                 src={user.photoURL}
-                alt={user.displayName || user.email}
+                alt={user.fullName || user.email}
                 className="w-16 h-16 rounded-full"
               />
             ) : (
               <div className="w-16 h-16 bg-orange-500 rounded-full flex items-center justify-center">
                 <span className="text-xl font-medium text-white">
-                  {(user?.displayName || user?.email || "")
+                  {(user?.fullName || user?.email || "")
                     .charAt(0)
                     .toUpperCase()}
                 </span>
@@ -115,13 +115,13 @@ function SettingsContent() {
             )}
             <div>
               <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
-                {user?.displayName || user?.email}
+                {user?.fullName || user?.email}
               </h3>
               <p className="text-sm text-gray-600 dark:text-gray-400">
                 {user?.email}
               </p>
               <p className="text-sm text-orange-600 dark:text-orange-400">
-                {user?.role}
+                {user?.roles?.join(", ")}
               </p>
             </div>
           </div>

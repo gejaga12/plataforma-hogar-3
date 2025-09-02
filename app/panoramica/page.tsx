@@ -971,20 +971,20 @@ function PanoramicaContent() {
           isPanelOpen ? "lg:mr-80" : ""
         )}>
           <div className="h-[calc(100vh-240px)] min-h-[500px]">
-            {isLoading ? (
+            {/* {isLoading ? ( */}
               <div className="flex items-center justify-center h-full">
                 <div className="text-center">
                   <LoadingSpinner size="lg" />
                   <p className="mt-4 text-gray-600 dark:text-gray-400">Cargando mapa y sucursales...</p>
                 </div>
               </div>
-            ) : (
-              <MapaSucursales 
-                sucursales={filteredSucursales} 
-                onSelect={handleSelectSucursal}
-                selectedSucursalId={selectedSucursal?.id}
-              />
-            )}
+            {/* ) : (
+              // <MapaSucursales 
+              //   sucursales={filteredSucursales} 
+              //   onSelect={handleSelectSucursal}
+              //   selectedSucursalId={selectedSucursal?.id}
+              // />
+            )} */}
           </div>
         </div>
 

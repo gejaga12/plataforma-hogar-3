@@ -1,6 +1,5 @@
 import React, { useRef, useState } from "react";
 import NodeDetailModal from "./NodeDetailModal";
-import JobSearchModal from "./JobsSearchModal";
 import OrgNode from "./OrgNode";
 import {
   Minus,
@@ -24,6 +23,7 @@ import { CrearJerarquiaModal } from "./CrearJerarquiaModal";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import ConfirmDeleteModal from "../ui/ConfirmDeleteModal";
+
 
 const OrganigramaContent = () => {
   const queryClient = useQueryClient();
@@ -381,11 +381,6 @@ const OrganigramaContent = () => {
         isOpen={showAddEmployeeModal}
         onClose={() => setShowAddEmployeeModal(false)}
         nodoId={nodoId}
-      />
-
-      <JobSearchModal
-        isOpen={showJobSearchModal}
-        onClose={() => setShowJobSearchModal(false)}
       />
 
       <CrearJerarquiaModal

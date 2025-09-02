@@ -1,31 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { 
-  Calendar as CalendarIcon, 
-  Plus, 
-  Filter, 
-  Search, 
-  Clock, 
-  MapPin, 
-  User,
-  ChevronLeft,
-  ChevronRight,
-  MoreHorizontal,
-  Users,
-  CheckCircle,
-  AlertCircle,
-  X,
-  Save,
-  Trash2,
-  Edit,
-  Eye,
-  ArrowRight
-} from 'lucide-react';
+
 import { ProtectedLayout } from '@/components/layout/protected-layout';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { cn } from '@/lib/utils';
 import { AgendaEvent, AgendaEventType, AgendaView } from '@/utils/types';
 import { AgendaCalendar } from '@/components/agenda/agenda-calendar';
 import { EventModal } from '@/components/agenda/event-modal';

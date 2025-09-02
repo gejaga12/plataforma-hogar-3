@@ -62,7 +62,7 @@ export const buildLaborUpdatePayload = (
 
   // sueldo (string -> number)
   const formSueldoNum =
-    form.sueldo !== undefined && form.sueldo !== ""
+    form.sueldo !== undefined && form.sueldo !== 0
       ? Number(form.sueldo)
       : undefined;
   const prevSueldoNum = prev?.sueldo;

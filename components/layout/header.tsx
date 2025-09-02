@@ -53,22 +53,22 @@ export function Header() {
             {user.photoURL ? (
               <img
                 src={user.photoURL}
-                alt={user.displayName || user.email}
+                alt={user.fullName || user.email}
                 className="w-8 h-8 rounded-full"
               />
             ) : (
               <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
                 <span className="text-sm font-medium text-white">
-                  {(user.displayName || user.email).charAt(0).toUpperCase()}
+                  {(user.fullName || user.email).charAt(0).toUpperCase()}
                 </span>
               </div>
             )}
             <div className="hidden md:block">
               <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                {user.displayName || user.email}
+                {user.fullName || user.email}
               </p>
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                {user.role}
+                {user.roles.join(', ')}
               </p>
             </div>
           </div>

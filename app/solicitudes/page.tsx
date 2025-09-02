@@ -1,21 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { 
   FileText, 
   Plus, 
-  Filter, 
-  Search, 
-  Clock, 
-  User,
-  CheckCircle,
-  XCircle,
-  AlertCircle
 } from 'lucide-react';
 import { ProtectedLayout } from '@/components/layout/protected-layout';
-import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { cn } from '@/lib/utils';
 
 function SolicitudesContent() {
   const [searchTerm, setSearchTerm] = useState('');
