@@ -68,7 +68,7 @@ export function Header() {
                 {user.fullName || user.email}
               </p>
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                {user.roles.join(', ')}
+                {user.roles[0]?.name}
               </p>
             </div>
           </div>
