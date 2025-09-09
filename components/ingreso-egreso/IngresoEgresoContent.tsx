@@ -1,16 +1,12 @@
-import { useQuery } from "@tanstack/react-query";
 import {
   Calendar,
   ChevronDown,
   ChevronUp,
   Clock,
   Download,
-  Edit,
   Eye,
   MapPin,
-  Plus,
   Search,
-  Trash2,
 } from "lucide-react";
 import { useState } from "react";
 import { LoadingSpinner } from "../ui/loading-spinner";
@@ -67,11 +63,11 @@ const IngresoEgresoContent: React.FC<IngresoEgresoContentProps> = ({
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const [modalState, setModalState] = useState<{
     isOpen: boolean;
-    mode: "create" | "view";
+    mode: "view";
     movimiento?: MovimientoIngresoEgreso;
   }>({
     isOpen: false,
-    mode: "create",
+    mode: "view",
   });
 
   const filteredMovimientos =
@@ -216,14 +212,6 @@ const IngresoEgresoContent: React.FC<IngresoEgresoContentProps> = ({
           >
             <Download size={20} />
             <span>Exportar a Excel</span>
-          </button>
-
-          <button
-            onClick={() => setModalState({ isOpen: true, mode: "create" })}
-            className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg flex items-center justify-center space-x-2 transition-colors"
-          >
-            <Plus size={20} />
-            <span>Registrar Movimiento</span>
           </button>
         </div>
       </div>
@@ -527,10 +515,9 @@ const IngresoEgresoContent: React.FC<IngresoEgresoContentProps> = ({
         </div>
       )}
 
-      {/* Modal */}
       <MovimientoModal
         isOpen={modalState.isOpen}
-        onClose={() => setModalState({ isOpen: false, mode: "create" })}
+        onClose={() => setModalState({ isOpen: false, mode: "view" })}
         movimiento={modalState.movimiento}
         mode={modalState.mode}
       />

@@ -1,16 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { MovimientoIngresoEgreso } from "@/components/ingreso-egreso/IngresoEgresoContent";
 import { X } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ingresoService } from "@/api/apiIngreso";
 import toast from "react-hot-toast";
-
-interface MovimientoModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  movimiento?: MovimientoIngresoEgreso;
-  mode: "create" | "view";
-}
 
 export interface CreateMovimientoData {
   usuarioId: string; // UUID del usuario seleccionado
@@ -23,6 +16,13 @@ export interface CreateMovimientoData {
     longitud?: number;
   };
   observaciones?: string; // Campo opcional para anotar detalles adicionales
+}
+
+interface MovimientoModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  movimiento?: MovimientoIngresoEgreso;
+  mode: "create" | "view";
 }
 
 const MovimientoModal = ({
@@ -41,6 +41,9 @@ const MovimientoModal = ({
         reason: formData.reason,
         modo: formData.modo,
       };
+
+      console.log("enviado ingreso-egreso:", payload);
+
       return await ingresoService.createIngreso(payload);
     },
     onSuccess: () => {
@@ -63,6 +66,19 @@ const MovimientoModal = ({
     ubicacion: movimiento?.ubicacion,
     observaciones: movimiento?.observaciones || "",
   });
+
+  useEffect(() => {
+    if (isOpen && mode === "view" && movimiento) {
+      setFormData({
+        usuarioId: movimiento.usuario.id || "",
+        tipo: movimiento.tipo,
+        reason: movimiento.motivo || "",
+        modo: movimiento.modo as "normal" | "eventual" | "viaje",
+        ubicacion: movimiento.ubicacion,
+        observaciones: movimiento.observaciones || "",
+      });
+    }
+  }, [isOpen, mode, movimiento]);
 
   if (!isOpen) return null;
 
@@ -94,31 +110,6 @@ const MovimientoModal = ({
           className="p-6 space-y-6"
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Usuario *
-              </label>
-              <select
-                value={formData.usuarioId}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    usuarioId: e.target.value,
-                  }))
-                }
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                required
-                disabled={isReadOnly}
-              >
-                <option value="">Seleccionar usuario</option>
-                <option value="user-1">Juan Carlos Pérez</option>
-                <option value="user-2">María González López</option>
-                <option value="user-3">Carlos Rodríguez</option>
-                <option value="user-4">Ana López Martínez</option>
-                <option value="user-5">Pedro Martín Silva</option>
-              </select>
-            </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Tipo de Movimiento *

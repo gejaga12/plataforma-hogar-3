@@ -1,10 +1,12 @@
-'use client';
+"use client";
 
-import { ReactNode, useState } from 'react';
-import { Bell, X, ThumbsUp, Heart, Eye } from 'lucide-react';
-import { NovedadCard } from './novedad-card';
-import { NovedadModal } from './novedad-modal';
-import { Novedad } from '@/utils/types';
+import { ReactNode, useState } from "react";
+import { Bell, X, ThumbsUp, Heart, Eye, Plus } from "lucide-react";
+import { NovedadCard } from "./novedad-card";
+import { NovedadModal } from "./novedad-modal";
+import { Novedad } from "@/utils/types";
+import MovimientoModal from "../ingreso-egreso/MovimientoModal";
+import { MovimientoIngresoEgreso } from "../ingreso-egreso/IngresoEgresoContent";
 
 interface DashboardHeaderProps {
   nombreUsuario: string;
@@ -12,7 +14,7 @@ interface DashboardHeaderProps {
   icon: ReactNode;
   novedades: Novedad[];
   onCerrarNovedad: (id: string) => void;
-  onReaccionar: (id: string, tipo: 'like' | 'love' | 'seen') => void;
+  onReaccionar: (id: string, tipo: "like" | "love" | "seen") => void;
 }
 
 export function DashboardHeader({
@@ -21,10 +23,11 @@ export function DashboardHeader({
   icon,
   novedades,
   onCerrarNovedad,
-  onReaccionar
+  onReaccionar,
 }: DashboardHeaderProps) {
   const [selectedNovedad, setSelectedNovedad] = useState<Novedad | null>(null);
-  
+  const [showMovimientoModal, setShowMovimientoModal] = useState(false);
+
   // Ordenar novedades: primero las fijadas, luego por fecha
   const sortedNovedades = [...novedades].sort((a, b) => {
     if (a.pin && !b.pin) return -1;
@@ -32,17 +35,42 @@ export function DashboardHeader({
     return new Date(b.fecha).getTime() - new Date(a.fecha).getTime();
   });
 
-  const today = new Date().toLocaleDateString('es-ES', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric'
+  const today = new Date().toLocaleDateString("es-ES", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
   });
 
   const handleOpenNovedad = (novedad: Novedad) => {
     setSelectedNovedad(novedad);
     // Marcar como vista automáticamente
-    onReaccionar(novedad.id, 'seen');
+    onReaccionar(novedad.id, "seen");
+  };
+
+  const handleAbrirModalMovimiento = () => {
+    setShowMovimientoModal(true);
+  };
+
+  const nuevoMovimiento: MovimientoIngresoEgreso = {
+    id: "",
+    usuario: {
+      id: "",
+      nombreCompleto: "",
+      rol: "",
+    },
+    tipo: "INGRESO",
+    fechaHora: new Date().toISOString(),
+    modo: "normal",
+    motivo: "",
+    ubicacion: {
+      direccion: "",
+    },
+    dispositivo: "",
+    ipAddress: "",
+    observaciones: "",
+    registradoPor: "",
+    createdAt: new Date().toISOString(),
   };
 
   return (
@@ -52,12 +80,23 @@ export function DashboardHeader({
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
             ¡Bienvenido, {nombreUsuario}!
           </h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1 capitalize">{today}</p>
+          <div className="flex flex-col space-x-2 text-sm text-gray-500 dark:text-gray-400 mt-4 md:mt-0">
+            <p className="text-gray-600 dark:text-gray-400 mt-1 capitalize">
+              {today}
+            </p>
+            <div className="flex items-center space-x-2 mt-2">
+              {icon}
+              <span>{panelTitle}</span>
+            </div>
+          </div>
         </div>
-        <div className="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400 mt-4 md:mt-0">
-          {icon}
-          <span>{panelTitle}</span>
-        </div>
+        <button
+          onClick={handleAbrirModalMovimiento}
+          className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg flex items-center justify-center space-x-2 transition-colors"
+        >
+          <Plus size={20} />
+          <span>Registrar Ingreso / Egreso</span>
+        </button>
       </div>
 
       {/* Novedades */}
@@ -69,7 +108,8 @@ export function DashboardHeader({
               Novedades
             </h2>
             <span className="text-sm text-gray-500 dark:text-gray-400">
-              {sortedNovedades.length} {sortedNovedades.length === 1 ? 'novedad' : 'novedades'}
+              {sortedNovedades.length}{" "}
+              {sortedNovedades.length === 1 ? "novedad" : "novedades"}
             </span>
           </div>
 
@@ -99,6 +139,14 @@ export function DashboardHeader({
           onReaccionar={(tipo) => onReaccionar(selectedNovedad.id, tipo)}
         />
       )}
+
+      {/* Modal */}
+      <MovimientoModal
+        isOpen={showMovimientoModal}
+        onClose={() => setShowMovimientoModal(false)}
+        movimiento={nuevoMovimiento}
+        mode="create"
+      />
     </div>
   );
 }

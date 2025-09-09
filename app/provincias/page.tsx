@@ -17,7 +17,8 @@ export type CrearProvinciaInput = {
 export default function ProvinciasPage() {
   const createProvinciaMutation = useMutation({
     mutationFn: (data: CrearProvinciaInput) => ZonaService.crearProvincia(data),
-    onSuccess: () => {
+    
+    onSuccess: () => {  
       toast.success("Provincia creada con éxito");
       queryClient.invalidateQueries({ queryKey: ["provincias"] });
     },

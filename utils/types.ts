@@ -6,7 +6,7 @@ export interface UserAdapted {
   email: string;
   fullName: string;
   roles: Role[];
-  zona: {
+  zona?: {
     name: string;
     id: string;
   };

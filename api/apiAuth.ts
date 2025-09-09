@@ -76,7 +76,7 @@ export class AuthService {
     roles: string[]; // IDs de los roles
     address: string;
     puesto: string;
-    zona: string;
+    // zona: string;
     sucursalHogar: string;
     fechaNacimiento: string;
     jerarquia?: string;
@@ -102,7 +102,7 @@ export class AuthService {
         address: resData.address || "",
         jerarquia: resData.jerarquia ?? null,
         sucursalHogar: resData.sucursalHogar ?? null,
-        zona: resData.zona ?? null,
+        // zona: resData.zona ?? null,
         createdAt: resData.createdAt ?? new Date().toISOString(),
         deletedAt: resData.deletedAt ?? null,
         fechaNacimiento: resData.fechaNacimiento,
