@@ -14,12 +14,12 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { LoadingSpinner } from "../ui/loading-spinner";
 import { cn } from "@/utils/cn";
-import { mockOrders, OrderTableData } from "@/app/orders/page";
-import BacklogOT from "./BacklogOT";
 import { OTService } from "@/api/apiOTs";
 import { queryClient } from "@/utils/query-client";
 import CrearOTModal from "./CrearOTModal";
 import toast from "react-hot-toast";
+import { Ots } from "@/utils/types";
+import BacklogOT from "./BacklogOT";
 
 type SortField = "id" | "fecha" | "tecnico" | "cliente";
 type SortDirection = "asc" | "desc";
@@ -43,11 +43,6 @@ const estadoConfig = {
     "bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400",
 };
 
-const fetchOrders = async (): Promise<OrderTableData[]> => {
-  await new Promise((resolve) => setTimeout(resolve, 800));
-  return mockOrders;
-};
-
 export function OrdersContent() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedOrders, setSelectedOrders] = useState<string[]>([]);
@@ -56,9 +51,15 @@ export function OrdersContent() {
   const [openModal, setOpenModal] = useState(false);
   const router = useRouter();
 
-  const { data: orders, isLoading } = useQuery({
-    queryKey: ["orders-table"],
-    queryFn: fetchOrders,
+  const {
+    data: ots,
+    isLoading: isLoadingOts,
+    isError,
+    error,
+  } = useQuery<Ots[]>({
+    //UNIFICAR TIPO DESPUES CON BACKLOG
+    queryKey: ["ots-backlog"],
+    queryFn: () => OTService.listarOTs({ limit: 50, offset: 0 }),
   });
 
   const crearOTMutation = useMutation({
@@ -72,7 +73,7 @@ export function OrdersContent() {
     },
     onSuccess: () => {
       toast.success("OT creada correctamente.");
-      queryClient.invalidateQueries({ queryKey: ["orders-table"] });
+      queryClient.invalidateQueries({ queryKey: ["ots-table"] });
       queryClient.invalidateQueries({ queryKey: ["ots-backlog"] });
     },
     onError: (error: any) => {
@@ -82,14 +83,11 @@ export function OrdersContent() {
   });
 
   const filteredOrders =
-    orders?.filter((order) => {
+    ots?.filter((order) => {
       const searchLower = searchTerm.toLowerCase();
       return (
-        order.id.toLowerCase().includes(searchLower) ||
-        order.tecnico.toLowerCase().includes(searchLower) ||
-        order.cliente.toLowerCase().includes(searchLower) ||
-        order.formulario.toLowerCase().includes(searchLower) ||
-        order.sucursal.toLowerCase().includes(searchLower)
+        order.tecnico?.fullName.toString().includes(searchLower) ||
+        order.cliente?.toLowerCase().includes(searchLower)
       );
     }) || [];
 
@@ -104,6 +102,10 @@ export function OrdersContent() {
       aValue = `${aYear}-${aMonth}-${aDay}`;
       bValue = `${bYear}-${bMonth}-${bDay}`;
     }
+
+    // Provide fallback values if undefined
+    if (aValue === undefined) aValue = "";
+    if (bValue === undefined) bValue = "";
 
     if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
     if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
@@ -169,7 +171,7 @@ export function OrdersContent() {
     </button>
   );
 
-  if (isLoading) {
+  if (isLoadingOts) {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="text-center">
@@ -178,6 +180,16 @@ export function OrdersContent() {
             Cargando órdenes...
           </p>
         </div>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <p className="mt-4 text-gray-600 dark:text-gray-400">
+          Error al cargar las OTs... intente nuevamente
+        </p>
       </div>
     );
   }
@@ -311,18 +323,26 @@ export function OrdersContent() {
                     <span
                       className={cn(
                         "px-2 py-1 text-xs font-medium rounded-full",
-                        estadoGestionConfig[order.estadoGestion]
+                        estadoGestionConfig[
+                          order.estadoGestion as
+                            | "Procesando"
+                            | "Completado"
+                            | "Cancelado"
+                        ]
                       )}
                     >
-                      {order.estadoGestion}
+                      {order.estadoGestion ?? ""}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100 font-mono">
                     {order.formulario}
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
-                    <div className="max-w-32 truncate" title={order.tecnico}>
-                      {order.tecnico}
+                    <div
+                      className="max-w-32 truncate"
+                      title={order.tecnico?.fullName}
+                    >
+                      {order.tecnico?.fullName}
                     </div>
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
@@ -344,7 +364,13 @@ export function OrdersContent() {
                     <span
                       className={cn(
                         "px-2 py-1 text-xs font-medium rounded-full",
-                        estadoConfig[order.estado]
+                        estadoConfig[
+                          order.estado as
+                            | "Pendiente"
+                            | "Me recibo"
+                            | "Finalizado"
+                            | "En proceso"
+                        ]
                       )}
                     >
                       {order.estado}
@@ -369,7 +395,7 @@ export function OrdersContent() {
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
                     <div className="max-w-32" title={order.cliente}>
-                      {order.cliente.split("\n").map((line, i) => (
+                      {order.cliente?.split("\n").map((line, i) => (
                         <div key={i} className="truncate">
                           {line}
                         </div>
@@ -378,11 +404,13 @@ export function OrdersContent() {
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
                     <div className="max-w-40" title={order.sucursalCliente}>
-                      {order.sucursalCliente.split(" || ").map((part, i) => (
-                        <div key={i} className="truncate text-xs">
-                          {part}
-                        </div>
-                      ))}
+                      {(order.sucursalCliente ?? "-")
+                        .split(" || ")
+                        .map((part, i) => (
+                          <div key={i} className="truncate text-xs">
+                            {part}
+                          </div>
+                        ))}
                     </div>
                   </td>
                   <td className="px-4 py-3">

@@ -1,22 +1,10 @@
 import { OTService } from "@/api/apiOTs";
 import { cn } from "@/utils/cn";
+import { Ots } from "@/utils/types";
 import { useQuery } from "@tanstack/react-query";
 import { Eye, Search, UserPlus, Wrench } from "lucide-react";
 import React, { useMemo, useState } from "react";
-
-export type BacklogOrder = {
-  id: string;
-  formulario: string;
-  cliente: string;
-  comentario?: string;
-  fecha: string; // dd/mm/yyyy
-  horaInicio?: string;
-  horaFin?: string;
-  tecnico?: string; // vacío = sin asignar
-  sucursal?: string; // vacío = sin asignar
-  prioridad?: "Baja" | "Media" | "Alta";
-  userId?: number | null; // para validar si está asignada
-};
+import { LoadingSpinner } from "../ui/loading-spinner";
 
 const prioridadClass: Record<"Baja" | "Media" | "Alta", string> = {
   Baja: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300",
@@ -28,26 +16,23 @@ const prioridadClass: Record<"Baja" | "Media" | "Alta", string> = {
 const BacklogOT = () => {
   const [search, setSearch] = useState("");
 
-  // 🔽 Cargar OTs desde API
+  //Cargar OTs desde API
   const {
     data: ots,
     isLoading,
     isError,
     error,
-  } = useQuery<BacklogOrder[]>({
+  } = useQuery<Ots[]>({
     queryKey: ["ots-backlog"],
     queryFn: () => OTService.listarOTs({ limit: 50, offset: 0 }),
   });
 
-  console.log('OTs sin user:', ots);
-
-  // 🔽 Filtrar backlog = OTs sin usuario asignado
+  //Filtrar backlog
   const backlog = useMemo(() => {
     if (!ots) return [];
-    return ots.filter((o) => !o.userId || o.userId === null);
+    return ots.filter((o) => !o.tecnico?.id || o.tecnico?.id === null);
   }, [ots]);
 
-  // 🔽 Filtrado por búsqueda
   const filtered = useMemo(() => {
     const s = search.toLowerCase();
     return backlog.filter(
@@ -60,7 +45,12 @@ const BacklogOT = () => {
   }, [backlog, search]);
 
   if (isLoading) {
-    return <p className="p-4 text-gray-500">Cargando backlog…</p>;
+    return (
+      <div className="text-center">
+        <LoadingSpinner size="md" />
+        <p className="p-4 text-gray-500">Cargando backlog…</p>
+      </div>
+    );
   }
 
   if (isError) {

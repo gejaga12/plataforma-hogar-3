@@ -13,8 +13,6 @@ export default function SucursalesPage() {
     queryFn: () => SucursalHogarService.getAllSucursalesHogar(),
   });
 
-  // console.log("Sucursales hogar:", sucursales);
-
   //MUTATIONS
   const crearSucursalMutation = useMutation({
     mutationFn: async (data: SucursalHogar) => {

@@ -24,8 +24,6 @@ const SucursalesContent: React.FC<SucursalProps> = ({
     useState<SucursalHogar | null>(null);
 
   const handleCrearSucursal = async (nombre: string, direccion: string) => {
-    // console.log("Crear sucursal:", { nombre, direccion });
-
     onCrearSucursal({ name: nombre.trim(), address: direccion.trim() });
   };
 

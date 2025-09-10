@@ -5,7 +5,6 @@ import React, { useState } from "react";
 import { Pais, Provincia } from "@/utils/types";
 import toast from "react-hot-toast";
 import { CreateRegionDto } from "@/api/apiZonas";
-import ProvinciaModal from "./Zona-provincia-modal";
 
 interface ZonaModalsProps {
   paises: Pais[];

@@ -308,7 +308,6 @@ export interface AgendaEvent {
 }
 
 //FORMULARIOS
-
 export enum Tipos {
   texto = "text",
   foto = "foto",
@@ -353,7 +352,7 @@ export interface Subtasks {
   required: boolean;
   FilesRequired: boolean;
   repeat?: number;
-};
+}
 
 export interface Activador {
   cadencia: number;
@@ -363,4 +362,21 @@ export interface Activador {
   repiter: number;
   repiterCount: number;
   fijo: boolean;
+}
+
+//OTs
+export interface Ots {
+  id: string;
+  formulario: string;
+  cliente: string;
+  comentario?: string;
+  fecha: string; // dd/mm/yyyy
+  horaInicio?: string;
+  horaFin?: string;
+  sucursal?: string; // vacío = sin asignar
+  prioridad?: "Baja" | "Media" | "Alta";
+  tecnico?: UserAdapted;
+  estadoGestion?: "Procesando" | "Completado" | "Cancelado";
+  estado?: "Pendiente" | "Me recibo" | "Finalizado" | "En proceso";
+  sucursalCliente?: string;
 }

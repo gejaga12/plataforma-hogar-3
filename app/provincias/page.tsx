@@ -20,7 +20,9 @@ export default function ProvinciasPage() {
     
     onSuccess: () => {  
       toast.success("Provincia creada con éxito");
+      //invalidamos ambas querys para que Zona este actualizado siempre
       queryClient.invalidateQueries({ queryKey: ["provincias"] });
+      queryClient.invalidateQueries({ queryKey: ["zonas"] });
     },
     onError: (error) => {
       toast.error("Hubo un error al crear la provincia");

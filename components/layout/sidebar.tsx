@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -477,6 +477,7 @@ export function Sidebar({ className }: SidebarProps) {
     "operations",
   ]);
 
+  const navRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
   const { user, signOut } = useAuth();
 
@@ -530,14 +531,34 @@ export function Sidebar({ className }: SidebarProps) {
     return () => window.removeEventListener("resize", updateSidebarWidthVar);
   }, [isCollapsed, isOpen]);
 
+  useEffect(() => {
+    const savedScroll = sessionStorage.getItem("sidebar-scroll");
+    if (navRef.current && savedScroll) {
+      navRef.current.scrollTop = parseInt(savedScroll, 10);
+    }
+  }, []);
+
+  const categoryRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
   if (!user) return null;
 
   const toggleCategory = (categoryId: string) => {
-    setExpandedCategories((prev) =>
-      prev.includes(categoryId)
-        ? prev.filter((id) => id !== categoryId)
-        : [...prev, categoryId]
-    );
+    setExpandedCategories((prev) => {
+      const isExpanding = !prev.includes(categoryId);
+      const newExpanded = isExpanding
+        ? [...prev, categoryId]
+        : prev.filter((id) => id !== categoryId);
+
+      // Scroll después de expandir
+      if (isExpanding) {
+        setTimeout(() => {
+          const el = categoryRefs.current[categoryId];
+          el?.scrollIntoView({ behavior: "smooth", block: "start" });
+        }, 100); // Esperar al re-render
+      }
+
+      return newExpanded;
+    });
   };
 
   const handleSignOut = async () => {
@@ -689,7 +710,10 @@ export function Sidebar({ className }: SidebarProps) {
           </div>
 
           {/* Navegación */}
-          <nav className={cn("flex-1 p-4 space-y-2 overflow-y-auto")}>
+          <nav
+            ref={navRef}
+            className={cn("flex-1 p-4 space-y-2 overflow-y-auto")}
+          >
             {menuCategories.map((category) => {
               const categoryItems = getItemsByCategory(category.items);
               if (categoryItems.length === 0) return null;
@@ -697,7 +721,11 @@ export function Sidebar({ className }: SidebarProps) {
               const isExpanded = expandedCategories.includes(category.id);
 
               return (
-                <div key={category.id} className="space-y-1">
+                <div
+                  key={category.id}
+                  ref={(el) => (categoryRefs.current[category.id] = el)}
+                  className="space-y-1"
+                >
                   {/* Encabezado de categoría (oculto al colapsar) */}
                   {!isCollapsed && (
                     <button
@@ -724,9 +752,18 @@ export function Sidebar({ className }: SidebarProps) {
                           <Link
                             key={item.id}
                             href={item.href}
-                            onClick={() =>
-                              window.innerWidth < 1024 && setIsOpen(false)
-                            }
+                            onClick={() => {
+                              if (navRef.current) {
+                                sessionStorage.setItem(
+                                  "sidebar-scroll",
+                                  String(navRef.current.scrollTop)
+                                );
+                              }
+                              // Cerrar sidebar si es mobile
+                              if (window.innerWidth < 1024) {
+                                setIsOpen(false);
+                              }
+                            }}
                             className={cn(
                               "flex items-center rounded-lg text-sm font-medium transition-colors px-3 py-2",
                               isCollapsed

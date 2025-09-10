@@ -30,11 +30,10 @@ const ZonaPage = () => {
   const provincias = data?.provincias ?? [];
 
   //  console.log("zonas:", zonas);
-  //  console.log('provincias:', provincias);
+   console.log('provincias:', provincias);
 
   const createZonaMutation = useMutation({
     mutationFn: (data: CreateRegionDto) => {
-      console.log("📤 Payload enviado a createZona:", data);
       return ZonaService.createRegion(data);
     },
     onSuccess: () => {
@@ -46,7 +45,6 @@ const ZonaPage = () => {
 
   const addPronviceMutation = useMutation({
     mutationFn: (data: { zonaId: string; provinciaIds: string[] }) => {
-      console.log("agregando provincias a zona:", data);
       return ZonaService.addProvince(data.zonaId, data.provinciaIds);
     },
     onSuccess: () => {
@@ -60,7 +58,6 @@ const ZonaPage = () => {
 
   const deleteZonaMutation = useMutation({
     mutationFn: (data: { zonaId: string }) => {
-      console.log("Eliminando zona:", data);
       return ZonaService.deleteZona(data.zonaId);
     },
     onSuccess: () => {
