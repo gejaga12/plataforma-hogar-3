@@ -1,7 +1,7 @@
 "use client";
-import { SucursalHogarService } from "@/api/apiSucursalHogar";
+import { SucursalesService } from "@/api/apiSucursales";
 import { ProtectedLayout } from "@/components/layout/protected-layout";
-import SucursalesContent from "@/components/sucursales/SucursalContent";
+import SucursalesContent from "@/components/sucursales-internas/SucursalContent";
 import { queryClient } from "@/utils/query-client";
 import { SucursalHogar } from "@/utils/types";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -9,19 +9,19 @@ import toast from "react-hot-toast";
 
 export default function SucursalesPage() {
   const { data: sucursales, isLoading: isLoadingSucursales } = useQuery({
-    queryKey: ["sucursalesHogar"],
-    queryFn: () => SucursalHogarService.getAllSucursalesHogar(),
+    queryKey: ["sucursales-hogar"],
+    queryFn: () => SucursalesService.getAllSucursalesHogar(),
   });
 
   //MUTATIONS
   const crearSucursalMutation = useMutation({
     mutationFn: async (data: SucursalHogar) => {
-      return await SucursalHogarService.crearSucursalHogar(data);
+      return await SucursalesService.crearSucursalHogar(data);
     },
     onSuccess: () => {
       toast.success("Sucursal creada correctamente");
       queryClient.invalidateQueries({
-        queryKey: ["sucursalesHogar"],
+        queryKey: ["sucursales-hogar"],
       });
     },
     onError: (error: any) => {
@@ -32,12 +32,12 @@ export default function SucursalesPage() {
 
   const deleteSucursalMutation = useMutation({
     mutationFn: async (data: string) => {
-      return await SucursalHogarService.deleteSucursalHogar(data);
+      return await SucursalesService.deleteSucursalHogar(data);
     },
     onSuccess: () => {
       toast.success("Sucursal eliminada con exito.");
       queryClient.invalidateQueries({
-        queryKey: ["sucursalesHogar"],
+        queryKey: ["sucursales-hogar"],
       });
     },
     onError: (error: any) => {

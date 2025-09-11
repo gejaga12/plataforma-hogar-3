@@ -1,12 +1,12 @@
-import { CreateClient } from "@/api/apiCliente";
 import { useForm } from "react-hook-form";
 import { X } from "lucide-react";
 import React from "react";
+import { Cliente } from "@/utils/types";
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
-  mutate: (data: CreateClient) => void;
+  mutate: (data: Cliente) => void;
 }
 
 const CreateClientModal = ({ isOpen, onClose, mutate }: Props) => {
@@ -15,9 +15,9 @@ const CreateClientModal = ({ isOpen, onClose, mutate }: Props) => {
     handleSubmit,
     formState: { errors },
     reset,
-  } = useForm<CreateClient>();
+  } = useForm<Cliente>();
 
-  const onSubmit = (data: CreateClient) => {
+  const onSubmit = (data: Cliente) => {
     mutate(data);
     reset();
     onClose();

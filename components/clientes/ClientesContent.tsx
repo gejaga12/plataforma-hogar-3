@@ -1,10 +1,11 @@
-import { ClientService, CreateClient } from "@/api/apiCliente";
+import { ClientService } from "@/api/apiCliente";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Edit, Plus, Trash2 } from "lucide-react";
+import { Edit, Pencil, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import CreateClientModal from "./CrearClienteModal";
 import ConfirmDeleteModal from "../ui/ConfirmDeleteModal";
+import { Cliente } from "@/utils/types";
 
 export const ClientesContent = () => {
   const queryClient = useQueryClient();
@@ -21,7 +22,7 @@ export const ClientesContent = () => {
   const clientes = data?.clients;
 
   const crearCliente = useMutation({
-    mutationFn: (data: CreateClient) => {
+    mutationFn: (data: Cliente) => {
       return ClientService.crearCliente(data);
     },
     onSuccess: () => {
@@ -60,7 +61,9 @@ export const ClientesContent = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">👥 Clientes</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-400">
+            👥 Clientes
+          </h1>
           <p className="text-gray-600 mt-1">
             Administración de la cartera de clientes
           </p>
@@ -135,6 +138,14 @@ export const ClientesContent = () => {
                     <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">
                       <div className="flex gap-2 items-center justify-start">
                         <button
+                          onClick={() =>
+                            console.log("editar cliente", cliente.id)
+                          }
+                          className="text-blue-500 hover:text-blue-600"
+                        >
+                          <Pencil size={16} />
+                        </button>
+                        <button
                           onClick={() => {
                             setClienteAEliminar(cliente.id);
                             setDeleteOpenModal(true);
@@ -142,14 +153,6 @@ export const ClientesContent = () => {
                           className="text-red-500 hover:text-red-600"
                         >
                           <Trash2 size={16} />
-                        </button>
-                        <button
-                          onClick={() =>
-                            console.log("editar cliente", cliente.id)
-                          }
-                          className="text-red-500 hover:text-red-600"
-                        >
-                          <Edit size={16} />
                         </button>
                       </div>
                     </td>

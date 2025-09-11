@@ -57,8 +57,12 @@ export default function RootLayout({
   }, []);
 
   return (
-    <html lang="es" suppressHydrationWarning>
-      <body className={inter.className}>
+    <html 
+    lang="es" 
+    suppressHydrationWarning
+    className={inter.className}
+    >
+      <body>
         <ThemeProvider defaultTheme="system" storageKey="hogarapp-ui-theme">
           <AuthProvider>
             <QueryClientProvider client={queryClient}>

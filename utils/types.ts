@@ -52,6 +52,7 @@ export interface CreateUserData {
   activo: boolean;
   jerarquiaId?: string;
 }
+
 //---------------------------------------//
 
 //DATOS LABORALES
@@ -93,6 +94,7 @@ export interface SucursalHogar {
   id?: string;
   name: string;
 }
+
 //----------------------------------------//
 
 //ZONAS
@@ -116,63 +118,6 @@ export interface Zona extends GeoGeneric {
 }
 
 //-----------------------------------------//
-
-export interface Order {
-  id: string;
-  title: string;
-  description: string;
-  status: "PENDIENTE" | "EN_PROGRESO" | "COMPLETADA" | "CANCELADA";
-  priority: "BAJA" | "MEDIA" | "ALTA" | "URGENTE";
-  assignedTo: string;
-  assignedBy: string;
-  location: {
-    address: string;
-    latitude?: number;
-    longitude?: number;
-  };
-  createdAt: string;
-  updatedAt: string;
-  dueDate?: string;
-  completedAt?: string;
-  forms: FormField[];
-  attachments: Attachment[];
-  signature?: string;
-  notes: string[];
-}
-
-export interface FormField {
-  id: string;
-  type:
-    | "text"
-    | "number"
-    | "email"
-    | "tel"
-    | "textarea"
-    | "select"
-    | "checkbox"
-    | "radio"
-    | "date"
-    | "file";
-  label: string;
-  value: any;
-  required: boolean;
-  options?: string[];
-  validation?: {
-    min?: number;
-    max?: number;
-    pattern?: string;
-  };
-}
-
-export interface Attachment {
-  id: string;
-  name: string;
-  url: string;
-  type: string;
-  size: number;
-  uploadedAt: string;
-  uploadedBy: string;
-}
 
 export interface News {
   id: string;
@@ -219,6 +164,8 @@ export interface MenuItem {
   badge?: string;
   isNew?: boolean;
 }
+
+//----------------------------------------//
 
 // Tipos para el sistema de ingreso
 export type EstadoPaso = "pendiente" | "en_curso" | "bloqueado" | "completo";
@@ -307,6 +254,8 @@ export interface AgendaEvent {
   color: string;
 }
 
+//----------------------------------------//
+
 //FORMULARIOS
 export enum Tipos {
   texto = "text",
@@ -364,6 +313,8 @@ export interface Activador {
   fijo: boolean;
 }
 
+//----------------------------------------//
+
 //OTs
 export interface Ots {
   id: string;
@@ -379,4 +330,20 @@ export interface Ots {
   estadoGestion?: "Procesando" | "Completado" | "Cancelado";
   estado?: "Pendiente" | "Me recibo" | "Finalizado" | "En proceso";
   sucursalCliente?: string;
+}
+
+//----------------------------------------//
+
+//CLIENTES Y SUCURSALES
+export interface Cliente {
+  name: string;
+  razonSocial: string;
+  cuit: string;
+  codigo: string;
+}
+
+export interface SucursalCliente extends SucursalHogar {
+  codigo: string;
+  sucHogar: SucursalHogar;
+  cliente: Cliente;
 }

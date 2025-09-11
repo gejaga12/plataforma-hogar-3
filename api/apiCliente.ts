@@ -1,16 +1,12 @@
 import { getAuthToken } from "@/utils/authToken";
 import { BASE_URL } from "@/utils/baseURL";
+import { Cliente } from "@/utils/types";
 import axios from "axios";
 
-export interface CreateClient {
-  name: string;
-  razonSocial: string;
-  cuit: string;
-  codigo: string;
-}
+
 
 export class ClientService {
-  static async crearCliente(data: CreateClient) {
+  static async crearCliente(data: Cliente) {
     const token = getAuthToken();
 
     try {
@@ -90,7 +86,7 @@ export class ClientService {
     }
   }
 
-  static async editarCliente(id: string, data: CreateClient) {
+  static async editarCliente(id: string, data: Cliente) {
     const token = getAuthToken();
 
     try {

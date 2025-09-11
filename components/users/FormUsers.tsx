@@ -8,10 +8,10 @@ import {
 } from "@/utils/types";
 import { Eye, EyeOff, Plus } from "lucide-react";
 import FormDatosLaborales, { FormDataLabor } from "./FormDatosLaborales";
-import { SucursalHogarService } from "@/api/apiSucursalHogar";
 import { useQuery } from "@tanstack/react-query";
 import { PhoneForm, PhoneType } from "@/api/apiTel";
 import TelefonosModal from "./TelefonosModal";
+import { SucursalesService } from "@/api/apiSucursales";
 
 interface FormUsersProps {
   user: UserAdapted | undefined;
@@ -57,7 +57,7 @@ const FormUsers: React.FC<FormUsersProps> = ({
 
   const { data: sucursales, isLoading: isLoadingSucursales } = useQuery({
     queryKey: ["sucursalesHogar"],
-    queryFn: SucursalHogarService.getAllSucursalesHogar,
+    queryFn: SucursalesService.getAllSucursalesHogar,
   });
 
   // abrir modal, precargando con lo existente o una fila vacía

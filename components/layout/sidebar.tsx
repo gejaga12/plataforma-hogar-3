@@ -232,6 +232,14 @@ const menuItems: MenuItem[] = [
     href: "/clientes",
     roles: ["Supervisor", "Admin"],
   },
+
+  {
+    id: "sucursales-clientes",
+    label: "Sucursales clientes",
+    icon: "Building2",
+    href: "/sucursales-clientes",
+    roles: ["Supervisor", "Admin"],
+  },
   {
     id: "depositos",
     label: "Depósitos",
@@ -254,9 +262,10 @@ const menuItems: MenuItem[] = [
     href: "/servicios",
     roles: ["Supervisor", "Admin"],
   },
+
   {
     id: "sucursales",
-    label: "Sucursales",
+    label: "Sucursales internas",
     icon: "Building2",
     href: "/sucursales",
     roles: ["Supervisor", "Admin"],
@@ -436,6 +445,7 @@ const menuCategories = [
     label: "Clientes y Ubicaciones",
     items: [
       "clientes",
+      "sucursales-clientes",
       "depositos",
       "grupos",
       "servicios",
