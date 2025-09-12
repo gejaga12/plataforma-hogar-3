@@ -145,7 +145,7 @@ export class ZonaService {
   static async crearProvincia(data: {
     name: string;
     paisId: string;
-    regionId: string;
+    regionId?: string;
   }): Promise<Provincia> {
     const token = getAuthToken();
 

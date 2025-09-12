@@ -3,7 +3,7 @@ import { SucursalesService } from "@/api/apiSucursales";
 import { ProtectedLayout } from "@/components/layout/protected-layout";
 import SucursalesContent from "@/components/sucursales-internas/SucursalContent";
 import { queryClient } from "@/utils/query-client";
-import { SucursalHogar } from "@/utils/types";
+import { Sucursal } from "@/utils/types";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 
@@ -15,7 +15,7 @@ export default function SucursalesPage() {
 
   //MUTATIONS
   const crearSucursalMutation = useMutation({
-    mutationFn: async (data: SucursalHogar) => {
+    mutationFn: async (data: Sucursal) => {
       return await SucursalesService.crearSucursalHogar(data);
     },
     onSuccess: () => {
@@ -49,7 +49,7 @@ export default function SucursalesPage() {
   return (
     <ProtectedLayout>
       <SucursalesContent
-        sucursales={sucursales}
+        sucursales={sucursales ?? []}
         isLoadingSucursales={isLoadingSucursales}
         onCrearSucursal={(data) => crearSucursalMutation.mutate(data)}
         deleteSucursal={(data) => deleteSucursalMutation.mutate(data)}

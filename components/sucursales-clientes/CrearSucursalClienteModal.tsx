@@ -1,51 +1,83 @@
 import React, { useState } from "react";
 import { X } from "lucide-react";
-import { SucursalCliente } from "@/utils/types";
+import { Cliente, Sucursal } from "@/utils/types";
+import { capitalizeFirstLetter } from "@/utils/normalize";
+
+interface SucursalForm {
+  name: string;
+  address: string;
+  coords: { lan: string; lng: string }; // 👈 string en el form
+  codigo: string;
+  sucHogar: string;
+  cliente: string;
+}
 
 interface CrearSucursalModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (formData: any) => void;
-  sucursalesHogar: any[]; // luego tipás si tenés interface
-  clientes: any[];
+  onSubmit: (formData: Sucursal) => void;
+  sucursalesHogar: Sucursal[]; // luego tipás si tenés interface
+  clientes: Cliente[];
 }
 
-export const CrearSucursalModal: React.FC<CrearSucursalModalProps> = ({
+export const CrearSucursalClienteModal: React.FC<CrearSucursalModalProps> = ({
   isOpen,
   onClose,
   onSubmit,
   sucursalesHogar,
   clientes,
 }) => {
-  const [formData, setFormData] = useState<SucursalCliente>({
+  const [formData, setFormData] = useState<SucursalForm>({
     name: "",
     address: "",
-    lan: undefined,
-    lng: undefined,
+    coords: { lan: "", lng: "" },
     codigo: "",
-    sucHogar: { id: "", name: "" },
-    cliente: { name: "", razonSocial: "", cuit: "", codigo: "" },
+    sucHogar: "",
+    cliente: "",
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
+    const { name, value } = e.target;
 
-  const handleSelect = (field: "sucHogar" | "client", value: any) => {
-    if (field === "sucHogar") {
-      setFormData({ ...formData, sucHogar: value });
+    if (name === "lan" || name === "lng") {
+      setFormData({
+        ...formData,
+        coords: { ...formData.coords, [name]: value },
+      });
     } else {
-      setFormData({ ...formData, cliente: value });
+      setFormData({ ...formData, [name]: value });
     }
   };
 
+  const handleSelect = (field: "sucHogar" | "cliente", value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
   const handleSubmit = () => {
-    const payload = {
-      ...formData,
-      lan: formData.lan ? Number(formData.lan) : null,
-      lng: formData.lng ? Number(formData.lng) : null,
+    const payload: Sucursal = {
+      name: capitalizeFirstLetter(formData.name),
+      codigo: capitalizeFirstLetter(formData.codigo ?? ""),
+      address: capitalizeFirstLetter(formData.address ?? ""),
+      coords: {
+        lan: formData.coords?.lan ? Number(formData.coords.lan) : 0,
+        lng: formData.coords?.lng ? Number(formData.coords.lng) : 0,
+      },
+      sucHogar: formData.sucHogar || undefined,
+      cliente: formData.cliente || undefined,
     };
+
+    console.log("payload:", payload);
+
     onSubmit(payload);
+    onClose();
+    setFormData({
+      name: "",
+      address: "",
+      coords: { lan: "", lng: "" },
+      codigo: "",
+      sucHogar: "",
+      cliente: "",
+    });
   };
 
   if (!isOpen) return null;
@@ -86,7 +118,7 @@ export const CrearSucursalModal: React.FC<CrearSucursalModalProps> = ({
             type="text"
             name="lan"
             placeholder="Latitud"
-            value={formData.lan}
+            value={formData.coords?.lan}
             onChange={handleChange}
             className="w-full border border-gray-300 dark:border-gray-700 rounded-md px-4 py-2 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
           />
@@ -94,7 +126,7 @@ export const CrearSucursalModal: React.FC<CrearSucursalModalProps> = ({
             type="text"
             name="lng"
             placeholder="Longitud"
-            value={formData.lng}
+            value={formData.coords?.lng}
             onChange={handleChange}
             className="w-full border border-gray-300 dark:border-gray-700 rounded-md px-4 py-2 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
           />
@@ -122,7 +154,7 @@ export const CrearSucursalModal: React.FC<CrearSucursalModalProps> = ({
                       ? "bg-orange-200 dark:bg-orange-700"
                       : ""
                   }`}
-                  onClick={() => handleSelect("sucHogar", suc.id)}
+                  onClick={() => handleSelect("sucHogar", suc.id!)}
                 >
                   {suc.name}
                 </div>
@@ -144,7 +176,7 @@ export const CrearSucursalModal: React.FC<CrearSucursalModalProps> = ({
                       ? "bg-orange-200 dark:bg-orange-700"
                       : ""
                   }`}
-                  onClick={() => handleSelect("client", cli.id)}
+                  onClick={() => handleSelect("cliente", cli.id!)}
                 >
                   {cli.name}
                 </div>

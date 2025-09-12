@@ -10,15 +10,17 @@ import toast from "react-hot-toast";
 export type CrearProvinciaInput = {
   name: string;
   paisId: string;
-  regionId: string;
+  regionId?: string;
   code?: number;
 };
 
 export default function ProvinciasPage() {
   const createProvinciaMutation = useMutation({
-    mutationFn: (data: CrearProvinciaInput) => ZonaService.crearProvincia(data),
-    
-    onSuccess: () => {  
+    mutationFn: (data: CrearProvinciaInput) => {
+      console.log(data);
+      return ZonaService.crearProvincia(data);
+    },
+    onSuccess: () => {
       toast.success("Provincia creada con éxito");
       //invalidamos ambas querys para que Zona este actualizado siempre
       queryClient.invalidateQueries({ queryKey: ["provincias"] });

@@ -29,11 +29,9 @@ const ZonaPage = () => {
   const paises = data?.paises ?? [];
   const provincias = data?.provincias ?? [];
 
-  //  console.log("zonas:", zonas);
-   console.log('provincias:', provincias);
-
   const createZonaMutation = useMutation({
     mutationFn: (data: CreateRegionDto) => {
+      console.log('creando zona:', data);
       return ZonaService.createRegion(data);
     },
     onSuccess: () => {

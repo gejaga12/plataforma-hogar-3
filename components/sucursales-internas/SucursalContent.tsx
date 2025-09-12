@@ -1,14 +1,14 @@
-import { SucursalHogar } from "@/utils/types";
 import { Building2, Plus, Trash2 } from "lucide-react";
 import { LoadingSpinner } from "../ui/loading-spinner";
 import { useState } from "react";
-import SucursalHogarModal from "./SucursalHogarModal";
 import ConfirmDeleteModal from "../ui/ConfirmDeleteModal";
+import { Sucursal } from "@/utils/types";
+import { CrearSucursalInternaModal } from "./SucursalHogarModal";
 
 interface SucursalProps {
-  sucursales: SucursalHogar[];
+  sucursales: Sucursal[];
   isLoadingSucursales: boolean;
-  onCrearSucursal: (data: { name: string; address: string }) => void;
+  onCrearSucursal: (data: Omit<Sucursal, "id">) => void;
   deleteSucursal: (data: string) => void;
 }
 
@@ -21,11 +21,7 @@ const SucursalesContent: React.FC<SucursalProps> = ({
   const [modalSucursal, setModalSucursal] = useState({ isOpen: false });
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [sucursalSeleccionada, setSucursalSeleccionada] =
-    useState<SucursalHogar | null>(null);
-
-  const handleCrearSucursal = async (nombre: string, direccion: string) => {
-    onCrearSucursal({ name: nombre.trim(), address: direccion.trim() });
-  };
+    useState<Sucursal | null>(null);
 
   const handleConfirmEliminar = () => {
     if (sucursalSeleccionada) {
@@ -131,10 +127,10 @@ const SucursalesContent: React.FC<SucursalProps> = ({
         )}
       </div>
 
-      <SucursalHogarModal
+      <CrearSucursalInternaModal
         isOpen={modalSucursal.isOpen}
         onClose={() => setModalSucursal({ isOpen: false })}
-        onSubmit={handleCrearSucursal}
+        onSubmit={onCrearSucursal}
       />
 
       <ConfirmDeleteModal

@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Loader } from "@googlemaps/js-api-loader";
 import { Building, Home } from "lucide-react";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { Sucursal } from "@/app/panoramica/page";
+import { Cliente, Sucursal } from "@/utils/types";
 
 interface MapaSucursalesProps {
   sucursales: Sucursal[];
@@ -99,22 +99,34 @@ export function MapaSucursales({
 
     // Crear marcadores para cada sucursal
     sucursales.forEach((sucursal) => {
-      const { lat, lng } = sucursal.coordenadas;
+      if (!sucursal.coords) return;
+
+      // Validar coords: si son null/undefined → usar 0
+      const lan = sucursal.coords.lan ?? 0;
+      const lng = sucursal.coords.lng ?? 0;
+      const esHogar = sucursal.isInternal === true;
 
       // Crear icono personalizado según el tipo de sucursal
       const icon = {
         url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(
-          sucursal.tipo === "hogar"
-            ? `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="${
-                sucursal.estado === "activo" ? "#2563eb" : "#6b7280"
+          esHogar
+            ? `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="${
+                sucursal.isActive  ? "#2563eb" : "#6b7280"
               }" stroke="${
                 sucursal.estado === "activo" ? "#ffffff" : "#e5e7eb"
-              }" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>`
-            : `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="${
-                sucursal.estado === "activo" ? "#ea580c" : "#6b7280"
+              }" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                <polyline points="9 22 9 12 15 12 15 22"></polyline>
+              </svg>`
+            : `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="${
+                sucursal.isActive ? "#ea580c" : "#6b7280"
               }" stroke="${
                 sucursal.estado === "activo" ? "#ffffff" : "#e5e7eb"
-              }" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="16" rx="2"></rect><path d="M4 9h16"></path><path d="M9 21V9"></path></svg>`
+              }" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="4" y="5" width="16" height="16" rx="2"></rect>
+                <path d="M4 9h16"></path>
+                <path d="M9 21V9"></path>
+              </svg>`
         )}`,
         scaledSize: new google.maps.Size(36, 36),
         origin: new google.maps.Point(0, 0),
@@ -124,9 +136,9 @@ export function MapaSucursales({
 
       // Crear marcador
       const marker = new google.maps.Marker({
-        position: { lat, lng },
+        position: { lat: lan, lng },
         map,
-        title: sucursal.nombre,
+        title: sucursal.name,
         icon,
         animation:
           selectedSucursalId === sucursal.id
@@ -139,27 +151,27 @@ export function MapaSucursales({
       // Crear contenido del tooltip
       const tooltipContent = `
         <div class="p-3 max-w-xs">
-          <div class="font-bold text-gray-900 mb-1">${sucursal.nombre}</div>
-          <div class="text-sm text-gray-600 mb-2">${sucursal.direccion}</div>
+          <div class="font-bold text-gray-900 mb-1">${sucursal.name}</div>
+          <div class="text-sm text-gray-600 mb-2">${sucursal.address}</div>
           <div class="flex flex-wrap gap-1 mb-1">
             <span class="px-2 py-0.5 rounded-full text-xs font-medium ${
-              sucursal.estado === "activo"
+              sucursal.isActive 
                 ? "bg-green-100 text-green-800"
                 : "bg-red-100 text-red-800"
             }">
-              ${sucursal.estado === "activo" ? "Activo" : "Inactivo"}
+              ${sucursal.isActive === true ? "Activo" : "Inactivo"}
             </span>
             <span class="px-2 py-0.5 rounded-full text-xs font-medium ${
-              sucursal.tipo === "hogar"
+              esHogar
                 ? "bg-blue-100 text-blue-800"
                 : "bg-orange-100 text-orange-800"
             }">
-              ${sucursal.tipo === "hogar" ? "Hogar" : "Cliente"}
+              ${esHogar ? "Hogar" : "Cliente"}
             </span>
           </div>
           ${
             sucursal.cliente
-              ? `<div class="text-xs text-gray-600 mb-2">Cliente: ${sucursal.cliente}</div>`
+              ? `<div class="text-xs text-gray-600 mb-2">Cliente: ${(sucursal.cliente as Cliente).name}</div>`
               : ""
           }
           <div class="text-xs text-blue-600 font-medium cursor-pointer mt-2">Click para ver detalles</div>
@@ -184,7 +196,9 @@ export function MapaSucursales({
       });
 
       newMarkers.push(marker);
-      bounds.extend({ lat, lng });
+      if (lan !== 0 && lng !== 0) {
+        bounds.extend({ lat: lan, lng });
+      }
     });
 
     // Ajustar el mapa para mostrar todos los marcadores
@@ -226,7 +240,7 @@ export function MapaSucursales({
 
     markers.forEach((marker, index) => {
       const sucursal = sucursales[index];
-      if (sucursal.id === selectedSucursalId) {
+      if (sucursal.id! === selectedSucursalId) {
         marker.setAnimation(google.maps.Animation.BOUNCE);
 
         // Centrar el mapa en el marcador seleccionado

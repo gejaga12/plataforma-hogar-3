@@ -28,7 +28,7 @@ const ProvinciaModal: React.FC<Props> = ({
       if (zonaActual?.provincias) {
         const ids = zonaActual.provincias.map((prov) => prov.id);
         setSeleccionadas(ids);
-         setPreAsignadas(ids);
+        setPreAsignadas(ids);
       }
     }
   }, [isOpen, zonaId, zonas]);
@@ -94,7 +94,6 @@ const ProvinciaModal: React.FC<Props> = ({
                       type="checkbox"
                       value={provincia.id}
                       checked={isPreAsignada || isSeleccionada}
-                      disabled={isPreAsignada}
                       onChange={() =>
                         !isPreAsignada && handleSeleccionProvincia(provincia.id)
                       }

@@ -19,11 +19,11 @@ import {
   ChevronRight,
   ChevronDown
 } from 'lucide-react';
-import { Sucursal } from '@/app/panoramica/page';
 import { EquiposTabla } from './EquiposTabla';
 import { SucursalDashboard } from './SucursalDashboard';
 import { TagEstado } from '@/components/ui/TagEstado';
 import { cn } from '@/utils/cn';
+import { Cliente, Sucursal } from '@/utils/types';
 
 interface SucursalPanelProps {
   sucursal: Sucursal;
@@ -82,8 +82,11 @@ export function SucursalPanel({ sucursal, onClose }: SucursalPanelProps) {
   const [showIncidencias, setShowIncidencias] = useState(true);
 
   const handleOpenGoogleMaps = () => {
-    const { lat, lng } = sucursal.coordenadas;
-    window.open(`https://www.google.com/maps/search/?api=1&query=${lat},${lng}`, '_blank');
+    const lat = sucursal.coords?.lan;
+    const lng = sucursal.coords?.lng;
+    if (lat && lng) {
+      window.open(`https://www.google.com/maps/search/?api=1&query=${lat},${lng}`, '_blank');
+    }
   };
 
   const formatDate = (dateString?: string) => {
@@ -96,7 +99,7 @@ export function SucursalPanel({ sucursal, onClose }: SucursalPanelProps) {
   };
 
   // Obtener incidencias para esta sucursal
-  const incidencias = mockIncidencias[sucursal.id] || [];
+  const incidencias = mockIncidencias[sucursal.id ?? ''] || [];
 
   // Función para obtener color según tipo de incidencia
   const getIncidenciaTypeColor = (tipo: string) => {
@@ -126,13 +129,13 @@ export function SucursalPanel({ sucursal, onClose }: SucursalPanelProps) {
       <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            {sucursal.tipo === 'hogar' ? (
+           {sucursal.isInternal ? (
               <Home className="text-blue-600 dark:text-blue-400" size={20} />
             ) : (
               <Building className="text-orange-600 dark:text-orange-400" size={20} />
             )}
             <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 truncate max-w-[200px]">
-              {sucursal.nombre}
+              {sucursal.name}
             </h2>
           </div>
           <button
@@ -145,26 +148,26 @@ export function SucursalPanel({ sucursal, onClose }: SucursalPanelProps) {
 
         <div className="mt-2 flex flex-wrap gap-2">
           <TagEstado 
-            estado={sucursal.estado === 'activo' ? 'activo' : 'inactivo'} 
+            estado={sucursal.isActive ? "activo" : "inactivo"}  
           />
           <span className={cn(
             "px-2 py-1 text-xs font-medium rounded-full",
-            sucursal.tipo === 'hogar' 
+            sucursal.isInternal
               ? "bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-400" 
               : "bg-orange-100 dark:bg-orange-900/20 text-orange-800 dark:text-orange-400"
           )}>
-            {sucursal.tipo === 'hogar' ? 'Hogar' : 'Cliente'}
+            {sucursal.isInternal ? 'Hogar' : 'Cliente'}
           </span>
           {sucursal.cliente && (
             <span className="px-2 py-1 text-xs font-medium rounded-full bg-purple-100 dark:bg-purple-900/20 text-purple-800 dark:text-purple-400">
-              {sucursal.cliente}
+              {(sucursal.cliente as Cliente).name}
             </span>
           )}
         </div>
 
         <div className="mt-3 flex items-center text-sm text-gray-600 dark:text-gray-400">
           <MapPin size={16} className="mr-1 flex-shrink-0" />
-          <span className="truncate">{sucursal.direccion}</span>
+          <span className="truncate">{sucursal.address}</span>
         </div>
 
         <button
@@ -178,39 +181,20 @@ export function SucursalPanel({ sucursal, onClose }: SucursalPanelProps) {
 
       {/* Tabs */}
       <div className="flex border-b border-gray-200 dark:border-gray-700">
-        <button
-          onClick={() => setActiveTab('info')}
-          className={cn(
-            "flex-1 py-2.5 text-sm font-medium transition-colors",
-            activeTab === 'info'
-              ? "text-orange-600 dark:text-orange-400 border-b-2 border-orange-500 dark:border-orange-400"
-              : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
-          )}
-        >
-          Información
-        </button>
-        <button
-          onClick={() => setActiveTab('equipos')}
-          className={cn(
-            "flex-1 py-2.5 text-sm font-medium transition-colors",
-            activeTab === 'equipos'
-              ? "text-orange-600 dark:text-orange-400 border-b-2 border-orange-500 dark:border-orange-400"
-              : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
-          )}
-        >
-          Equipos
-        </button>
-        <button
-          onClick={() => setActiveTab('dashboard')}
-          className={cn(
-            "flex-1 py-2.5 text-sm font-medium transition-colors",
-            activeTab === 'dashboard'
-              ? "text-orange-600 dark:text-orange-400 border-b-2 border-orange-500 dark:border-orange-400"
-              : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
-          )}
-        >
-          Dashboard
-        </button>
+        {['info','equipos','dashboard'].map(tab => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab as typeof activeTab)}
+            className={cn(
+              "flex-1 py-2.5 text-sm font-medium transition-colors",
+              activeTab === tab
+                ? "text-orange-600 dark:text-orange-400 border-b-2 border-orange-500 dark:border-orange-400"
+                : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
+            )}
+          >
+            {tab === 'info' ? 'Información' : tab === 'equipos' ? 'Equipos' : 'Dashboard'}
+          </button>
+        ))}
       </div>
 
       {/* Content */}
@@ -242,16 +226,16 @@ export function SucursalPanel({ sucursal, onClose }: SucursalPanelProps) {
                 </div>
               )}
               
-              {sucursal.responsable && (
+              {sucursal.facility && (
                 <div className="flex items-center text-sm">
                   <User size={16} className="text-gray-400 dark:text-gray-500 mr-2" />
-                  <span className="text-gray-700 dark:text-gray-300">{sucursal.responsable}</span>
+                  <span className="text-gray-700 dark:text-gray-300">{sucursal.facility}</span>
                 </div>
               )}
             </div>
 
             {/* Información de visitas */}
-            {sucursal.tipo === 'cliente' && (
+            {!sucursal.isInternal && (
               <div className="space-y-3 pt-4 border-t border-gray-200 dark:border-gray-700">
                 <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">Información de visitas</h3>
                 

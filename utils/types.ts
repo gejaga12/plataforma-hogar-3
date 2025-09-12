@@ -87,14 +87,6 @@ export interface Role {
   permissions: string[];
 }
 
-export interface SucursalHogar {
-  lan?: number;
-  lng?: number;
-  address?: string;
-  id?: string;
-  name: string;
-}
-
 //----------------------------------------//
 
 //ZONAS
@@ -336,14 +328,57 @@ export interface Ots {
 
 //CLIENTES Y SUCURSALES
 export interface Cliente {
+  id?: string;
   name: string;
-  razonSocial: string;
-  cuit: string;
-  codigo: string;
+  razonSocial?: string;
+  cuit?: string;
+  codigo?: string;
 }
 
-export interface SucursalCliente extends SucursalHogar {
-  codigo: string;
-  sucHogar: SucursalHogar;
-  cliente: Cliente;
+export interface Sucursal {
+  coords?: {
+    lan?: number;
+    lng?: number;
+  };
+  address?: string;
+  id?: string;
+  name: string;
+  codigo?: string;
+  sucHogar?: string | Sucursal; // 👈 string en create, objeto en get
+  cliente?: string | Cliente; // idem
+  users?: UserAdapted;
+  isInternal?: boolean;
+  estado?: "activo" | "inactivo";
+  telefono?: string;
+  email?: string;
+  horario?: string;
+  facility?: string;
+  ultimaVisita?: string;
+  proximaVisita?: string;
+  equipos?: Equipo[];
+  mantenimientos?: Mantenimiento[];
+  isActive?: boolean;
+}
+
+//INTERFACES DEL MOCK
+export interface Equipo {
+  id: string;
+  tipo: string;
+  marca: string;
+  modelo: string;
+  estado: "activo" | "en_reparacion" | "dado_de_baja";
+  qrCode: string;
+  fechaInstalacion: string;
+  ultimoMantenimiento?: string;
+  proximoMantenimiento?: string;
+  ubicacionExacta?: string;
+}
+
+export interface Mantenimiento {
+  id: string;
+  fecha: string;
+  tipo: "preventivo" | "correctivo" | "instalacion";
+  tecnico: string;
+  duracion: number; // en minutos
+  observaciones?: string;
 }

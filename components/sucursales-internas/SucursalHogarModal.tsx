@@ -1,99 +1,149 @@
-import { MapPinPlus, X } from "lucide-react";
-import { useState } from "react";
+"use client";
+import { useEffect, useState } from "react";
+import { X } from "lucide-react";
+import { Sucursal } from "@/utils/types";
+import { capitalizeFirstLetter } from "@/utils/normalize";
 
-interface Props {
+interface CrearSucursalInternaModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (nombre: string, direccion: string) => void;
+  onSubmit: (formData: Omit<Sucursal, "id">) => void;
 }
 
-const SucursalHogarModal: React.FC<Props> = ({ isOpen, onClose, onSubmit }) => {
-  const [nombre, setNombre] = useState("");
-  const [direccion, setDireccion] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+export const CrearSucursalInternaModal: React.FC<
+  CrearSucursalInternaModalProps
+> = ({ isOpen, onClose, onSubmit }) => {
+  const [formData, setFormData] = useState({
+    name: "",
+    address: "",
+    coords: { lan: "", lng: "" },
+    codigo: "",
+  });
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    if (!isOpen) {
+      setFormData({
+        name: "",
+        address: "",
+        coords: { lan: "", lng: "" },
+        codigo: "",
+      });
+    }
+  }, [isOpen]);
 
-  const handleGuardar = async () => {
-    setIsSubmitting(true);
-    onSubmit(nombre.trim(), direccion.trim());
-    setIsSubmitting(false);
-    setNombre("");
-    setDireccion("");
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+
+    if (name === "lan" || name === "lng") {
+      setFormData({
+        ...formData,
+        coords: { ...formData.coords, [name]: value },
+      });
+    } else {
+      setFormData({ ...formData, [name]: value });
+    }
+  };
+
+  const handleSubmit = () => {
+    const payload: Omit<Sucursal, "id"> = {
+      name: capitalizeFirstLetter(formData.name).trim(),
+      address: capitalizeFirstLetter(formData.address).trim(),
+      coords: {
+        lan: formData.coords.lan ? Number(formData.coords.lan) : 0,
+        lng: formData.coords.lng ? Number(formData.coords.lng) : 0,
+      },
+      codigo: capitalizeFirstLetter(formData.codigo).trim(),
+    };
+    console.log("enviando payload:", payload);
+    onSubmit(payload);
+
+    setFormData({
+      name: "",
+      address: "",
+      coords: { lan: "", lng: "" },
+      codigo: "",
+    });
     onClose();
   };
 
+  if (!isOpen) return null;
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg max-w-md w-full dark:bg-gray-900">
-        <div className="p-6">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center space-x-2">
-              <MapPinPlus
-                className="text-red-500 dark:text-red-400"
-                size={26}
-              />
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-400">
-                Crear Nueva Sucursal
-              </h2>
-            </div>
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-600"
-            >
-              <X />
-            </button>
-          </div>
+    <div className="fixed inset-0 z-50 bg-black bg-opacity-40 flex justify-center items-center">
+      <div className="bg-white dark:bg-gray-900 rounded-lg w-full max-w-2xl p-6 shadow-lg relative">
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
+        >
+          <X size={20} />
+        </button>
 
-          {/* Inputs */}
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-900 dark:text-gray-400 mb-1">
-                Nombre de la sucursal
-              </label>
-              <input
-                type="text"
-                value={nombre}
-                onChange={(e) => setNombre(e.target.value)}
-                className="w-full border rounded px-3 py-2 focus:outline-none focus:ring dark:bg-gray-700"
-                placeholder="Sucursal Centro"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-900 dark:text-gray-400 mb-1">
-                Dirección
-              </label>
-              <input
-                type="text"
-                value={direccion}
-                onChange={(e) => setDireccion(e.target.value)}
-                className="w-full border rounded px-3 py-2 focus:outline-none focus:ring dark:bg-gray-700"
-                placeholder="Av. Siempre Viva 123"
-              />
-            </div>
-          </div>
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
+          Crear nueva sucursal interna
+        </h2>
 
-          {/* Botones */}
-          <div className="mt-6 flex justify-end gap-2 border-t pt-4">
-            <button
-              onClick={onClose}
-              className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800"
-            >
-              Cancelar
-            </button>
-            <button
-              onClick={handleGuardar}
-              disabled={isSubmitting || !nombre.trim()}
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
-            >
-              {isSubmitting ? "Creando..." : "Crear Sucursal"}
-            </button>
-          </div>
+        <div className="space-y-4">
+          <input
+            type="text"
+            name="name"
+            placeholder="Nombre"
+            value={formData.name}
+            onChange={handleChange}
+            className="w-full border border-gray-300 dark:border-gray-700 rounded-md px-4 py-2 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+          />
+
+          <input
+            type="text"
+            name="address"
+            placeholder="Dirección"
+            value={formData.address}
+            onChange={handleChange}
+            className="w-full border border-gray-300 dark:border-gray-700 rounded-md px-4 py-2 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+          />
+
+          <input
+            type="text"
+            name="lan"
+            placeholder="Latitud"
+            value={formData.coords.lan}
+            onChange={handleChange}
+            className="w-full border border-gray-300 dark:border-gray-700 rounded-md px-4 py-2 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+          />
+
+          <input
+            type="text"
+            name="lng"
+            placeholder="Longitud"
+            value={formData.coords.lng}
+            onChange={handleChange}
+            className="w-full border border-gray-300 dark:border-gray-700 rounded-md px-4 py-2 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+          />
+          <input
+            type="text"
+            name="codigo"
+            placeholder="Codigo"
+            value={formData.codigo}
+            onChange={handleChange}
+            className="w-full border border-gray-300 dark:border-gray-700 rounded-md px-4 py-2 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+          />
+        </div>
+
+        {/* Botones */}
+        <div className="flex justify-end mt-6 space-x-3">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 text-sm bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded hover:bg-gray-300 dark:hover:bg-gray-600"
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={handleSubmit}
+            className="px-4 py-2 text-sm bg-orange-600 text-white rounded hover:bg-orange-700"
+          >
+            Crear
+          </button>
         </div>
       </div>
     </div>
   );
 };
-
-export default SucursalHogarModal;

@@ -6,18 +6,18 @@ import { Building2, Pencil, Plus, Search, Trash2 } from "lucide-react";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
 import { LoadingSpinner } from "../ui/loading-spinner";
-import { SucursalCliente } from "@/utils/types";
 import ConfirmDeleteModal from "../ui/ConfirmDeleteModal";
-import { CrearSucursalModal } from "./SucClienteCrearModal";
 import { ClientService } from "@/api/apiCliente";
-import { normalizeText } from "@/utils/normalizeText";
+import { normalizeText } from "@/utils/normalize";
+import { Sucursal } from "@/utils/types";
+import { CrearSucursalClienteModal } from "./CrearSucursalClienteModal";
 
 const SucursalesClienteContent = () => {
   const queryClient = useQueryClient();
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [sucursalSeleccionada, setSucursalSeleccionada] =
-    useState<SucursalCliente | null>(null);
+    useState<Sucursal | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -63,10 +63,24 @@ const SucursalesClienteContent = () => {
     },
   });
 
+  const activarSucursal = useMutation({
+    mutationFn: async (id: string) => {
+      return await SucursalesService.activeSucursal(id);
+    },
+    onSuccess: () => {
+      toast.success("Sucursal actualizada correctamente.");
+      queryClient.invalidateQueries({ queryKey: ["sucursales-clientes"] }),
+        queryClient.invalidateQueries({ queryKey: ["sucursales-panoramica"] });
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Error al actualizar sucursal ❌");
+      console.error("❌ Error activarSucursal:", error);
+    },
+  });
+
   // Mutación para crear (el modal lo harás después)
   const crearSucursalCliente = useMutation({
     mutationFn: (data: any) => {
-      console.log("payload enviado:", data);
       return SucursalesService.crearSucursalCliente(data);
     },
     onSuccess: () => {
@@ -135,6 +149,7 @@ const SucursalesClienteContent = () => {
         </button>
       </div>
 
+      {/* Buscador */}
       <div className="relative mt-4">
         <input
           type="text"
@@ -170,12 +185,15 @@ const SucursalesClienteContent = () => {
                   Suc. Hogar
                 </th>
                 <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Activar / Desactivar
+                </th>
+                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Acciones
                 </th>
               </tr>
             </thead>
             <tbody className="bg-white dark:bg-gray-900 divide-y dark:divide-gray-800 divide-gray-200">
-              {sucursalesFiltradas?.map((sucursal: SucursalCliente) => (
+              {sucursalesFiltradas?.map((sucursal: Sucursal) => (
                 <tr
                   key={sucursal.id}
                   className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
@@ -190,10 +208,39 @@ const SucursalesClienteContent = () => {
                     {sucursal.address || "-"}
                   </td>
                   <td className="px-4 py-3 text-center text-sm text-gray-700 dark:text-gray-400">
-                    {sucursal?.cliente?.name || "-"}
+                    {typeof sucursal?.cliente === "string"
+                      ? sucursal.cliente // si viene como UUID, muestro el string o un guion
+                      : sucursal?.cliente?.name || "-"}
                   </td>
                   <td className="px-4 py-3 text-center text-sm text-gray-700 dark:text-gray-400">
-                    {sucursal?.sucHogar?.name || "-"}
+                    {typeof sucursal?.sucHogar === "string"
+                      ? sucursal.sucHogar // si viene como UUID, muestro el string o un guion
+                      : sucursal?.sucHogar?.name}
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center justify-center space-x-2">
+                      <label className="relative inline-flex items-center cursor-pointer w-11 h-6">
+                        <input
+                          type="checkbox"
+                          checked={sucursal.isActive}
+                          onChange={() => {
+                            activarSucursal.mutate(sucursal.id!);
+                          }}
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-red-500 rounded-full peer-checked:bg-green-500 transition-colors dark:bg-red-400 dark:peer-checked:bg-green-400"></div>
+                        <div className="absolute left-0.5 top-0.5 w-5 h-5 bg-white rounded-full shadow-md transform transition-transform peer-checked:translate-x-5"></div>
+                      </label>
+                      <span
+                        className={`text-xs ${
+                          sucursal.isActive
+                            ? "text-green-600 dark:text-green-400"
+                            : "text-red-600 dark:text-red-400"
+                        }`}
+                      >
+                        {sucursal.isActive ? "Activo" : "Inactivo"}
+                      </span>
+                    </div>
                   </td>
                   <td className="px-4 py-3 text-center">
                     <div className="flex justify-center items-center gap-3">
@@ -237,15 +284,15 @@ const SucursalesClienteContent = () => {
         </div>
       </div>
 
-      <CrearSucursalModal
+      <CrearSucursalClienteModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         onSubmit={(data) => {
           crearSucursalCliente.mutate(data);
           setIsCreateModalOpen(false);
         }}
-        sucursalesHogar={sucHogar} // pendiente de endpoint
-        clientes={clientes} // pendiente de endpoint
+        sucursalesHogar={sucHogar ?? []}
+        clientes={clientes}
       />
 
       {isDeleteModalOpen && (

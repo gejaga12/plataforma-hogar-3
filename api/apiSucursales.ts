@@ -2,13 +2,13 @@
 
 import { getAuthToken } from "@/utils/authToken";
 import { BASE_URL } from "@/utils/baseURL";
-import { SucursalCliente, SucursalHogar } from "@/utils/types";
+import { Sucursal } from "@/utils/types";
 
 import axios from "axios";
 
 export class SucursalesService {
   //SUCURSALES HOGAR
-  static async crearSucursalHogar(data: SucursalHogar) {
+  static async crearSucursalHogar(data: Sucursal) {
     try {
       const token = getAuthToken();
 
@@ -27,7 +27,7 @@ export class SucursalesService {
     }
   }
 
-  static async getAllSucursalesHogar(): Promise<any> {
+  static async getAllSucursalesHogar(): Promise<Sucursal[]> {
     try {
       const token = getAuthToken();
 
@@ -82,7 +82,7 @@ export class SucursalesService {
   }
 
   //SUCURSALES CLIENTES
-  static async crearSucursalCliente(data: SucursalCliente) {
+  static async crearSucursalCliente(data: Sucursal) {
     const token = getAuthToken();
 
     try {
@@ -117,14 +117,33 @@ export class SucursalesService {
 
       return response.data;
     } catch (error: any) {
-      const msg =
-        error?.response?.data?.message || "Error al listar las sucursales";
+      const msg = error?.response;
       console.log("Error:", msg);
       throw new Error(msg);
     }
   }
 
-  static async editarSucursal(id: string, data: SucursalCliente) {
+  static async sucursalesMapa() {
+    //Para mostrar las sucursales en el mapa
+    const token = getAuthToken();
+
+    try {
+      const response = await axios.get(`${BASE_URL}/sucursal/map`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      return response.data;
+    } catch (error: any) {
+      const msg =
+        error?.response?.data?.message ||
+        "Error al listar las sucursales en el mapa";
+      throw new Error(msg);
+    }
+  }
+
+  static async editarSucursal(id: string, data: Sucursal) {
     const token = getAuthToken();
 
     try {
@@ -158,6 +177,23 @@ export class SucursalesService {
       const msg =
         error?.response?.data?.message || "Error al eliminar la sucursal";
       console.log("Error:", msg);
+      throw new Error(msg);
+    }
+  }
+
+  static async activeSucursal(id: string) {
+    const token = getAuthToken();
+
+    try {
+      const response = await axios.patch(`${BASE_URL}/sucursal/toggle/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      return response.data;
+    } catch (error: any) {
+      const msg = error?.response?.data?.message || error?.response;
       throw new Error(msg);
     }
   }
