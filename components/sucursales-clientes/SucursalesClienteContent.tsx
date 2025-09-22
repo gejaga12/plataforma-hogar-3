@@ -11,9 +11,11 @@ import { ClientService } from "@/api/apiCliente";
 import { normalizeText } from "@/utils/normalize";
 import { Sucursal } from "@/utils/types";
 import { CrearSucursalClienteModal } from "./CrearSucursalClienteModal";
+import { useRouter } from "next/navigation";
 
 const SucursalesClienteContent = () => {
   const queryClient = useQueryClient();
+  const router = useRouter();
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [sucursalSeleccionada, setSucursalSeleccionada] =
@@ -113,6 +115,14 @@ const SucursalesClienteContent = () => {
     );
   });
 
+  const handleViewSectores = (sucursal: { id: string; name: string }) => {
+    router.push(
+      `/sucursales-clientes/${sucursal.id}?name=${encodeURIComponent(
+        sucursal.name
+      )}`
+    );
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -175,6 +185,9 @@ const SucursalesClienteContent = () => {
                 <th className="px-4 py-3 text-left text-xs font-normal text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Nombre sucursal
                 </th>
+                <th className="px-4 py-3 text-left text-xs font-normal text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Sectores
+                </th>
                 <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Dirección
                 </th>
@@ -203,6 +216,19 @@ const SucursalesClienteContent = () => {
                   </td>
                   <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-gray-400">
                     {sucursal.name}
+                  </td>
+                  <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-gray-400">
+                    <button
+                      onClick={() =>
+                        handleViewSectores({
+                          id: sucursal.id!,
+                          name: sucursal.name!,
+                        })
+                      }
+                      className="text-xs text-white rounded-lg border bg-blue-400 hover:bg-blue-500 px-1 py-2"
+                    >
+                      Ver Sectores
+                    </button>
                   </td>
                   <td className="px-4 py-3 text-center text-sm text-gray-700 dark:text-gray-400">
                     {sucursal.address || "-"}

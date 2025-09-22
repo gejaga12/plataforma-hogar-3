@@ -360,18 +360,40 @@ export interface Sucursal {
   isActive?: boolean;
 }
 
-//INTERFACES DEL MOCK
+export interface Sector {
+  id?: string;
+  name: string;
+  sucursalid: string;
+  codigo: string;
+}
+
+//----------------------------------------//
+
+//EQUIPOS
 export interface Equipo {
-  id: string;
-  tipo: string;
-  marca: string;
-  modelo: string;
-  estado: "activo" | "en_reparacion" | "dado_de_baja";
-  qrCode: string;
-  fechaInstalacion: string;
-  ultimoMantenimiento?: string;
-  proximoMantenimiento?: string;
-  ubicacionExacta?: string;
+  id?: string;
+  name: string;
+  defId?: string;
+  type?: string;
+  Kv?: Kv[];
+  habilitado: EstadoEquipo;
+  fueraDeServicio: boolean;
+  qrId?: string | null;
+  ptId?: string;
+  utId?: string;
+}
+
+export type KvValue = string | number | boolean | Date | undefined;
+
+export interface Kv {
+  key: string;
+  value: KvValue;
+}
+
+export enum EstadoEquipo {
+  OK = "ok",
+  Reparacion = "reparacion",
+  No_ok = "no_ok",
 }
 
 export interface Mantenimiento {
@@ -381,4 +403,12 @@ export interface Mantenimiento {
   tecnico: string;
   duracion: number; // en minutos
   observaciones?: string;
+}
+
+//----------------------------------------//
+
+//Ubicacion tecnica
+export interface UbicacionTec {
+  name: string;
+  SecId: string;
 }

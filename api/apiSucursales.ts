@@ -2,9 +2,15 @@
 
 import { getAuthToken } from "@/utils/authToken";
 import { BASE_URL } from "@/utils/baseURL";
-import { Sucursal } from "@/utils/types";
+import { Sector, Sucursal } from "@/utils/types";
 
 import axios from "axios";
+
+export interface SectorPatch {
+  name?: string;
+  sucursalid?: string;
+  codigo?: string;
+}
 
 export class SucursalesService {
   //SUCURSALES HOGAR
@@ -195,6 +201,74 @@ export class SucursalesService {
     } catch (error: any) {
       const msg = error?.response?.data?.message || error?.response;
       throw new Error(msg);
+    }
+  }
+
+  //SECTORES
+  static async crearSector(data: Sector) {
+    const token = getAuthToken();
+
+    try {
+      const response = await axios.post(`${BASE_URL}/sector`, data, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      return response.data;
+    } catch (error: any) {
+      const msg = error?.response?.data?.message || error.message;
+      console.log("error:", msg);
+      throw new Error(msg);
+    }
+  }
+
+  static async listarSectores(id: string) {
+    const token = getAuthToken();
+    try {
+      const response = await axios.get(`${BASE_URL}/sector/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      return response.data;
+    } catch (err: any) {
+      console.log("Error", err);
+      throw new Error(err);
+    }
+  }
+
+  static async editarSector(id: string, data: SectorPatch) {
+    const token = getAuthToken();
+
+    try {
+      const response = await axios.patch(`${BASE_URL}/sector/${id}`, data, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      return response.data;
+    } catch (error: any) {
+      console.error("Error:", error);
+      throw new Error(error);
+    }
+  }
+
+  static async eliminarSector(id: string) {
+    const token = getAuthToken();
+
+    try {
+      const response = await axios.delete(`${BASE_URL}/sector/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      return response.data;
+    } catch (err: any) {
+      console.error("error:", err);
+      throw new Error(err);
     }
   }
 }

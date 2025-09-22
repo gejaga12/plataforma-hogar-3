@@ -41,9 +41,7 @@ export class ZonaService {
     });
 
     const respZonas = response.data;
-
-    // console.log(respZonas);
-
+    
     return respZonas;
   }
 
