@@ -309,19 +309,39 @@ export interface Activador {
 
 //OTs
 export interface Ots {
-  id: string;
-  formulario: string;
-  cliente: string;
-  comentario?: string;
-  fecha: string; // dd/mm/yyyy
-  horaInicio?: string;
-  horaFin?: string;
-  sucursal?: string; // vacío = sin asignar
-  prioridad?: "Baja" | "Media" | "Alta";
+  id: number;
+  state?: StateOT;
+  processRef?: string;
+  task?: string;
+  priority?: string;
+  commentary?: string;
+  result?: boolean;
+  metadata?: Record<string, any>;
+  pendiente?: string;
+  en_camino?: string;
+  me_recibio?: string;
+  no_me_recibio?: string;
+  finalizado?: string;
+  postergado?: string;
+  sin_asignar?: string;
+  Audit?: Audit;
   tecnico?: UserAdapted;
-  estadoGestion?: "Procesando" | "Completado" | "Cancelado";
-  estado?: "Pendiente" | "Me recibo" | "Finalizado" | "En proceso";
-  sucursalCliente?: string;
+}
+
+export enum StateOT {
+  PENDING = "pendiente",
+  ONTHERUN = "en_camino",
+  RECEIVED = "me_recibio",
+  WAITINGFORTHEWORMS = "no_me_recibio",
+  INTHEEND = "finalizado",
+  OUTSIDETHEWALL = "postergado",
+  NOASSIGN = "sin_asignar",
+}
+
+export interface Audit {
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string | null;
 }
 
 //----------------------------------------//

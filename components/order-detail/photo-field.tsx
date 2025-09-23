@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Camera, Plus, X, Eye } from 'lucide-react';
 
 interface CampoFormulario {
@@ -17,34 +17,61 @@ interface CampoFormulario {
 
 interface PhotoFieldProps {
   campo: CampoFormulario;
+  onChange?: (fotos: string[]) => void; // 🔹 notifica al padre
 }
 
-export function PhotoField({ campo }: PhotoFieldProps) {
+export function PhotoField({ campo, onChange }: PhotoFieldProps) {
   const [fotos, setFotos] = useState<string[]>(campo.fotos || []);
   const [fotoSeleccionada, setFotoSeleccionada] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
+  // 🔹 Actualizar estado local + notificar al padre
+  const updateFotos = (newFotos: string[]) => {
+    setFotos(newFotos);
+    onChange?.(newFotos);
+  };
+
+  // 🔹 Simular agregar foto con archivo local (mock)
   const handleAgregarFoto = () => {
-    // Simular agregar una nueva foto
-    const nuevaFoto = `https://images.pexels.com/photos/${Math.floor(Math.random() * 1000000)}/pexels-photo-${Math.floor(Math.random() * 1000000)}.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop`;
-    setFotos(prev => [...prev, nuevaFoto]);
+    fileInputRef.current?.click();
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files?.length) return;
+    const file = e.target.files[0];
+
+    // Simulación: usar ObjectURL (mock)
+    const url = URL.createObjectURL(file);
+    updateFotos([...fotos, url]);
+  };
+
+  // 🔹 Simular reemplazo de foto
   const handleReemplazarFoto = (index: number) => {
-    // Simular reemplazar una foto
-    const nuevaFoto = `https://images.pexels.com/photos/${Math.floor(Math.random() * 1000000)}/pexels-photo-${Math.floor(Math.random() * 1000000)}.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop`;
-    setFotos(prev => prev.map((foto, i) => i === index ? nuevaFoto : foto));
+    const nuevaFoto = `https://picsum.photos/seed/${Math.floor(Math.random() * 1000)}/300/200`;
+    updateFotos(fotos.map((foto, i) => (i === index ? nuevaFoto : foto)));
   };
 
+  // 🔹 Eliminar foto
   const handleDeshabilitarFoto = (index: number) => {
-    setFotos(prev => prev.filter((_, i) => i !== index));
+    updateFotos(fotos.filter((_, i) => i !== index));
   };
 
+  // 🔹 Ver foto en modal
   const handleVerFoto = (foto: string) => {
     setFotoSeleccionada(foto);
   };
 
   return (
     <div className="space-y-4">
+      {/* Input oculto */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleFileChange}
+        className="hidden"
+      />
+
       {/* Galería de fotos */}
       {fotos.length > 0 ? (
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
@@ -75,7 +102,7 @@ export function PhotoField({ campo }: PhotoFieldProps) {
                 <button
                   onClick={() => handleDeshabilitarFoto(index)}
                   className="p-2 bg-red-600 hover:bg-red-700 text-white rounded-full transition-colors"
-                  title="Deshabilitar foto"
+                  title="Eliminar foto"
                 >
                   <X size={16} />
                 </button>
@@ -106,7 +133,7 @@ export function PhotoField({ campo }: PhotoFieldProps) {
             className="flex items-center space-x-2 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors text-sm"
           >
             <Camera size={16} />
-            <span>Reemplazar foto</span>
+            <span>Reemplazar última</span>
           </button>
         )}
       </div>

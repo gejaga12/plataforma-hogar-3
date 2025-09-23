@@ -20,53 +20,45 @@ import CrearOTModal from "./CrearOTModal";
 import toast from "react-hot-toast";
 import { Ots } from "@/utils/types";
 import BacklogOT from "./BacklogOT";
+import { AsignarOTModal } from "./AsignarClienteOtModal";
+import { formatDateText } from "@/utils/formatDate";
+import {
+  getEstadoBadgeClass,
+  getEstadoLabel,
+  getPrioridadClass,
+} from "../ui/EstadosBadge";
 
-type SortField = "id" | "fecha" | "tecnico" | "cliente";
+type SortField = "id" | "fecha" | "tecnico";
 type SortDirection = "asc" | "desc";
-
-const estadoGestionConfig = {
-  Procesando: "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400",
-  Completado:
-    "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400",
-  Pendiente:
-    "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400",
-  Cancelado: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300",
-};
-
-const estadoConfig = {
-  Pendiente: "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400",
-  "Me recibo":
-    "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400",
-  Finalizado:
-    "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400",
-  "En proceso":
-    "bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400",
-};
 
 export function OrdersContent() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedOrders, setSelectedOrders] = useState<string[]>([]);
+  const [selectedOrders, setSelectedOrders] = useState<number[]>([]);
   const [sortField, setSortField] = useState<SortField>("id");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
   const [openModal, setOpenModal] = useState(false);
+  const [openAsignarModal, setOpenAsignarModal] = useState(false);
+  const [selectedOT, setSelectedOT] = useState<Ots | null>(null);
   const router = useRouter();
 
   const {
     data: ots,
     isLoading: isLoadingOts,
     isError,
-    error,
   } = useQuery<Ots[]>({
     //UNIFICAR TIPO DESPUES CON BACKLOG
     queryKey: ["ots-backlog"],
     queryFn: () => OTService.listarOTs({ limit: 50, offset: 0 }),
   });
 
+  // console.log('Ots:', ots);
+
   const crearOTMutation = useMutation({
     mutationFn: async (payload: {
       commentary: string;
       task: string;
       userId?: number;
+      priority?: "baja" | "media" | "alta" | "default";
     }) => {
       console.log("📤 Enviando payload a crearOT:", payload);
       return OTService.crearOT(payload);
@@ -76,36 +68,42 @@ export function OrdersContent() {
       queryClient.invalidateQueries({ queryKey: ["ots-table"] });
       queryClient.invalidateQueries({ queryKey: ["ots-backlog"] });
     },
-    onError: (error: any) => {
+    onError: () => {
       toast.error("Ocurrio un error al crear la OT. Intente nuevamente");
-      console.error("❌ Error al crear OT:", error?.message || error);
     },
   });
+
+  const getFechaFromOT = (ot: Ots): string => {
+    if (!ot.state) return "";
+    return ot[ot.state] ?? "";
+  };
 
   const filteredOrders =
     ots?.filter((order) => {
       const searchLower = searchTerm.toLowerCase();
-      return (
-        order.tecnico?.fullName.toString().includes(searchLower) ||
-        order.cliente?.toLowerCase().includes(searchLower)
-      );
+      return order.tecnico?.fullName.toString().includes(searchLower);
     }) || [];
 
   const sortedOrders = [...filteredOrders].sort((a, b) => {
-    let aValue = a[sortField];
-    let bValue = b[sortField];
+    let aValue: any;
+    let bValue: any;
 
     if (sortField === "fecha") {
-      // Convert dd/mm/yyyy to comparable format
-      const [aDay, aMonth, aYear] = a.fecha.split("/");
-      const [bDay, bMonth, bYear] = b.fecha.split("/");
-      aValue = `${aYear}-${aMonth}-${aDay}`;
-      bValue = `${bYear}-${bMonth}-${bDay}`;
+      aValue = getFechaFromOT(a);
+      bValue = getFechaFromOT(b);
+    } else if (sortField === "tecnico") {
+      aValue = a.tecnico?.fullName?.toLowerCase() ?? "";
+      bValue = b.tecnico?.fullName?.toLowerCase() ?? "";
+    } else {
+      aValue = a[sortField] ?? "";
+      bValue = b[sortField] ?? "";
     }
 
-    // Provide fallback values if undefined
-    if (aValue === undefined) aValue = "";
-    if (bValue === undefined) bValue = "";
+    // Normalizar a string para comparación
+    if (typeof aValue === "string" && aValue.includes("T")) {
+      aValue = new Date(aValue).getTime();
+      bValue = new Date(bValue).getTime();
+    }
 
     if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
     if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
@@ -129,7 +127,7 @@ export function OrdersContent() {
     }
   };
 
-  const handleSelectOrder = (orderId: string, checked: boolean) => {
+  const handleSelectOrder = (orderId: number, checked: boolean) => {
     if (checked) {
       setSelectedOrders((prev) => [...prev, orderId]);
     } else {
@@ -137,15 +135,15 @@ export function OrdersContent() {
     }
   };
 
-  const handleViewOrder = (orderId: string) => {
+  const handleViewOrder = (orderId: number) => {
     router.push(`/orders/${orderId}`);
   };
 
-  const handleEditOrder = (orderId: string) => {
+  const handleEditOrder = (orderId: number) => {
     console.log("Editar orden:", orderId);
   };
 
-  const handleDeleteOrder = (orderId: string) => {
+  const handleDeleteOrder = (orderId: number) => {
     console.log("Eliminar orden:", orderId);
     // Aquí mostrarías un modal de confirmación
   };
@@ -258,37 +256,19 @@ export function OrdersContent() {
                   <SortButton field="id">ID</SortButton>
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Estado Gestión
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Formulario
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   <SortButton field="tecnico">Técnico</SortButton>
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Comentario
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Sucursal
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Estado
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  <SortButton field="fecha">Fecha</SortButton>
+                  Fecha
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Hora inicio
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Hora fin
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  <SortButton field="cliente">Cliente</SortButton>
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Sucursal de cliente
+                  Prioridad
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Acciones
@@ -319,24 +299,7 @@ export function OrdersContent() {
                   <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-gray-100">
                     {order.id}
                   </td>
-                  <td className="px-4 py-3">
-                    <span
-                      className={cn(
-                        "px-2 py-1 text-xs font-medium rounded-full",
-                        estadoGestionConfig[
-                          order.estadoGestion as
-                            | "Procesando"
-                            | "Completado"
-                            | "Cancelado"
-                        ]
-                      )}
-                    >
-                      {order.estadoGestion ?? ""}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100 font-mono">
-                    {order.formulario}
-                  </td>
+
                   <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
                     <div
                       className="max-w-32 truncate"
@@ -346,72 +309,35 @@ export function OrdersContent() {
                     </div>
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
-                    <div
-                      className="max-w-40 truncate"
-                      title={order.comentario || "Nulo"}
-                    >
-                      {order.comentario || (
+                    <div className="max-w-40 truncate" title={order.commentary}>
+                      {order.commentary || (
                         <span className="text-gray-400 dark:text-gray-500 italic">
-                          Nulo
+                          S/ comentario
                         </span>
                       )}
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
-                    {order.sucursal}
-                  </td>
                   <td className="px-4 py-3">
                     <span
-                      className={cn(
-                        "px-2 py-1 text-xs font-medium rounded-full",
-                        estadoConfig[
-                          order.estado as
-                            | "Pendiente"
-                            | "Me recibo"
-                            | "Finalizado"
-                            | "En proceso"
-                        ]
-                      )}
+                      className={`px-2 py-1 text-xs font-medium rounded-full ${getEstadoBadgeClass(
+                        order.state
+                      )}`}
                     >
-                      {order.estado}
+                      {getEstadoLabel(order.state)}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
-                    {order.fecha}
+                    {formatDateText(getFechaFromOT(order))}
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
-                    {order.horaInicio || (
-                      <span className="text-gray-400 dark:text-gray-500 italic">
-                        Nulo
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
-                    {order.horaFin || (
-                      <span className="text-gray-400 dark:text-gray-500 italic">
-                        Nulo
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
-                    <div className="max-w-32" title={order.cliente}>
-                      {order.cliente?.split("\n").map((line, i) => (
-                        <div key={i} className="truncate">
-                          {line}
-                        </div>
-                      ))}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
-                    <div className="max-w-40" title={order.sucursalCliente}>
-                      {(order.sucursalCliente ?? "-")
-                        .split(" || ")
-                        .map((part, i) => (
-                          <div key={i} className="truncate text-xs">
-                            {part}
-                          </div>
-                        ))}
-                    </div>
+                    <span
+                      className={cn(
+                        "px-2 py-1 text-xs font-medium rounded-full flex items-center w-fit gap-1",
+                        getPrioridadClass(order.priority)
+                      )}
+                    >
+                      {order.priority ?? "s/p"}
+                    </span>
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center space-x-2">
@@ -480,12 +406,30 @@ export function OrdersContent() {
         </div>
       )}
 
-      <BacklogOT />
+      <BacklogOT
+        onAsignar={(ot) => {
+          setSelectedOT(ot);
+          setOpenAsignarModal(true);
+        }}
+      />
 
       <CrearOTModal
         isOpen={openModal}
         onClose={() => setOpenModal(false)}
-        onSubmit={(data) => crearOTMutation.mutate(data)}
+        onSubmit={(data) =>
+          crearOTMutation.mutate(data, {
+            onSuccess: () => {
+              // ✅ resetea también desde el padre
+              setOpenModal(false);
+            },
+          })
+        }
+      />
+
+      <AsignarOTModal
+        open={openAsignarModal}
+        onClose={() => setOpenAsignarModal(false)}
+        ot={selectedOT}
       />
     </div>
   );

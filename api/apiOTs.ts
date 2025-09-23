@@ -35,8 +35,9 @@ export class OTService {
 
       return response.data;
     } catch (error: any) {
-      console.log("Error:", error);
-      throw new Error(error);
+      const msg = error?.response?.data?.message || error?.message;
+      console.log("Error:",msg);
+      throw new Error(msg);
     }
   }
 

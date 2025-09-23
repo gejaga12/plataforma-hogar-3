@@ -5,15 +5,14 @@ import { useQuery } from "@tanstack/react-query";
 import { Eye, Search, UserPlus, Wrench } from "lucide-react";
 import React, { useMemo, useState } from "react";
 import { LoadingSpinner } from "../ui/loading-spinner";
+import {
+  getEstadoBadgeClass,
+  getEstadoLabel,
+  getPrioridadClass,
+} from "../ui/EstadosBadge";
+import { formatDateText } from "@/utils/formatDate";
 
-const prioridadClass: Record<"Baja" | "Media" | "Alta", string> = {
-  Baja: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300",
-  Media:
-    "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400",
-  Alta: "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400",
-};
-
-const BacklogOT = () => {
+const BacklogOT = ({ onAsignar }: { onAsignar: (ot: Ots) => void }) => {
   const [search, setSearch] = useState("");
 
   //Cargar OTs desde API
@@ -33,14 +32,18 @@ const BacklogOT = () => {
     return ots.filter((o) => !o.tecnico?.id || o.tecnico?.id === null);
   }, [ots]);
 
+  const getFechaFromOT = (ot: Ots): string => {
+    if (!ot.state) return "";
+    return ot[ot.state] ?? "";
+  };
+
   const filtered = useMemo(() => {
     const s = search.toLowerCase();
     return backlog.filter(
       (o) =>
         o.id.toString().toLowerCase().includes(s) ||
-        (o.formulario ?? "").toLowerCase().includes(s) ||
-        (o.cliente ?? "").toLowerCase().includes(s) ||
-        (o.comentario ?? "").toLowerCase().includes(s)
+        (o.task ?? "").toLowerCase().includes(s) ||
+        (o.commentary ?? "").toLowerCase().includes(s)
     );
   }, [backlog, search]);
 
@@ -98,10 +101,10 @@ const BacklogOT = () => {
                   Formulario
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                  Cliente
+                  Comentario
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                  Comentario
+                  Estado
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                   Fecha
@@ -127,41 +130,43 @@ const BacklogOT = () => {
                     {o.id}
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100 font-mono">
-                    {o.formulario}
+                    {o.task}
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
-                    <div className="max-w-40 truncate" title={o.cliente}>
-                      {o.cliente}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
-                    <div
-                      className="max-w-64 truncate"
-                      title={o.comentario || "Nulo"}
-                    >
-                      {o.comentario || (
+                    <div className="max-w-64 truncate" title={o.commentary}>
+                      {o.commentary || (
                         <span className="text-gray-400 dark:text-gray-500 italic">
-                          Nulo
+                          S/ comentario
                         </span>
                       )}
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
-                    {o.fecha}
-                  </td>
+                  {/* Estado con badge */}
                   <td className="px-4 py-3">
                     <span
                       className={cn(
-                        "px-2 py-1 text-xs font-medium rounded-full flex items-center w-fit gap-1",
-                        prioridadClass[
-                          (o.prioridad ?? "Baja") as "Baja" | "Media" | "Alta"
-                        ]
+                        "px-2 py-1 text-xs font-medium rounded-full",
+                        getEstadoBadgeClass(o.state)
                       )}
                     >
-                      <Wrench size={14} />
-                      {o.prioridad ?? "Baja"}
+                      {getEstadoLabel(o.state)}
                     </span>
                   </td>
+                  {/* Fecha formateada */}
+                  <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
+                    {formatDateText(getFechaFromOT(o))}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
+                    <span
+                      className={cn(
+                        "px-2 py-1 text-xs font-medium rounded-full flex items-center w-fit gap-1",
+                        getPrioridadClass(o.priority)
+                      )}
+                    >
+                      {o.priority ?? "Baja"}
+                    </span>
+                  </td>
+                  {/* Acciones */}
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
                       <button
@@ -172,9 +177,7 @@ const BacklogOT = () => {
                         <Eye size={16} />
                       </button>
                       <button
-                        onClick={() =>
-                          console.log("Asignar técnico/sucursal a:", o.id)
-                        }
+                        onClick={() => onAsignar(o)}
                         className="text-orange-600 dark:text-orange-400 hover:text-orange-800 dark:hover:text-orange-300"
                         title="Asignar"
                       >

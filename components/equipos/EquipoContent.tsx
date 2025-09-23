@@ -51,7 +51,7 @@ const EquiposContent = () => {
     queryFn: EquipoService.listarEquipos,
   });
 
-  console.log('equipos:', equipos);
+  // console.log('equipos:', equipos);
 
   const generarQRMutation = useMutation({
     mutationFn: EquipoService.generarQR,

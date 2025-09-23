@@ -1,260 +1,79 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useParams } from 'next/navigation';
-import { 
-  Download,
-  Save,
-  ThumbsUp,
-  ThumbsDown,
-  MapPin,
-  Clock,
-  User,
-  Building,
-  FileText,
-  Camera,
-  Edit,
-  Plus,
-  X
-} from 'lucide-react';
-import { ProtectedLayout } from '@/components/layout/protected-layout';
-import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { OrderInfoSection } from '@/components/order-detail/order-info-section';
-import { OrderMapsSection } from '@/components/order-detail/order-maps-section';
-import { OrderStatusSection } from '@/components/order-detail/order-status-section';
-import { OrderWorkTimeSection } from '@/components/order-detail/order-work-time-section';
-import { OrderFormSection } from '@/components/order-detail/order-form-section';
-
-
-interface OrdenDetalle {
-  id: string;
-  usuario: string;
-  formulario: string;
-  orden: string;
-  sucursal: string;
-  cliente: string;
-  comentario: string | null;
-  sucursalCliente: string;
-  facility: string;
-  estado: 'Pendiente' | 'En proceso' | 'Finalizado' | 'Cancelado';
-  horaInicio: string | null;
-  horaFin: string | null;
-  fechaCompleta: string;
-  postergarPor: string | null;
-  creado: string;
-  firma: string | null;
-  firmaResponsable: string | null;
-  ultimaEdicionFormulario: string | null;
-  imageSolucioname: string | null;
-  ubicacionRecibido: {
-    latitud: number;
-    longitud: number;
-    direccion: string;
-  } | null;
-  ubicacionCierre: {
-    latitud: number;
-    longitud: number;
-    direccion: string;
-  } | null;
-  calificacion: 'positiva' | 'negativa' | null;
-  modulos: ModuloFormulario[];
-}
-
-interface ModuloFormulario {
-  id: string;
-  pagina: number;
-  nombre: string;
-  orden: number;
-  campos: CampoFormulario[];
-}
-
-interface CampoFormulario {
-  id: string;
-  nombre: string;
-  titulo: string;
-  tipo: 'texto' | 'numero' | 'fecha' | 'fecha_hora' | 'casilla_verificacion' | 'desplegable' | 'foto';
-  valor: any;
-  requerido: boolean;
-  tareaTecnico: string;
-  vistaInforme: string;
-  fotos?: string[];
-}
-
-// Mock data
-const mockOrdenDetalle: OrdenDetalle = {
-  id: 'ORD-001',
-  usuario: 'Juan Carlos Pérez',
-  formulario: 'BSR-2021-SEMESTRAL',
-  orden: 'OT-2025-001',
-  sucursal: 'ZONA NOA',
-  cliente: 'Empresa Constructora San Miguel S.A.',
-  comentario: 'Revisión completa del sistema eléctrico y HVAC',
-  sucursalCliente: 'Av. Libertador 1234, CABA || Ruta 9 Km 45',
-  facility: 'Carlos Mendoza',
-  estado: 'En proceso',
-  horaInicio: '08:30',
-  horaFin: null,
-  fechaCompleta: '09/06/2025 08:30 - En curso',
-  postergarPor: null,
-  creado: '08/06/2025 14:33',
-  firma: 'https://images.pexels.com/photos/261763/pexels-photo-261763.jpeg?auto=compress&cs=tinysrgb&w=400&h=200&fit=crop',
-  firmaResponsable: 'Juan Carlos Pérez',
-  ultimaEdicionFormulario: '09/06/2025 10:15',
-  imageSolucioname: 'https://images.pexels.com/photos/1181467/pexels-photo-1181467.jpeg?auto=compress&cs=tinysrgb&w=400&h=300&fit=crop',
-  ubicacionRecibido: {
-    latitud: -34.6037,
-    longitud: -58.3816,
-    direccion: 'Av. Libertador 1234, CABA'
-  },
-  ubicacionCierre: null,
-  calificacion: null,
-  modulos: [
-    {
-      id: 'mod-1',
-      pagina: 1,
-      nombre: 'Revisión Inicial',
-      orden: 1,
-      campos: [
-        {
-          id: 'campo-1',
-          nombre: 'existe_aire_acondicionado',
-          titulo: '¿Existe aire acondicionado?',
-          tipo: 'casilla_verificacion',
-          valor: true,
-          requerido: true,
-          tareaTecnico: 'Verifica si hay aire acondicionado instalado',
-          vistaInforme: 'Aire acondicionado presente'
-        },
-        {
-          id: 'campo-2',
-          nombre: 'marca_aire_acondicionado',
-          titulo: 'Marca del aire acondicionado',
-          tipo: 'texto',
-          valor: 'Samsung',
-          requerido: true,
-          tareaTecnico: 'Identifica la marca del equipo',
-          vistaInforme: 'Marca del equipo'
-        },
-        {
-          id: 'campo-3',
-          nombre: 'estado_equipo',
-          titulo: 'Estado del Equipo',
-          tipo: 'desplegable',
-          valor: 'Funcionando',
-          requerido: true,
-          tareaTecnico: 'Evalúa el estado actual del equipo',
-          vistaInforme: 'Estado del equipo'
-        }
-      ]
-    },
-    {
-      id: 'mod-2',
-      pagina: 1,
-      nombre: 'Documentación Fotográfica',
-      orden: 2,
-      campos: [
-        {
-          id: 'campo-4',
-          nombre: 'foto_evidencia',
-          titulo: 'Foto de Evidencia',
-          tipo: 'foto',
-          valor: null,
-          requerido: true,
-          tareaTecnico: 'Toma una foto del equipo',
-          vistaInforme: 'Evidencia fotográfica',
-          fotos: [
-            'https://images.pexels.com/photos/1181467/pexels-photo-1181467.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop',
-            'https://images.pexels.com/photos/1181354/pexels-photo-1181354.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop'
-          ]
-        }
-      ]
-    },
-    {
-      id: 'mod-3',
-      pagina: 2,
-      nombre: 'Mantenimiento Preventivo',
-      orden: 1,
-      campos: [
-        {
-          id: 'campo-5',
-          nombre: 'fecha_mantenimiento',
-          titulo: 'Fecha de Próximo Mantenimiento',
-          tipo: 'fecha',
-          valor: '2025-09-15',
-          requerido: false,
-          tareaTecnico: 'Programa la próxima fecha de mantenimiento',
-          vistaInforme: 'Próximo mantenimiento'
-        },
-        {
-          id: 'campo-6',
-          nombre: 'observaciones_tecnico',
-          titulo: 'Observaciones del Técnico',
-          tipo: 'texto',
-          valor: 'Equipo en buen estado, se recomienda limpieza de filtros',
-          requerido: false,
-          tareaTecnico: 'Anota observaciones importantes',
-          vistaInforme: 'Observaciones técnicas'
-        }
-      ]
-    }
-  ]
-};
-
-const fetchOrdenDetalle = async (id: string): Promise<OrdenDetalle> => {
-  await new Promise(resolve => setTimeout(resolve, 800));
-  return mockOrdenDetalle;
-};
-
-const updateOrdenEstado = async (id: string, estado: string): Promise<void> => {
-  await new Promise(resolve => setTimeout(resolve, 500));
-};
-
-const updateOrdenTiempo = async (id: string, data: any): Promise<void> => {
-  await new Promise(resolve => setTimeout(resolve, 500));
-};
-
-const calificarOrden = async (id: string, calificacion: 'positiva' | 'negativa'): Promise<void> => {
-  await new Promise(resolve => setTimeout(resolve, 500));
-};
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useParams, useRouter } from "next/navigation";
+import { ArrowLeft, Download, Save } from "lucide-react";
+import { ProtectedLayout } from "@/components/layout/protected-layout";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { OrderInfoSection } from "@/components/order-detail/order-info-section";
+import { OrderMapsSection } from "@/components/order-detail/order-maps-section";
+import { OrderStatusSection } from "@/components/order-detail/order-status-section";
+import { OrderWorkTimeSection } from "@/components/order-detail/order-work-time-section";
+import {
+  CampoFormulario,
+  OrderFormSection,
+} from "@/components/order-detail/order-form-section";
+import { OTService } from "@/api/apiOTs";
 
 export function OrdenDetalleContent() {
   const params = useParams();
   const queryClient = useQueryClient();
   const ordenId = params.id as string;
 
-  const { data: orden, isLoading } = useQuery({
-    queryKey: ['orden-detalle', ordenId],
-    queryFn: () => fetchOrdenDetalle(ordenId),
+  const router = useRouter();
+
+  const {
+    data: orden,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["orden-detalle", ordenId],
+    queryFn: () => OTService.obtenerOTDetalleMDA(Number(ordenId)),
+    enabled: !!ordenId,
   });
 
+  console.log('orden:', orden);
+
   const updateEstadoMutation = useMutation({
-    mutationFn: ({ estado }: { estado: string }) => updateOrdenEstado(ordenId, estado),
+    mutationFn: async ({ estado }: { estado: string }) => {
+      // TODO: conectar con tu endpoint de updateEstado
+      console.log("Actualizar estado:", estado);
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['orden-detalle', ordenId] });
-    }
+      queryClient.invalidateQueries({ queryKey: ["orden-detalle", ordenId] });
+    },
   });
 
   const updateTiempoMutation = useMutation({
-    mutationFn: (data: any) => updateOrdenTiempo(ordenId, data),
+    mutationFn: async (data: any) => {
+      // TODO: conectar con tu endpoint de updateTiempo
+      console.log("Actualizar tiempo:", data);
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['orden-detalle', ordenId] });
-    }
+      queryClient.invalidateQueries({ queryKey: ["orden-detalle", ordenId] });
+    },
   });
 
   const calificarMutation = useMutation({
-    mutationFn: (calificacion: 'positiva' | 'negativa') => calificarOrden(ordenId, calificacion),
+    mutationFn: async (calificacion: "positiva" | "negativa") => {
+      // TODO: conectar con tu endpoint de calificación
+      console.log("Calificar orden:", calificacion);
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['orden-detalle', ordenId] });
-    }
+      queryClient.invalidateQueries({ queryKey: ["orden-detalle", ordenId] });
+    },
   });
 
   const handleExport = () => {
-    console.log('Exportar orden:', ordenId);
+    console.log("Exportar orden:", ordenId);
   };
 
   const handleFinalizarEdicion = () => {
-    console.log('Finalizar edición de formulario');
+    console.log("Finalizar edición de formulario");
+  };
+
+  const handleRedirection = () => {
+    router.replace("/orders");
   };
 
   if (isLoading) {
@@ -270,12 +89,27 @@ export function OrdenDetalleContent() {
     );
   }
 
+  if (error) {
+    return (
+      <ProtectedLayout>
+        <div className="text-center py-12">
+          <h3 className="text-lg font-medium text-red-600">Error</h3>
+          <p className="mt-1 text-gray-500">{(error as Error).message}</p>
+        </div>
+      </ProtectedLayout>
+    );
+  }
+
   if (!orden) {
     return (
       <ProtectedLayout>
         <div className="text-center py-12">
-          <h3 className="text-lg font-medium text-gray-900">Orden no encontrada</h3>
-          <p className="mt-1 text-gray-500">La orden de trabajo solicitada no existe.</p>
+          <h3 className="text-lg font-medium text-gray-900">
+            Orden no encontrada
+          </h3>
+          <p className="mt-1 text-gray-500">
+            La orden de trabajo solicitada no existe.
+          </p>
         </div>
       </ProtectedLayout>
     );
@@ -287,15 +121,20 @@ export function OrdenDetalleContent() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">
-              Orden de Trabajo (#{orden.id})
-            </h1>
+            <div className="flex gap-2 items-center">
+              <button onClick={handleRedirection}>
+                <ArrowLeft size={20} />
+              </button>
+              <h1 className="text-2xl font-bold text-gray-900">
+                Orden de Trabajo (#{orden.id})
+              </h1>
+            </div>
             <p className="text-gray-600 mt-1">
-              {orden.formulario} - {orden.cliente}
+              {orden?.task?.code} - {orden?.tecnico?.fullName}
             </p>
           </div>
-          
-          <button 
+
+          <button
             onClick={handleExport}
             className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
           >
@@ -303,34 +142,39 @@ export function OrdenDetalleContent() {
             <span>Exportar</span>
           </button>
         </div>
-
         {/* Información General */}
-        <OrderInfoSection orden={orden} />
-
+        <OrderInfoSection orden={mapOrdenInfo(orden)} />
         {/* Mapas */}
-        <OrderMapsSection 
+        <OrderMapsSection
           ubicacionRecibido={orden.ubicacionRecibido}
           ubicacionCierre={orden.ubicacionCierre}
         />
-
         {/* Estado y Calificación */}
-        <OrderStatusSection 
-          orden={orden}
-          onUpdateEstado={(estado) => updateEstadoMutation.mutate({ estado })}
+        <OrderStatusSection
+          orden={{
+            estado: mapTipoBackToFront(orden.state),
+            calificacion: null, // por ahora, hasta que el back lo devuelva
+          }}
+          onUpdateEstado={(estadoFront) =>
+            updateEstadoMutation.mutate({
+              estado: mapEstadoFrontToBack(estadoFront),
+            })
+          }
           onCalificar={(calificacion) => calificarMutation.mutate(calificacion)}
-          isLoading={updateEstadoMutation.isPending || calificarMutation.isPending}
+          isLoading={
+            updateEstadoMutation.isPending || calificarMutation.isPending
+          }
         />
-
         {/* Fecha y Hora de Trabajo */}
-        <OrderWorkTimeSection 
-          orden={orden}
+        <OrderWorkTimeSection
+          orden={mapWorkTimes(orden)}
           onUpdateTiempo={(data) => updateTiempoMutation.mutate(data)}
           isLoading={updateTiempoMutation.isPending}
         />
-
         {/* Formulario */}
-        <OrderFormSection modulos={orden.modulos} />
-
+        <OrderFormSection
+          modulos={mapSubtasksResultToModulos(orden?.result?.Subtasks || [])}
+        />
         {/* Botón Final */}
         <div className="flex justify-center pt-6">
           <button
@@ -344,4 +188,132 @@ export function OrdenDetalleContent() {
       </div>
     </ProtectedLayout>
   );
+}
+
+//MAPEOS PARA CONECTAR UI CON BACK
+function mapOrdenInfo(orden: any) {
+  return {
+    id: String(orden.id),
+    usuario: orden.tecnico?.fullName || "Sin asignar",
+    formulario: orden.task?.typeform || "N/A",
+    orden: orden.task?.code || "N/A",
+    sucursal: "N/A", // acá depende cómo viene la info
+    cliente: "N/A",
+    comentario: orden.commentary,
+    sucursalCliente: "N/A",
+    facility: "N/A",
+    estado: orden.state || "Pendiente",
+    horaInicio: orden.en_camino
+      ? new Date(orden.en_camino).toLocaleTimeString()
+      : null,
+    horaFin: orden.finalizado
+      ? new Date(orden.finalizado).toLocaleTimeString()
+      : null,
+    fechaCompleta: orden.pendiente
+      ? new Date(orden.pendiente).toLocaleString()
+      : "N/A",
+    postergarPor: orden.postergado
+      ? new Date(orden.postergado).toLocaleString()
+      : null,
+    creado: orden.Audit?.createdAt
+      ? new Date(orden.Audit.createdAt).toLocaleString()
+      : "N/A",
+    firma: null, // tu JSON real no trae imagen de firma
+    firmaResponsable: null, // idem
+    ultimaEdicionFormulario: orden.Audit?.updatedAt
+      ? new Date(orden.Audit.updatedAt).toLocaleString()
+      : null,
+    imageSolucioname: null, // idem
+  };
+}
+
+function mapSubtasksResultToModulos(subtasks: any[]) {
+  return [
+    {
+      id: "mod-resultado",
+      pagina: 1,
+      nombre: "Resultado",
+      orden: 1,
+      campos: subtasks.map((st, index) => ({
+        id: `campo-${index}`,
+        nombre: st.description || `campo-${index}`,
+        titulo: st.description || `Campo ${index + 1}`,
+        tipo: mapTipoBackToFront(st.type),
+        valor: st.result && st.result.length > 0 ? st.result[0] : null,
+        requerido: false, // el back no lo manda, por ahora fijo en false
+        tareaTecnico: "", // el back no lo manda
+        vistaInforme: "", // el back no lo manda
+        fotos: st.type === "foto" ? st.result : undefined,
+      })),
+    },
+  ];
+}
+
+function mapTipoBackToFront(type: string): CampoFormulario["tipo"] {
+  switch (type) {
+    case "text":
+      return "texto";
+    case "foto":
+      return "foto";
+    case "si/no":
+      return "casilla_verificacion";
+    case "select":
+      return "desplegable";
+    case "number":
+      return "numero";
+    case "fecha":
+      return "fecha";
+    case "titulo":
+      return "titulo";
+    default:
+      return "texto";
+  }
+}
+
+export function mapEstadoFrontToBack(estado: string): string {
+  switch (estado) {
+    case "Pendiente":
+      return "pendiente";
+    case "En proceso":
+      return "en_camino";
+    case "Finalizado":
+      return "finalizado";
+    case "Cancelado":
+      return "cancelado";
+    default:
+      return "pendiente";
+  }
+}
+
+export function mapEstadoBackToFront(estado: string): string {
+  switch (estado) {
+    case "pendiente":
+      return "Pendiente";
+    case "en_camino":
+      return "En proceso";
+    case "finalizado":
+      return "Finalizado";
+    case "cancelado":
+      return "Cancelado";
+    default:
+      return "Pendiente";
+  }
+}
+
+function mapWorkTimes(orden: any) {
+  const formatHour = (iso: string | undefined) => {
+    if (!iso) return null;
+    const date = new Date(iso);
+
+    const hours = date.getHours().toString().padStart(2, "0");
+    const minutes = date.getMinutes().toString().padStart(2, "0");
+
+
+    return `${hours}:${minutes}`;
+  };
+
+  return {
+    horaInicio: orden.en_camino ? formatHour(orden.en_camino) : null,
+    horaFin: orden.finalizado ? formatHour(orden.finalizado) : null,
+  };
 }

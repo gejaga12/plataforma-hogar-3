@@ -2,6 +2,7 @@
 
 import { User, Building, FileText, Calendar, Clock, Signature } from 'lucide-react';
 
+// cambiar despues a los atributos reales
 interface OrdenInfoSectionProps {
   orden: {
     id: string;

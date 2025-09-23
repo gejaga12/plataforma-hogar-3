@@ -4,7 +4,7 @@ import { FileText } from 'lucide-react';
 import { PhotoField } from './photo-field';
 import { TextField } from './text-field';
 
-interface ModuloFormulario {
+ interface ModuloFormulario {
   id: string;
   pagina: number;
   nombre: string;
@@ -12,11 +12,11 @@ interface ModuloFormulario {
   campos: CampoFormulario[];
 }
 
-interface CampoFormulario {
+export interface CampoFormulario {
   id: string;
   nombre: string;
   titulo: string;
-  tipo: 'texto' | 'numero' | 'fecha' | 'fecha_hora' | 'casilla_verificacion' | 'desplegable' | 'foto';
+  tipo: 'texto' | 'numero' | 'fecha' | 'fecha_hora' | 'casilla_verificacion' | 'desplegable' | 'foto' | "titulo";
   valor: any;
   requerido: boolean;
   tareaTecnico: string;
@@ -59,7 +59,7 @@ export function OrderFormSection({ modulos }: OrderFormSectionProps) {
               {modulosDePagina.map((modulo) => (
                 <div key={modulo.id} className="border border-gray-200 dark:border-gray-600 rounded-lg p-6 bg-gray-50 dark:bg-gray-700/50">
                   <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">
-                    Página {modulo.pagina} – {modulo.nombre.toUpperCase()}
+                    Página {modulo.pagina} - {modulo.nombre.toUpperCase()}
                   </h3>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
