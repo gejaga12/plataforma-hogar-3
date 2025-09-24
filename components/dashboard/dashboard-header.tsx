@@ -7,7 +7,7 @@ import { NovedadModal } from "./novedad-modal";
 import { MovimientoIngresoEgreso, Novedad } from "@/utils/types";
 import MovimientoModal from "../ingreso-egreso/MovimientoModal";
 import HoraExtraModal from "../horas-extras/HoraExtraModal";
-import { HoraExtra } from "@/api/apiIngreso";
+import { HoraExtra } from "@/utils/api/apiIngreso";
 
 interface DashboardHeaderProps {
   nombreUsuario: string;

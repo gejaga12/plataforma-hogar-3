@@ -4,7 +4,7 @@ import { Search, Filter, Plus, Layers, X, Trash2 } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ReactFlowProvider } from "reactflow";
 import { FlowLienzo } from "./FlowLienzo";
-import { TaskServices } from "@/api/apiFormularios";
+import { TaskServices } from "@/utils/api/apiFormularios";
 import { Task } from "@/utils/types";
 import toast from "react-hot-toast";
 import ConfirmDeleteModal from "../ui/ConfirmDeleteModal";

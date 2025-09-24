@@ -1,5 +1,5 @@
-import { AuthService } from "@/api/apiAuth";
-import { TaskServices } from "@/api/apiFormularios";
+import { AuthService } from "@/utils/api/apiAuth";
+import { TaskServices } from "@/utils/api/apiFormularios";
 import { Task } from "@/utils/types";
 import { useQuery } from "@tanstack/react-query";
 import { X } from "lucide-react";

@@ -14,7 +14,7 @@ import { EquipoForm } from "./equipo-form";
 import { EquipoQR } from "./equipo-qr";
 import { Equipo, EstadoEquipo } from "@/utils/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { EquipoService } from "@/api/apiEquipo";
+import { EquipoService } from "@/utils/api/apiEquipo";
 import { capitalizeFirstLetter } from "@/utils/normalize";
 import toast from "react-hot-toast";
 import ConfirmDeleteModal from "../ui/ConfirmDeleteModal";

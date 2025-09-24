@@ -1,4 +1,4 @@
-import { PhoneForm } from "@/api/apiTel";
+import { PhoneForm } from "@/utils/api/apiTel";
 
 //USUARIOS
 export interface UserAdapted {

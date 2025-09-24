@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import FormUsers from "./FormUsers";
 import { EstadoContractual, FormDataLabor } from "./FormDatosLaborales";
 import { formatDateInput } from "@/utils/formatDate";
-import { PhoneForm, PhoneType } from "@/api/apiTel";
+import { PhoneForm, PhoneType } from "@/utils/api/apiTel";
 
 interface UserModalProps {
   isOpen: boolean;

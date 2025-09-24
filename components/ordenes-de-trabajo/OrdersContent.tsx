@@ -14,7 +14,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { LoadingSpinner } from "../ui/loading-spinner";
 import { cn } from "@/utils/cn";
-import { OTService } from "@/api/apiOTs";
+import { OTService } from "@/utils/api/apiOTs";
 import { queryClient } from "@/utils/query-client";
 import CrearOTModal from "./CrearOTModal";
 import toast from "react-hot-toast";

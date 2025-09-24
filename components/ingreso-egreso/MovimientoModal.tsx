@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { ingresoService } from "@/api/apiIngreso";
+import { ingresoService } from "@/utils/api/apiIngreso";
 import toast from "react-hot-toast";
 import { MovimientoIngresoEgreso } from "@/utils/types";
 

@@ -1,5 +1,5 @@
-import { AuthService } from "@/api/apiAuth";
-import { OTService } from "@/api/apiOTs";
+import { AuthService } from "@/utils/api/apiAuth";
+import { OTService } from "@/utils/api/apiOTs";
 import { Ots, UserAdapted } from "@/utils/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";

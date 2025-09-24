@@ -4,7 +4,7 @@ import { Info, InfoIcon, X } from "lucide-react";
 import {
   CrearJerarquiaConUsuario,
   crearJerarquiaData,
-} from "@/api/apiJerarquia";
+} from "@/utils/api/apiJerarquia";
 import { LoadingSpinner } from "../ui/loading-spinner";
 
 interface Props {

@@ -1,6 +1,6 @@
 // hooks/useJerarquia.ts
 import { useQuery } from "@tanstack/react-query";
-import { JerarquiaService } from "@/api/apiJerarquia";
+import { JerarquiaService } from "@/utils/api/apiJerarquia";
 
 export const useJerarquia = () => {
   const {

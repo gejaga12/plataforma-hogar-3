@@ -1,4 +1,4 @@
-import { ClientService } from "@/api/apiCliente";
+import { ClientService } from "@/utils/api/apiCliente";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Edit, Pencil, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";

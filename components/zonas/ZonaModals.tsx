@@ -4,7 +4,7 @@ import { MapPinCheck, MapPinPlus, X } from "lucide-react";
 import React, { useState } from "react";
 import { Pais, Provincia } from "@/utils/types";
 import toast from "react-hot-toast";
-import { CreateRegionDto } from "@/api/apiZonas";
+import { CreateRegionDto } from "@/utils/api/apiZonas";
 
 interface ZonaModalsProps {
   paises: Pais[];

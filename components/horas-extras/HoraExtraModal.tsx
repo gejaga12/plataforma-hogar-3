@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
-import { HoraExtra, ingresoService } from "@/api/apiIngreso";
+import { HoraExtra, ingresoService } from "@/utils/api/apiIngreso";
 
 interface HoraExtraModalProps {
   isOpen: boolean;

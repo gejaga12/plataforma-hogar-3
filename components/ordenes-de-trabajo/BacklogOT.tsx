@@ -1,4 +1,4 @@
-import { OTService } from "@/api/apiOTs";
+import { OTService } from "@/utils/api/apiOTs";
 import { cn } from "@/utils/cn";
 import { Ots } from "@/utils/types";
 import { useQuery } from "@tanstack/react-query";

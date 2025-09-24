@@ -1,4 +1,4 @@
-import { PhoneForm, PhoneType } from "@/api/apiTel";
+import { PhoneForm, PhoneType } from "@/utils/api/apiTel";
 import { Plus, Trash2 } from "lucide-react";
 import React from "react";
 

@@ -1,18 +1,18 @@
-import { ZonaService } from "@/api/apiZonas";
+import { ZonaService } from "@/utils/api/apiZonas";
 import { useAuth } from "@/hooks/useAuth";
 import { CreateUserData, Puesto, UserAdapted } from "@/utils/types";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import React, { useEffect, useMemo, useState } from "react";
 import { FormDataLabor } from "./FormDatosLaborales";
-import { ApiRoles } from "@/api/apiRoles";
+import { ApiRoles } from "@/utils/api/apiRoles";
 import { formatDateInput } from "@/utils/formatDate";
-import { AuthService } from "@/api/apiAuth";
+import { AuthService } from "@/utils/api/apiAuth";
 import {
   buildCrearLaborPayload,
   CrearLaborDTO,
   LaborService,
-} from "@/api/apiLabor";
-import { PuestoService } from "@/api/apiPuesto";
+} from "@/utils/api/apiLabor";
+import { PuestoService } from "@/utils/api/apiPuesto";
 import toast from "react-hot-toast";
 import { LoadingSpinner } from "../ui/loading-spinner";
 import {
@@ -28,7 +28,7 @@ import {
 import { cn } from "@/utils/cn";
 import UserModal from "./UserModal";
 import DeleteUSerModal from "./DeleteUserModal";
-import { PhoneForm, PhoneType, TelPayload, TelService } from "@/api/apiTel";
+import { PhoneForm, PhoneType, TelPayload, TelService } from "@/utils/api/apiTel";
 
 const mapPhonesToPayload = (
   userId: number,

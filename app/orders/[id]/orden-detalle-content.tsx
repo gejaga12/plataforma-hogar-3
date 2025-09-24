@@ -13,7 +13,7 @@ import {
   CampoFormulario,
   OrderFormSection,
 } from "@/components/order-detail/order-form-section";
-import { OTService } from "@/api/apiOTs";
+import { OTService } from "@/utils/api/apiOTs";
 
 export function OrdenDetalleContent() {
   const params = useParams();

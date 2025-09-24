@@ -2,7 +2,7 @@
 "use client";
 
 import React, { createContext, useEffect, useState } from "react";
-import { AuthService, UserLoginData } from "@/api/apiAuth";
+import { AuthService, UserLoginData } from "@/utils/api/apiAuth";
 import { useRouter } from "next/navigation";
 import { UserAdapted } from "@/utils/types";
 

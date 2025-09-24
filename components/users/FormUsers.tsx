@@ -8,9 +8,9 @@ import {
 import { Eye, EyeOff, Plus } from "lucide-react";
 import FormDatosLaborales, { FormDataLabor } from "./FormDatosLaborales";
 import { useQuery } from "@tanstack/react-query";
-import { PhoneForm, PhoneType } from "@/api/apiTel";
+import { PhoneForm, PhoneType } from "@/utils/api/apiTel";
 import TelefonosModal from "./TelefonosModal";
-import { SucursalesService } from "@/api/apiSucursales";
+import { SucursalesService } from "@/utils/api/apiSucursales";
 
 interface FormUsersProps {
   user: UserAdapted | undefined;

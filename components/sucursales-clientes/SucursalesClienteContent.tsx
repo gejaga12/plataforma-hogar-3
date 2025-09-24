@@ -1,13 +1,13 @@
 "use client";
 
-import { SucursalesService } from "@/api/apiSucursales";
+import { SucursalesService } from "@/utils/api/apiSucursales";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Building2, Pencil, Plus, Search, Trash2 } from "lucide-react";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
 import { LoadingSpinner } from "../ui/loading-spinner";
 import ConfirmDeleteModal from "../ui/ConfirmDeleteModal";
-import { ClientService } from "@/api/apiCliente";
+import { ClientService } from "@/utils/api/apiCliente";
 import { normalizeText } from "@/utils/normalize";
 import { Sucursal } from "@/utils/types";
 import { CrearSucursalClienteModal } from "./CrearSucursalClienteModal";

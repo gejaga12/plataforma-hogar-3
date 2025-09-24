@@ -2,7 +2,7 @@
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Download, Trash2, MoreHorizontal, QrCodeIcon } from "lucide-react";
-import { EquipoService } from "@/api/apiEquipo"; // o tu servicio de QRs
+import { EquipoService } from "@/utils/api/apiEquipo";
 import { cn } from "@/utils/cn";
 import { QRCodeCanvas } from "qrcode.react";
 import toast from "react-hot-toast";

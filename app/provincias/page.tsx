@@ -1,6 +1,6 @@
 "use client";
 
-import { ZonaService } from "@/api/apiZonas";
+import { ZonaService } from "@/utils/api/apiZonas";
 import { ProtectedLayout } from "@/components/layout/protected-layout";
 import ProvinciasContent from "@/components/provincias/ProvinciaContent";
 import { queryClient } from "@/utils/query-client";

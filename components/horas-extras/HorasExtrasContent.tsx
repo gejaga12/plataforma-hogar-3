@@ -2,6 +2,7 @@
 
 import {
   Calendar,
+  Check,
   ChevronDown,
   ChevronUp,
   Clock,
@@ -9,12 +10,15 @@ import {
   Eye,
   MapPin,
   Search,
+  X,
 } from "lucide-react";
 import { useState } from "react";
 import { LoadingSpinner } from "../ui/loading-spinner";
 import { cn } from "@/utils/cn";
-import { HoraExtra, ingresoService } from "@/api/apiIngreso";
-import { useQuery } from "@tanstack/react-query";
+import { HoraExtra, ingresoService } from "@/utils/api/apiIngreso";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import toast from "react-hot-toast";
+import { queryClient } from "@/utils/query-client";
 
 type SortField = "horaInicio" | "horaFinal" | "razon";
 type SortDirection = "asc" | "desc";
@@ -32,6 +36,20 @@ const HorasExtrasContent = () => {
     queryFn: () => ingresoService.fetchHorasExtras({ limit: 20 }),
     staleTime: 5000 * 60,
     refetchOnWindowFocus: false,
+  });
+
+  const { mutate: mutateAprobacion, isPending: isUpdating } = useMutation({
+    mutationFn: ({ id, approved }: { id: string; approved: boolean }) => {
+      console.log("aprobando/rechazando hora extra:", id, approved);
+      return ingresoService.aprobarHoraExtra(id, approved);
+    },
+    onSuccess: () => {
+      toast.success("Solicitud actualizada");
+      queryClient.invalidateQueries({ queryKey: ["horas-extras"] });
+    },
+    onError: () => {
+      toast.error("Error al aprobar o rechazar la solicitud.");
+    },
   });
 
   const filtered = (horasExtras ?? []).filter((h) => {
@@ -260,12 +278,28 @@ const HorasExtrasContent = () => {
                     )}
                   </td>
                   <td className="px-4 py-3 text-center">
-                    <button
-                      className="text-blue-600 hover:text-blue-800 transition-colors"
-                      title="Ver detalle"
-                    >
-                      <Eye size={16} />
-                    </button>
+                    <div className="flex items-center justify-center gap-3">
+                      <button
+                        onClick={() =>
+                          mutateAprobacion({ id: h.id!, approved: true })
+                        }
+                        disabled={isUpdating}
+                        className="text-blue-600 hover:text-blue-800 transition-colors disabled:opacity-50"
+                        title="Aprobar"
+                      >
+                        <Check size={16} />
+                      </button>
+                      <button
+                        onClick={() =>
+                          mutateAprobacion({ id: h.id!, approved: false })
+                        }
+                        disabled={isUpdating}
+                        className="text-red-600 hover:text-red-800 transition-colors disabled:opacity-50"
+                        title="Rechazar"
+                      >
+                        <X size={16} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

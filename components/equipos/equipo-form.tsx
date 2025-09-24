@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { X, ChevronLeft, ChevronRight, QrCode } from "lucide-react";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useQuery } from "@tanstack/react-query";
-import { EquipoService } from "@/api/apiEquipo";
+import { EquipoService } from "@/utils/api/apiEquipo";
 import { Equipo, EstadoEquipo } from "@/utils/types";
 
 interface EquipoFormProps {

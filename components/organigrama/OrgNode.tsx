@@ -1,4 +1,4 @@
-import { JerarquiaNodo } from "@/api/apiJerarquia";
+import { JerarquiaNodo } from "@/utils/api/apiJerarquia";
 import { cn } from "@/utils/cn";
 import { UserPlus, UserRoundX, X } from "lucide-react";
 import { areaColors } from "../ui/AreaColors";

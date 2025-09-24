@@ -9,7 +9,7 @@ import { cn } from "@/utils/cn";
 import { LoadingSpinner } from "../ui/loading-spinner";
 import { MapaSucursales } from "./MapaSucursales";
 import { SucursalPanel } from "./SucursalPanel";
-import { SucursalesService } from "@/api/apiSucursales";
+import { SucursalesService } from "@/utils/api/apiSucursales";
 
 export interface FiltrosSucursales {
   estado?: "activo" | "inactivo" | "";

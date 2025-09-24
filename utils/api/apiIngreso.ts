@@ -11,6 +11,7 @@ type Ingreso = {
 };
 
 export type HoraExtra = {
+  id?: string;
   lan: number;
   lng: number;
   horaInicio: string;
@@ -146,5 +147,23 @@ export class ingresoService {
       console.warn("Error al obtener la hora extra", error?.message || error);
       throw error;
     }
-  } 
+  }
+
+  static async aprobarHoraExtra(id: string, approved: boolean) {
+    const token = getAuthToken();
+
+    try {
+      const response = await axios.post(`${BASE_URL}/horas-extras/a/${id}`, { approved }, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      return response.data;
+    } catch (error: any) {
+      const msg = error?.response?.data?.message;
+      console.log("Error:", msg);
+      throw new Error(msg);
+    }
+  }
 }

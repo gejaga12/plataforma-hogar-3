@@ -1,5 +1,5 @@
 "use client";
-import { SucursalesService } from "@/api/apiSucursales";
+import { SucursalesService } from "@/utils/api/apiSucursales";
 import { ProtectedLayout } from "@/components/layout/protected-layout";
 import SucursalesContent from "@/components/sucursales-internas/SucursalContent";
 import { queryClient } from "@/utils/query-client";

@@ -16,7 +16,7 @@ import {
   crearJerarquiaData,
   JerarquiaNodo,
   JerarquiaService,
-} from "@/api/apiJerarquia";
+} from "@/utils/api/apiJerarquia";
 import { useJerarquia } from "@/hooks/useJerarquia";
 import { AddEmployeeModal } from "./add-employee-modal";
 import { CrearJerarquiaModal } from "./CrearJerarquiaModal";

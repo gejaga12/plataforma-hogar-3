@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { LoadingSpinner } from "../ui/loading-spinner";
 import { Pais, Provincia, Zona } from "@/utils/types";
 import ZonaModals from "./ZonaModals";
-import { CreateRegionDto } from "@/api/apiZonas";
+import { CreateRegionDto } from "@/utils/api/apiZonas";
 import ProvinciaModal from "./Zona-provincia-modal";
 import ConfirmDeleteModal from "../ui/ConfirmDeleteModal";
 
