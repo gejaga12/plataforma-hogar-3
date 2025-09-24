@@ -146,5 +146,5 @@ export class ingresoService {
       console.warn("Error al obtener la hora extra", error?.message || error);
       throw error;
     }
-  }
+  } 
 }
