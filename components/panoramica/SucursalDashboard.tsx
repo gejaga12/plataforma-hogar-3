@@ -12,7 +12,7 @@ import {
   Cell
 } from 'recharts';
 import { Layers, Calendar, CheckCircle, Clock } from 'lucide-react';
-import { Sucursal, Mantenimiento } from '@/app/panoramica/page';
+import { Mantenimiento, Sucursal } from '@/utils/types';
 
 interface SucursalDashboardProps {
   sucursal: Sucursal;
@@ -48,7 +48,7 @@ export function SucursalDashboard({ sucursal, mantenimientos }: SucursalDashboar
 
   // Calcular estadísticas
   const totalEquipos = sucursal.equipos?.length || 0;
-  const equiposActivos = sucursal.equipos?.filter(e => e.estado === 'activo').length || 0;
+  const equiposActivos = sucursal.equipos?.filter(e => e.habilitado === 'ok').length || 0;
   const totalMantenimientos = mantenimientos.length;
   
   // Encontrar el último mantenimiento

@@ -270,21 +270,21 @@ export function SucursalPanel({ sucursal, onClose }: SucursalPanelProps) {
                 <div className="bg-green-50 dark:bg-green-900/10 p-3 rounded-lg">
                   <div className="text-xs text-green-600 dark:text-green-400">Equipos activos</div>
                   <div className="text-lg font-semibold text-green-700 dark:text-green-300">
-                    {sucursal.equipos?.filter(e => e.estado === 'activo').length || 0}
+                    {sucursal.equipos?.filter(e => e.habilitado === 'ok').length || 0}
                   </div>
                 </div>
                 
                 <div className="bg-yellow-50 dark:bg-yellow-900/10 p-3 rounded-lg">
                   <div className="text-xs text-yellow-600 dark:text-yellow-400">En reparación</div>
                   <div className="text-lg font-semibold text-yellow-700 dark:text-yellow-300">
-                    {sucursal.equipos?.filter(e => e.estado === 'en_reparacion').length || 0}
+                    {sucursal.equipos?.filter(e => e.habilitado === 'reparacion').length || 0}
                   </div>
                 </div>
                 
                 <div className="bg-red-50 dark:bg-red-900/10 p-3 rounded-lg">
                   <div className="text-xs text-red-600 dark:text-red-400">Dados de baja</div>
                   <div className="text-lg font-semibold text-red-700 dark:text-red-300">
-                    {sucursal.equipos?.filter(e => e.estado === 'dado_de_baja').length || 0}
+                    {sucursal.equipos?.filter(e => e.habilitado === 'no_ok').length || 0}
                   </div>
                 </div>
               </div>

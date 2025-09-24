@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { LoadingSpinner } from "../ui/loading-spinner";
 import {
   CreateUserData,
-  SucursalHogar,
   UserAdapted,
   Zona,
 } from "@/utils/types";
@@ -318,7 +317,7 @@ const FormUsers: React.FC<FormUsersProps> = ({
               >
                 <option value="">Seleccionar sucursal</option>
 
-                {sucursales?.map((sucursal: SucursalHogar) => (
+                {sucursales?.map((sucursal) => (
                   <option key={sucursal.id} value={sucursal.id}>
                     {sucursal.name}
                   </option>

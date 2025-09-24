@@ -92,8 +92,8 @@ const PanoramicaContent = () => {
         new Map(
           sucursalesCombinadas
             .filter((s) => s.cliente)
-            .map((s) => [(s.cliente! as Cliente).id, s.cliente!])
-        ).values() as MapIterator<Cliente>
+            .map((s) => [(s.cliente! as Cliente).id, s.cliente! as Cliente])
+        ).values()
       )
     : [];
 
