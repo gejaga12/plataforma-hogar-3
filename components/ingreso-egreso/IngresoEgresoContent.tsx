@@ -12,30 +12,7 @@ import { useState } from "react";
 import { LoadingSpinner } from "../ui/loading-spinner";
 import { cn } from "@/utils/cn";
 import MovimientoModal from "./MovimientoModal";
-
-export interface MovimientoIngresoEgreso {
-  id: string;
-  usuario: {
-    id: string;
-    nombreCompleto: string;
-    rol: string;
-    avatar?: string;
-  };
-  tipo: "INGRESO" | "EGRESO";
-  fechaHora: string;
-  modo: string;
-  motivo: string;
-  ubicacion?: {
-    direccion: string;
-    latitud?: number;
-    longitud?: number;
-  };
-  dispositivo?: string;
-  ipAddress?: string;
-  observaciones?: string;
-  registradoPor?: string;
-  createdAt: string;
-}
+import { MovimientoIngresoEgreso } from "@/utils/types";
 
 interface IngresoEgresoContentProps {
   movimientos: MovimientoIngresoEgreso[];
@@ -80,7 +57,7 @@ const IngresoEgresoContent: React.FC<IngresoEgresoContentProps> = ({
 
       const matchesTipo = !tipoFilter || movimiento.tipo === tipoFilter;
       const matchesUsuario =
-        !usuarioFilter || movimiento.usuario.id === usuarioFilter;
+        !usuarioFilter || String(movimiento.usuario.id) === usuarioFilter;
 
       // Filtros de fecha
       let matchesFecha = true;
@@ -314,9 +291,6 @@ const IngresoEgresoContent: React.FC<IngresoEgresoContentProps> = ({
                   />
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  <SortButton field="id">ID</SortButton>
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   <SortButton field="usuario">Usuario</SortButton>
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -367,28 +341,17 @@ const IngresoEgresoContent: React.FC<IngresoEgresoContentProps> = ({
                         className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
                       />
                     </td>
-                    <td className="px-4 py-3 text-sm font-medium text-gray-900 truncate max-w-[120px]">
-                      <span title={movimiento.id}>{movimiento.id}</span>
-                    </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center">
-                        {movimiento.usuario.avatar ? (
-                          <img
-                            className="h-8 w-8 rounded-full object-cover mr-3"
-                            src={movimiento.usuario.avatar}
-                            alt={movimiento.usuario.nombreCompleto}
-                          />
-                        ) : (
-                          <div className="h-8 w-8 rounded-full bg-orange-500 flex items-center justify-center mr-3">
-                            <span className="text-xs font-medium text-white">
-                              {movimiento.usuario.nombreCompleto
-                                .split(" ")
-                                .map((n) => n[0])
-                                .join("")
-                                .toUpperCase()}
-                            </span>
-                          </div>
-                        )}
+                        <div className="h-8 w-8 rounded-full bg-orange-500 flex items-center justify-center mr-3">
+                          <span className="text-xs font-medium text-white">
+                            {movimiento.usuario.nombreCompleto
+                              .split(" ")
+                              .map((n) => n[0])
+                              .join("")
+                              .toUpperCase()}
+                          </span>
+                        </div>
                         <div>
                           <div className="text-sm font-medium text-gray-900">
                             {movimiento.usuario.nombreCompleto}

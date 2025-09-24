@@ -4,9 +4,10 @@ import { ReactNode, useState } from "react";
 import { Bell, X, ThumbsUp, Heart, Eye, Plus } from "lucide-react";
 import { NovedadCard } from "./novedad-card";
 import { NovedadModal } from "./novedad-modal";
-import { Novedad } from "@/utils/types";
+import { MovimientoIngresoEgreso, Novedad } from "@/utils/types";
 import MovimientoModal from "../ingreso-egreso/MovimientoModal";
-import { MovimientoIngresoEgreso } from "../ingreso-egreso/IngresoEgresoContent";
+import HoraExtraModal from "../horas-extras/HoraExtraModal";
+import { HoraExtra } from "@/api/apiIngreso";
 
 interface DashboardHeaderProps {
   nombreUsuario: string;
@@ -27,6 +28,7 @@ export function DashboardHeader({
 }: DashboardHeaderProps) {
   const [selectedNovedad, setSelectedNovedad] = useState<Novedad | null>(null);
   const [showMovimientoModal, setShowMovimientoModal] = useState(false);
+  const [showHoraExtraModal, setShowHoraExtraModal] = useState(false);
 
   // Ordenar novedades: primero las fijadas, luego por fecha
   const sortedNovedades = [...novedades].sort((a, b) => {
@@ -52,6 +54,10 @@ export function DashboardHeader({
     setShowMovimientoModal(true);
   };
 
+  const handleAbrirModalHoraExtra = () => {
+    setShowHoraExtraModal(true);
+  };
+
   const nuevoMovimiento: MovimientoIngresoEgreso = {
     id: "",
     usuario: {
@@ -73,6 +79,14 @@ export function DashboardHeader({
     createdAt: new Date().toISOString(),
   };
 
+  const nuevaHoraExta: HoraExtra = {
+    lan: 0,
+    lng: 0,
+    horaInicio: "",
+    horaFinal: "",
+    razon: "",
+  };
+
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 transition-colors mb-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between">
@@ -90,13 +104,23 @@ export function DashboardHeader({
             </div>
           </div>
         </div>
-        <button
-          onClick={handleAbrirModalMovimiento}
-          className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg flex items-center justify-center space-x-2 transition-colors"
-        >
-          <Plus size={20} />
-          <span>Registrar Ingreso / Egreso</span>
-        </button>
+
+        <div className="flex gap-3 items-center">
+          <button
+            onClick={handleAbrirModalHoraExtra}
+            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center justify-center space-x-2 transition-colors"
+          >
+            <Plus size={20} />
+            <span>Hora extra</span>
+          </button>
+          <button
+            onClick={handleAbrirModalMovimiento}
+            className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg flex items-center justify-center space-x-2 transition-colors"
+          >
+            <Plus size={20} />
+            <span>Ingreso / Egreso</span>
+          </button>
+        </div>
       </div>
 
       {/* Novedades */}
@@ -146,6 +170,13 @@ export function DashboardHeader({
         onClose={() => setShowMovimientoModal(false)}
         movimiento={nuevoMovimiento}
         mode="create"
+      />
+
+      <HoraExtraModal
+        isOpen={showHoraExtraModal}
+        onClose={() => setShowHoraExtraModal(false)}
+        mode="create"
+        horaExtra={nuevaHoraExta}
       />
     </div>
   );

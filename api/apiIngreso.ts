@@ -10,6 +10,15 @@ type Ingreso = {
   modo: string;
 };
 
+export type HoraExtra = {
+  lan: number;
+  lng: number;
+  horaInicio: string;
+  horaFinal: string;
+  razon: string;
+  comentario?: string;
+};
+
 type FiltrosIngreso = {
   limit?: number;
   offset?: number;
@@ -63,5 +72,79 @@ export class ingresoService {
     });
 
     return response.data;
+  }
+
+  //horas extras
+  static async createHorasExtras(data: HoraExtra): Promise<any> {
+    const token = getAuthToken();
+
+    try {
+      const response = await axios.post(`${BASE_URL}/horas-extras`, data, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      return response.data;
+    } catch (error: any) {
+      console.error("❌ Error al crear hora extra:", error);
+      if (error.response) {
+        console.error("📥 Respuesta del servidor:", error.response.data);
+        throw new Error(error.response.data?.message || "Error en la petición");
+      }
+
+      throw new Error(error.message || "Error desconocido");
+    }
+  }
+
+  static async fetchHorasExtras(params?: {
+    limit?: number;
+    offset?: number;
+    status?: "pendiente" | "no aprobado" | "aprobado";
+    verificacion?: "no verificado" | "verificado";
+    start?: string;
+    end?: string;
+  }) {
+    const token = getAuthToken();
+    try {
+      const response = await axios.get(`${BASE_URL}/horas-extras`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        params: {
+          limit: params?.limit ?? 10,
+          offset: params?.offset ?? 0,
+          status: params?.status,
+          verificacion: params?.verificacion,
+          start: params?.start,
+          end: params?.end,
+        },
+      });
+
+      return response.data;
+    } catch (error: any) {
+      console.error(
+        "❌ Error al listar horas extras:",
+        error?.message || error
+      );
+      throw error;
+    }
+  }
+
+  static async fetchHoraExtraById(id: string) {
+    const token = getAuthToken();
+
+    try {
+      const response = await axios.get(`${BASE_URL}/horas-extras/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      return response.data;
+    } catch (error: any) {
+      console.warn("Error al obtener la hora extra", error?.message || error);
+      throw error;
+    }
   }
 }

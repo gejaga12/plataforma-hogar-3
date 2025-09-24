@@ -200,6 +200,34 @@ export interface ProcesoIngreso {
   updatedAt: string;
 }
 
+//----------------------------------------//
+
+// INGRESO-EGRESO Y HORAS EXTAS
+export interface MovimientoIngresoEgreso {
+  id: string;
+  usuario: {
+    id: "";
+    nombreCompleto: "";
+    rol: "";
+  };
+  tipo: "INGRESO" | "EGRESO";
+  fechaHora: string;
+  modo: string;
+  motivo: string;
+  ubicacion?: {
+    direccion: string;
+    latitud?: number;
+    longitud?: number;
+  };
+  dispositivo?: string;
+  ipAddress?: string;
+  observaciones?: string;
+  registradoPor?: string;
+  createdAt: string;
+}
+
+//----------------------------------------//
+
 // Interfaz para novedades
 export interface Novedad {
   id: string;

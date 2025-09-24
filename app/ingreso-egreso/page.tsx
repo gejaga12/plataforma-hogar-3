@@ -2,11 +2,10 @@
 
 import { LogIn, LogOut } from "lucide-react";
 import { ProtectedLayout } from "@/components/layout/protected-layout";
-import IngresoEgresoContent, {
-  MovimientoIngresoEgreso,
-} from "@/components/ingreso-egreso/IngresoEgresoContent";
 import { useQuery } from "@tanstack/react-query";
 import { ingresoService } from "@/api/apiIngreso";
+import { MovimientoIngresoEgreso } from "@/utils/types";
+import IngresoEgresoContent from "@/components/ingreso-egreso/IngresoEgresoContent";
 
 function mapMovimientosFromApi(apiData: any[]): MovimientoIngresoEgreso[] {
   return apiData.map((item) => ({
@@ -14,7 +13,7 @@ function mapMovimientosFromApi(apiData: any[]): MovimientoIngresoEgreso[] {
     usuario: {
       id: item.user ?? "sin-id",
       nombreCompleto: item.user ?? "Usuario desconocido",
-      rol: "Sin rol",
+      rol: "",
     },
     tipo: item.typeAction?.toUpperCase() === "INGRESO" ? "INGRESO" : "EGRESO",
     fechaHora: item.date,

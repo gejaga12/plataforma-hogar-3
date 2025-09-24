@@ -1,21 +1,21 @@
 import { useEffect, useState } from "react";
-import { MovimientoIngresoEgreso } from "@/components/ingreso-egreso/IngresoEgresoContent";
 import { X } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ingresoService } from "@/api/apiIngreso";
 import toast from "react-hot-toast";
+import { MovimientoIngresoEgreso } from "@/utils/types";
 
 export interface CreateMovimientoData {
-  usuarioId: string; // UUID del usuario seleccionado
-  tipo: "INGRESO" | "EGRESO"; // Se convierte a typeAction (lowercase)
-  reason: string; // Motivo del movimiento (se mapea a `reason`)
-  modo: "normal" | "eventual" | "viaje"; // Modo de jornada
+  usuarioId: string;
+  tipo: "INGRESO" | "EGRESO";
+  reason: string;
+  modo: "normal" | "eventual" | "viaje";
   ubicacion?: {
     direccion?: string;
     latitud?: number;
     longitud?: number;
   };
-  observaciones?: string; // Campo opcional para anotar detalles adicionales
+  observaciones?: string;
 }
 
 interface MovimientoModalProps {
