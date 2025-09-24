@@ -30,7 +30,7 @@ export function MapaSucursales({
   useEffect(() => {
     const loadMap = async () => {
       const loader = new Loader({
-        apiKey: "AIzaSyB4tfeY1uDDlIN4a5RdBVQNXQzxEc9TeiA",
+        apiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY as string,
         version: "weekly",
         libraries: ["places", "visualization"],
       });
