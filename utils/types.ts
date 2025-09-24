@@ -226,6 +226,37 @@ export interface MovimientoIngresoEgreso {
   createdAt: string;
 }
 
+export interface CrearHoraExtra {
+  lan: number;
+  lng: number;
+  horaInicio: string;
+  horaFinal: string;
+  razon: string;
+  comentario?: string;
+}
+
+export interface HorasExtras extends CrearHoraExtra {
+  autorizado: string;
+  controlado: string;
+  fechaSolicitud: string;
+  id: string;
+  solicitante: string;
+  state: EstadoHoraExtra;
+  totalHoras: string;
+  verificacion: Verificacion;
+}
+
+export enum EstadoHoraExtra {
+  PENDIENTE = "pendiente",
+  NOAPPROVED = "no aprobado",
+  APPROVED = "aprobado",
+}
+
+export enum Verificacion {
+  NOVERIFICADO = "no verificado",
+  VERIFICADO = "verificado",
+}
+
 //----------------------------------------//
 
 // Interfaz para novedades

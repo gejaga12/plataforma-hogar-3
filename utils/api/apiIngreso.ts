@@ -1,6 +1,7 @@
 import { getAuthToken } from "@/utils/authToken";
 import { BASE_URL } from "@/utils/baseURL";
 import axios from "axios";
+import { CrearHoraExtra } from "../types";
 
 type Ingreso = {
   lan?: number;
@@ -8,16 +9,6 @@ type Ingreso = {
   typeAction: string;
   reason: string;
   modo: string;
-};
-
-export type HoraExtra = {
-  id?: string;
-  lan: number;
-  lng: number;
-  horaInicio: string;
-  horaFinal: string;
-  razon: string;
-  comentario?: string;
 };
 
 type FiltrosIngreso = {
@@ -76,7 +67,7 @@ export class ingresoService {
   }
 
   //horas extras
-  static async createHorasExtras(data: HoraExtra): Promise<any> {
+  static async createHorasExtras(data: CrearHoraExtra): Promise<any> {
     const token = getAuthToken();
 
     try {
