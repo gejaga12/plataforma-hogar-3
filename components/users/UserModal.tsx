@@ -3,7 +3,7 @@ import { X } from "lucide-react";
 import { useEffect, useState } from "react";
 import FormUsers from "./FormUsers";
 import { EstadoContractual, FormDataLabor } from "./FormDatosLaborales";
-import { formatDateInput } from "@/utils/formatDate";
+import { formatDateInput, toDateInputValue } from "@/utils/formatDate";
 import { PhoneForm, PhoneType } from "@/utils/api/apiTel";
 
 interface UserModalProps {
@@ -70,12 +70,14 @@ const UserModal: React.FC<UserModalProps> = ({
     }
 
     if (user) {
-      const telefonosFromApi: PhoneForm[] = Array.isArray((user as any).phoneNumber)
-      ? (user as any).phoneNumber.map((p: any) => ({
-          tel: p?.tel ?? "",
-          phoneType: (p?.phoneType as PhoneType) ?? PhoneType.PRIMARY, // "principal" | "secundario" | "emergencia"
-        }))
-      : [];
+      const telefonosFromApi: PhoneForm[] = Array.isArray(
+        (user as any).phoneNumber
+      )
+        ? (user as any).phoneNumber.map((p: any) => ({
+            tel: p?.tel ?? "",
+            phoneType: (p?.phoneType as PhoneType) ?? PhoneType.PRIMARY, // "principal" | "secundario" | "emergencia"
+          }))
+        : [];
 
       // intentar encontrar la zona por nombre (en tu Adapted guardás el name)
       const zonaObj = zonas?.find((z) => z.id === user.zona?.id);
@@ -86,7 +88,7 @@ const UserModal: React.FC<UserModalProps> = ({
       setFormData({
         nombreCompleto: user.fullName || "",
         zona: zonaObj,
-        fechaNacimiento: formatDateInput(user.fechaNacimiento) || "",
+        fechaNacimiento: toDateInputValue(user.fechaNacimiento),
         mail: user.email || "",
         direccion: user.address || "",
         roles: roleIds,
@@ -97,13 +99,12 @@ const UserModal: React.FC<UserModalProps> = ({
         puesto: user.labor?.puestos?.[0]?.name || "",
       });
 
-      setFormDataLabor((prev) => {
+      setFormDataLabor(() => {
         const laborDeUser = user.labor;
-
         const laborData: FormDataLabor = {
           cuil: laborDeUser?.cuil,
-          fechaIngreso: formatDateInput(laborDeUser?.fechaIngreso) || "",
-          fechaAlta: formatDateInput(laborDeUser?.fechaAlta) || "",
+          fechaIngreso: toDateInputValue(laborDeUser?.fechaIngreso),
+          fechaAlta: toDateInputValue(laborDeUser?.fechaAlta),
           tipoDeContrato:
             laborDeUser?.tipoDeContrato || "Relación de Dependencia",
           relacionLaboral: laborDeUser?.relacionLaboral as EstadoContractual,

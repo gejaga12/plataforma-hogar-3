@@ -245,11 +245,7 @@ const FormDatosLaborales: React.FC<FormDatosLaboralesProps> = ({
           <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-400">
             Horas de Trabajo
           </label>
-          <input
-            type="number"
-            min={0}
-            step="1"
-            placeholder="40"
+          <select
             value={formDataLabor.horasTrabajo ?? ""}
             onChange={(e) =>
               setFormDataLabor((prev) => ({
@@ -257,9 +253,13 @@ const FormDatosLaborales: React.FC<FormDatosLaboralesProps> = ({
                 horasTrabajo: e.target.value,
               }))
             }
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-600 dark:border-gray-800"
             disabled={isReadOnly}
-          />
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-600 dark:border-gray-800 text-gray-900 dark:text-gray-100"
+          >
+            <option value="">Seleccionar...</option>
+            <option value="full-time">Full Time</option>
+            <option value="part-time">Part Time</option>
+          </select>
         </div>
 
         {/* Sueldo */}
@@ -283,25 +283,6 @@ const FormDatosLaborales: React.FC<FormDatosLaboralesProps> = ({
             disabled={isReadOnly}
           />
         </div>
-
-        {/* Certificaciones / Título */}
-        {/* <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-400">
-            Certificaciones/Título
-          </label>
-          <input
-            type="text"
-            value={formDataLabor.certificacionesTitulo ?? ""}
-            onChange={(e) =>
-              setFormDataLabor((prev) => ({
-                ...prev,
-                certificacionesTitulo: e.target.value,
-              }))
-            }
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-600 dark:border-gray-800"
-            disabled={isReadOnly}
-          />
-        </div> */}
       </div>
     </div>
   );

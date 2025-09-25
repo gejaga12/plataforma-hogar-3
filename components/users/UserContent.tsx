@@ -28,7 +28,12 @@ import {
 import { cn } from "@/utils/cn";
 import UserModal from "./UserModal";
 import DeleteUSerModal from "./DeleteUserModal";
-import { PhoneForm, PhoneType, TelPayload, TelService } from "@/utils/api/apiTel";
+import {
+  PhoneForm,
+  PhoneType,
+  TelPayload,
+  TelService,
+} from "@/utils/api/apiTel";
 
 const mapPhonesToPayload = (
   userId: number,
@@ -63,7 +68,7 @@ const UsersContent = () => {
 
   const userActual = usuarios?.find((u) => u.id === modalState.user?.id);
 
-  const { data: zonasResponse, isLoading: isLoadingZonas } = useQuery({
+  const { data: zonasResponse } = useQuery({
     queryKey: ["zonas"],
     queryFn: () => ZonaService.allInfoZona(),
   });
@@ -119,7 +124,7 @@ const UsersContent = () => {
         puesto: user.puesto ?? "",
         zona: user.zona?.id ?? "",
         sucursalHogar: user.sucursalHogar ?? "",
-        fechaNacimiento: formatDateInput(user.fechaNacimiento),
+        fechaNacimiento: user.fechaNacimiento,
         jerarquia: user.jerarquiaId ?? undefined,
       };
 
@@ -200,7 +205,6 @@ const UsersContent = () => {
         password: formData.contrasena || undefined,
         fullName: formData.nombreCompleto,
         roles: formData.roles,
-        phoneNumber: formData.telefono,
         address: formData.direccion,
         puesto: formData.puesto,
         zona: formData.zona?.id,
@@ -209,6 +213,19 @@ const UsersContent = () => {
       };
       // console.log("📤 Enviando payload al PATCH", payload);
       await AuthService.editUsers(id, payload);
+
+      const telefonos: PhoneForm[] = Array.isArray(formData.telefono)
+        ? formData.telefono
+        : [];
+
+      const telPayloads: TelPayload[] = mapPhonesToPayload(id, telefonos);
+
+      if (telPayloads.length) {
+        console.log("📤 [PATCH /tel] Actualizando teléfonos:", telPayloads);
+        await Promise.all(
+          telPayloads.map((tp) => TelService.editarTelefono(id, tp))
+        );
+      }
 
       if (
         laborForm &&

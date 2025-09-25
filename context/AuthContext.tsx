@@ -82,10 +82,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const refetchUsuarios = async () => {
     try {
-      const data = await AuthService.getUsers(100, 0);
-
-      console.log(data);
-      
+      const data = await AuthService.getUsers(100, 0);      
       setUsuarios(data);
     } catch (e) {
       console.error("Error al cargar usuarios:", e);

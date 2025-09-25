@@ -51,7 +51,7 @@ const EquiposContent = () => {
     queryFn: EquipoService.listarEquipos,
   });
 
-  // console.log('equipos:', equipos);
+  console.log('equipos:', equipos);
 
   const generarQRMutation = useMutation({
     mutationFn: EquipoService.generarQR,
@@ -127,8 +127,6 @@ const EquiposContent = () => {
 
   const handleCreateEquipo = async (data: any) => {
     try {
-      // console.log("📤 Datos enviados al crear equipo:", data);
-
       await EquipoService.crearEquipo(data);
       queryClient.invalidateQueries({ queryKey: ["equipos"] });
       setShowFormModal(false);
@@ -148,11 +146,6 @@ const EquiposContent = () => {
   const handleEdit = (equipo: Equipo) => {
     setEditingEquipo(equipo);
     setShowFormModal(true);
-  };
-
-  const handleShowQR = (equipo: Equipo) => {
-    setSelectedEquipo(equipo);
-    setShowQRModal(true);
   };
 
   const handleDownloadQR = (equipo: Equipo) => {

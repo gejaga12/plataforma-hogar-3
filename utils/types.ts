@@ -13,6 +13,8 @@ export interface UserAdapted {
   jerarquia?: Jerarquia;
   fechaNacimiento: string;
   createdAt: string;
+  fechaIngreso?: string;
+  fechaAlta?: string;
   deletedAt: string | null;
   address: string;
   telefono: PhoneForm[];
@@ -72,7 +74,7 @@ export interface Labor {
   horasTrabajo?: string;
   sueldo?: number;
   relacionLaboral: string;
-  fechaIngreso: Date | string;
+  fechaIngreso: string;
   puestos?: Puesto[];
 }
 
@@ -371,7 +373,7 @@ export interface Ots {
   id: number;
   state?: StateOT;
   processRef?: string;
-  task?: string;
+  task?: Task;
   priority?: string;
   commentary?: string;
   result?: boolean;
@@ -382,9 +384,17 @@ export interface Ots {
   no_me_recibio?: string;
   finalizado?: string;
   postergado?: string;
+  postergadoPor?: string;
   sin_asignar?: string;
   Audit?: Audit;
   tecnico?: UserAdapted;
+  sucursal?: string;
+  cliente?: string;
+  facility?: string;
+  firma?: string;
+  aclaracion?: string;
+
+  imageSolucioname?: string;
 }
 
 export enum StateOT {

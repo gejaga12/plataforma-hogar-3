@@ -14,6 +14,7 @@ import {
   OrderFormSection,
 } from "@/components/order-detail/order-form-section";
 import { OTService } from "@/utils/api/apiOTs";
+import { TaskServices } from "@/utils/api/apiFormularios";
 
 export function OrdenDetalleContent() {
   const params = useParams();
@@ -31,8 +32,6 @@ export function OrdenDetalleContent() {
     queryFn: () => OTService.obtenerOTDetalleMDA(Number(ordenId)),
     enabled: !!ordenId,
   });
-
-  console.log('orden:', orden);
 
   const updateEstadoMutation = useMutation({
     mutationFn: async ({ estado }: { estado: string }) => {
@@ -142,13 +141,26 @@ export function OrdenDetalleContent() {
             <span>Exportar</span>
           </button>
         </div>
+        
         {/* Información General */}
-        <OrderInfoSection orden={mapOrdenInfo(orden)} />
+        <OrderInfoSection 
+        orden={orden}
+        />
+
         {/* Mapas */}
         <OrderMapsSection
-          ubicacionRecibido={orden.ubicacionRecibido}
-          ubicacionCierre={orden.ubicacionCierre}
+          ubicacionRecibido={mapUbicacion(
+            orden.lanStart,
+            orden.lngStart,
+            orden.direccion
+          )}
+          ubicacionCierre={mapUbicacion(
+            orden.lanEnd,
+            orden.lngEnd,
+            orden.direccion
+          )}
         />
+
         {/* Estado y Calificación */}
         <OrderStatusSection
           orden={{
@@ -167,7 +179,7 @@ export function OrdenDetalleContent() {
         />
         {/* Fecha y Hora de Trabajo */}
         <OrderWorkTimeSection
-          orden={mapWorkTimes(orden)}
+          orden={orden}
           onUpdateTiempo={(data) => updateTiempoMutation.mutate(data)}
           isLoading={updateTiempoMutation.isPending}
         />
@@ -175,6 +187,7 @@ export function OrdenDetalleContent() {
         <OrderFormSection
           modulos={mapSubtasksResultToModulos(orden?.result?.Subtasks || [])}
         />
+        
         {/* Botón Final */}
         <div className="flex justify-center pt-6">
           <button
@@ -188,43 +201,6 @@ export function OrdenDetalleContent() {
       </div>
     </ProtectedLayout>
   );
-}
-
-//MAPEOS PARA CONECTAR UI CON BACK
-function mapOrdenInfo(orden: any) {
-  return {
-    id: String(orden.id),
-    usuario: orden.tecnico?.fullName || "Sin asignar",
-    formulario: orden.task?.typeform || "N/A",
-    orden: orden.task?.code || "N/A",
-    sucursal: "N/A", // acá depende cómo viene la info
-    cliente: "N/A",
-    comentario: orden.commentary,
-    sucursalCliente: "N/A",
-    facility: "N/A",
-    estado: orden.state || "Pendiente",
-    horaInicio: orden.en_camino
-      ? new Date(orden.en_camino).toLocaleTimeString()
-      : null,
-    horaFin: orden.finalizado
-      ? new Date(orden.finalizado).toLocaleTimeString()
-      : null,
-    fechaCompleta: orden.pendiente
-      ? new Date(orden.pendiente).toLocaleString()
-      : "N/A",
-    postergarPor: orden.postergado
-      ? new Date(orden.postergado).toLocaleString()
-      : null,
-    creado: orden.Audit?.createdAt
-      ? new Date(orden.Audit.createdAt).toLocaleString()
-      : "N/A",
-    firma: null, // tu JSON real no trae imagen de firma
-    firmaResponsable: null, // idem
-    ultimaEdicionFormulario: orden.Audit?.updatedAt
-      ? new Date(orden.Audit.updatedAt).toLocaleString()
-      : null,
-    imageSolucioname: null, // idem
-  };
 }
 
 function mapSubtasksResultToModulos(subtasks: any[]) {
@@ -270,15 +246,15 @@ function mapTipoBackToFront(type: string): CampoFormulario["tipo"] {
   }
 }
 
-export function mapEstadoFrontToBack(estado: string): string {
-  switch (estado) {
-    case "Pendiente":
+export function mapEstadoFrontToBack(state: string): string {
+  switch (state) {
+    case "pendiente":
       return "pendiente";
-    case "En proceso":
+    case "en proceso":
       return "en_camino";
-    case "Finalizado":
+    case "finalizado":
       return "finalizado";
-    case "Cancelado":
+    case "cancelado":
       return "cancelado";
     default:
       return "pendiente";
@@ -300,20 +276,16 @@ export function mapEstadoBackToFront(estado: string): string {
   }
 }
 
-function mapWorkTimes(orden: any) {
-  const formatHour = (iso: string | undefined) => {
-    if (!iso) return null;
-    const date = new Date(iso);
-
-    const hours = date.getHours().toString().padStart(2, "0");
-    const minutes = date.getMinutes().toString().padStart(2, "0");
-
-
-    return `${hours}:${minutes}`;
-  };
+function mapUbicacion(
+  lat: number | null | undefined,
+  lng: number | null | undefined,
+  direccion?: string
+) {
+  if (lat == null || lng == null) return null;
 
   return {
-    horaInicio: orden.en_camino ? formatHour(orden.en_camino) : null,
-    horaFin: orden.finalizado ? formatHour(orden.finalizado) : null,
+    latitud: lat,
+    longitud: lng,
+    direccion: direccion || "Sin dirección registrada",
   };
 }

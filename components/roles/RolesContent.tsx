@@ -77,7 +77,6 @@ const RolesContent = ({
   const {
     data: availableViews,
     isLoading: isLoadingPermissions,
-    error: errorPermissions,
   } = useQuery<Permiso[]>({
     queryKey: ["permisos-disponibles"],
     queryFn: ApiRoles.obtenerPermisosDisponibles,
