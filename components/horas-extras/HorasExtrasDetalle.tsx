@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { X, Check } from "lucide-react";
 import { HorasExtras } from "@/utils/types";
 import { Loader } from "@googlemaps/js-api-loader";
@@ -8,6 +8,7 @@ import { getStateBadgeHoras } from "../ui/EstadosBadge";
 import { cn } from "@/utils/cn";
 import { capitalizeFirstLetter } from "@/utils/normalize";
 import ConfirmDeleteModal from "../ui/ConfirmDeleteModal";
+import { useGoogleMaps } from "@/hooks/useGoogleMaps";
 
 interface HoraExtraDetalleModalProps {
   isOpen: boolean;
@@ -27,7 +28,12 @@ const HoraExtraDetalleModal = ({
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [accion, setAccion] = useState<"aprobar" | "rechazar" | null>(null);
 
-  const mapRef = useRef<HTMLDivElement | null>(null);
+  const { isLoaded } = useGoogleMaps();
+
+  const mapContainerRef = useRef<HTMLDivElement | null>(null);
+  const mapRef = useRef<google.maps.Map | null>(null);
+  const markerRef = useRef<google.maps.Marker | null>(null);
+  const initializedRef = useRef(false);
 
   const handleClick = (accionSeleccionada: "aprobar" | "rechazar") => {
     setAccion(accionSeleccionada);
@@ -41,35 +47,6 @@ const HoraExtraDetalleModal = ({
   };
 
   useEffect(() => {
-    if (isOpen && mapRef.current) {
-      const loader = new Loader({
-        apiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY as string,
-        version: "weekly",
-        libraries: ["places"],
-      });
-
-      loader.load().then(() => {
-        if (!horaExtra) return;
-
-        const map = new google.maps.Map(mapRef.current as HTMLElement, {
-          center: {
-            lat: horaExtra.lan || -34.6037, // fallback BA
-            lng: horaExtra.lng || -58.3816,
-          },
-          zoom: 14,
-        });
-
-        if (horaExtra.lan && horaExtra.lng) {
-          new google.maps.Marker({
-            position: { lat: horaExtra.lan, lng: horaExtra.lng },
-            map,
-          });
-        }
-      });
-    }
-  }, [isOpen, horaExtra]);
-
-  useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -77,6 +54,75 @@ const HoraExtraDetalleModal = ({
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
+
+  const pos = useMemo(() => {
+    const lat = horaExtra?.lan ?? -34.6037;
+    const lng = horaExtra?.lng ?? -58.3816;
+    return { lat, lng };
+  }, [horaExtra?.lan, horaExtra?.lng]);
+
+  // 1) Inicializar el mapa UNA sola vez por apertura
+  useEffect(() => {
+    if (
+      !isOpen ||
+      !isLoaded ||
+      !mapContainerRef.current ||
+      initializedRef.current
+    )
+      return;
+
+    mapRef.current = new google.maps.Map(mapContainerRef.current, {
+      center: pos,
+      zoom: 14,
+      gestureHandling: "greedy",
+      disableDefaultUI: true,
+      clickableIcons: false,
+    });
+
+    markerRef.current = new google.maps.Marker({
+      position: pos,
+      map: mapRef.current,
+    });
+
+    initializedRef.current = true;
+
+    // Importante: forzar resize cuando el modal ya es visible
+    // (el mapa necesita medir el contenedor abierto)
+    requestAnimationFrame(() => {
+      if (mapRef.current) google.maps.event.trigger(mapRef.current, "resize");
+      if (mapRef.current) mapRef.current.setCenter(pos);
+    });
+
+    return () => {
+      // cleanup al desmontar el modal
+      if (markerRef.current) {
+        markerRef.current.setMap(null);
+        markerRef.current = null;
+      }
+      // Map no tiene destroy público; soltar referencias
+      mapRef.current = null;
+      initializedRef.current = false;
+    };
+  }, [isOpen, isLoaded, pos]);
+
+  // 2) Actualizar posición/zoom SIN recrear mapa/marker
+  useEffect(() => {
+    if (!isOpen) return;
+    const map = mapRef.current;
+    const marker = markerRef.current;
+    if (!map || !marker) return;
+
+    marker.setPosition(pos);
+
+    // Centrado suave si cambia la posición
+    const center = map.getCenter();
+    const clat = center?.lat();
+    const clng = center?.lng();
+    if (clat !== pos.lat || clng !== pos.lng) {
+      if (map.panTo) map.panTo(pos);
+      else map.setCenter(pos);
+    }
+  }, [isOpen, pos]);
 
   if (!isOpen || !horaExtra) return null;
 
@@ -248,7 +294,17 @@ const HoraExtraDetalleModal = ({
             <h3 className="text-md font-medium text-gray-700 mb-2">
               Ubicación
             </h3>
-            <div ref={mapRef} className="w-full h-[350px] rounded-lg border" />
+            <div
+              ref={mapContainerRef}
+              className="w-full h-[350px] rounded-lg border bg-gray-100"
+            />
+            {/* Tip: si no hay coords reales, podés mostrar un aviso pequeño */}
+            {!(horaExtra.lan && horaExtra.lng) && (
+              <p className="text-xs text-gray-500 mt-2">
+                No hay coordenadas registradas; mostrando posición por defecto
+                (CABA).
+              </p>
+            )}
           </div>
 
           {/* Footer */}

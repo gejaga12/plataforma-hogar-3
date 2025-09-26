@@ -8,6 +8,7 @@ import { ThemeProvider } from "@/components/theme/theme-provider";
 import { useEffect } from "react";
 import { AuthProvider } from "@/context/AuthContext";
 import { Toaster } from "react-hot-toast";
+import { GeoAutoAsk } from "@/components/layout/GeoAutoAsk";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -57,12 +58,9 @@ export default function RootLayout({
   }, []);
 
   return (
-    <html 
-    lang="es" 
-    suppressHydrationWarning
-    className={inter.className}
-    >
+    <html lang="es" suppressHydrationWarning className={inter.className}>
       <body>
+        <GeoAutoAsk />
         <ThemeProvider defaultTheme="system" storageKey="hogarapp-ui-theme">
           <AuthProvider>
             <QueryClientProvider client={queryClient}>

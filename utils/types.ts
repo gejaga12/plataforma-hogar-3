@@ -277,34 +277,51 @@ export interface Novedad {
   pin?: boolean; // para fijar arriba
 }
 
-// Tipos para la agenda de trabajo
-export type AgendaView = "day" | "week" | "month" | "list";
-export type AgendaEventType =
+// AGENDA
+export type AgendaState = "pendiente" | "progreso" | "finalizado";
+
+export type AgendaType =
   | "meeting"
   | "task"
   | "deadline"
   | "training"
   | "reminder";
 
-export interface AgendaEvent {
-  id: string;
-  title: string;
-  description?: string;
-  startDate: string;
-  endDate?: string;
-  type: AgendaEventType;
-  location?: string;
-  participants: {
+export interface AgendaUserLite {
+  id: number | string;
+  email: string;
+  fullName: string;
+  isActive: boolean;
+  fechaNacimiento: boolean | string;
+  address: string;
+  createdAt: string;
+  zona: string;
+  sucursal: Record<string, unknown>;
+  configuraciones: {
     id: string;
-    name: string;
-    avatar?: string;
-  }[];
-  createdBy: string;
-  status: "pending" | "confirmed" | "completed";
-  priority: "low" | "medium" | "high";
-  relatedOrder?: string;
-  recurrence: "daily" | "weekly" | "monthly" | "quarterly" | "yearly" | null;
-  color: string;
+    notificaciones: boolean;
+    correos: boolean;
+  };
+}
+
+export interface AgendaItem {
+  id: string;
+  name: string;
+  until: string;
+  priority?: "alta" | "media" | "baja";
+  description?: string;
+  state: AgendaState;
+  assignedBy: AgendaUserLite;
+  user: AgendaUserLite;
+  type?: AgendaType;
+}
+
+// Respuesta completa del GET /agenda
+export interface ListarAgendasResponse {
+  subordinados: AgendaUserLite[];
+  owner: AgendaItem[];
+  subs: AgendaItem[];
+  agendaByArea: AgendaItem[];
 }
 
 //----------------------------------------//

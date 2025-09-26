@@ -279,6 +279,28 @@ export function EquipoForm({
                   )}
                 </div>
 
+                {/* Habilitado */}
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    Estado *
+                  </label>
+                  <select
+                    value={formData.habilitado}
+                    onChange={(e) =>
+                      handleInputChange(
+                        "habilitado",
+                        e.target.value as EstadoEquipo
+                      )
+                    }
+                    className="w-full px-3 py-2 border rounded-lg"
+                    required
+                  >
+                    <option value={EstadoEquipo.OK}>Ok</option>
+                    <option value={EstadoEquipo.Reparacion}>Reparación</option>
+                    <option value={EstadoEquipo.No_ok}>No OK</option>
+                  </select>
+                </div>
+
                 {/* Plan Tasks asociados */}
                 <div>
                   <label className="block text-sm font-medium mb-1">
@@ -304,28 +326,6 @@ export function EquipoForm({
                           ))}
                       </>
                     )}
-                  </select>
-                </div>
-
-                {/* Habilitado */}
-                <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Estado *
-                  </label>
-                  <select
-                    value={formData.habilitado}
-                    onChange={(e) =>
-                      handleInputChange(
-                        "habilitado",
-                        e.target.value as EstadoEquipo
-                      )
-                    }
-                    className="w-full px-3 py-2 border rounded-lg"
-                    required
-                  >
-                    <option value={EstadoEquipo.OK}>Ok</option>
-                    <option value={EstadoEquipo.Reparacion}>Reparación</option>
-                    <option value={EstadoEquipo.No_ok}>No OK</option>
                   </select>
                 </div>
               </div>
