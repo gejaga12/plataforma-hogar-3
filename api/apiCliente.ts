@@ -3,8 +3,6 @@ import { BASE_URL } from "@/utils/baseURL";
 import { Cliente } from "@/utils/types";
 import axios from "axios";
 
-
-
 export class ClientService {
   static async crearCliente(data: Cliente) {
     const token = getAuthToken();
@@ -42,8 +40,7 @@ export class ClientService {
       return response.data;
     } catch (error: any) {
       const msg =
-        error?.response?.data?.message || error.message || "Error desconocido";
-      console.log("❌ Error al listar los clientes:", msg);
+        error?.response?.data?.message;
       throw new Error(msg);
     }
   }

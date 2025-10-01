@@ -19,6 +19,7 @@ import { capitalizeFirstLetter } from "@/utils/normalize";
 import toast from "react-hot-toast";
 import ConfirmDeleteModal from "../ui/ConfirmDeleteModal";
 import QRsList from "./QRsList";
+import TipoEquipoModal from "./TipoEquipoModal";
 
 type SortField = "nombre" | "fechaInstalacion";
 type SortDirection = "asc" | "desc";
@@ -43,6 +44,7 @@ const EquiposContent = () => {
   } | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [equipoToDelete, setEquipoToDelete] = useState<string | null>(null);
+  const [showTipoEquipoModal, setShowTipoEquipoModal] = useState(false);
 
   const router = useRouter();
 
@@ -91,7 +93,6 @@ const EquiposContent = () => {
   });
 
   const sortedEquipos = [...filteredEquipos].sort((a, b) => {
-    // Map SortField to actual Equipo property
     const getSortValue = (equipo: Equipo, field: SortField) => {
       switch (field) {
         case "nombre":
@@ -122,6 +123,17 @@ const EquiposContent = () => {
       setSelectedEquipos((prev) => [...prev, equipoId]);
     } else {
       setSelectedEquipos((prev) => prev.filter((id) => id !== equipoId));
+    }
+  };
+
+  const handleCreateTipoEquipo = async (data: any) => {
+    try {
+      console.log("📤 Datos enviados al crear tipo equipo:", data);
+      await EquipoService.crearEquipoAdmin(data);
+      queryClient.invalidateQueries({ queryKey: ["tipos-equipos"] });
+      setShowTipoEquipoModal(false);
+    } catch (error) {
+      console.error("Error al crear el tipo de equipo:", error);
     }
   };
 
@@ -170,6 +182,14 @@ const EquiposContent = () => {
     setEquipoToDelete(null);
   };
 
+  const handleOpenTipoEquipoModal = () => {
+    setShowTipoEquipoModal(true);
+  };
+
+  const handleCloseTipoEquipoModal = () => {
+    setShowTipoEquipoModal(false);
+  };
+
   const getEstadoColor = (estado: EstadoEquipo): string => {
     switch (estado) {
       case EstadoEquipo.OK:
@@ -201,6 +221,13 @@ const EquiposContent = () => {
 
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
           <button
+            onClick={handleOpenTipoEquipoModal}
+            className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg flex items-center justify-center space-x-2 transition-colors"
+          >
+            <Plus size={20} />
+            <span>Nuevo tipo de Equipo</span>
+          </button>
+          <button
             onClick={() => generarQRMutation.mutate()}
             disabled={generarQRMutation.isPending}
             className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center justify-center space-x-2 transition-colors disabled:opacity-50"
@@ -208,7 +235,6 @@ const EquiposContent = () => {
             <QrCode size={20} />
             <span>Generar QR</span>
           </button>
-
           <button
             onClick={() => {
               setEditingEquipo(null);
@@ -458,6 +484,12 @@ const EquiposContent = () => {
           isLoading={isLoading}
         />
       )}
+
+      <TipoEquipoModal
+        onSubmit={handleCreateTipoEquipo}
+        isOpen={showTipoEquipoModal}
+        onClose={handleCloseTipoEquipoModal}
+      />
 
       {showQRModal && selectedEquipo && (
         <EquipoQR
