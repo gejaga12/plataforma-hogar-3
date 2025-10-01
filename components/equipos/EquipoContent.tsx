@@ -128,7 +128,7 @@ const EquiposContent = () => {
 
   const handleCreateTipoEquipo = async (data: any) => {
     try {
-      console.log("📤 Datos enviados al crear tipo equipo:", data);
+      // console.log("📤 Datos enviados al crear tipo equipo:", data);
       await EquipoService.crearEquipoAdmin(data);
       queryClient.invalidateQueries({ queryKey: ["tipos-equipos"] });
       setShowTipoEquipoModal(false);

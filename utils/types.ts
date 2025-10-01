@@ -202,7 +202,7 @@ export interface ProcesoIngreso {
 
 //----------------------------------------//
 
-// INGRESO-EGRESO Y HORAS EXTAS
+// INGRESO-EGRESO Y HORAS EXTRAS
 export interface MovimientoIngresoEgreso {
   id: string;
   usuario: {
@@ -226,7 +226,7 @@ export interface MovimientoIngresoEgreso {
   createdAt: string;
 }
 
-//----------------------------------------//
+//----------------------------------------// 
 
 // Interfaz para novedades
 export interface Novedad {
@@ -392,8 +392,8 @@ export interface Sucursal {
   id?: string;
   name: string;
   codigo?: string;
-  sucHogar?: string | Sucursal; // 👈 string en create, objeto en get
-  cliente?: string | Cliente; // idem
+  sucHogar?: string | Sucursal;
+  cliente?: string | Cliente;
   users?: UserAdapted;
   isInternal?: boolean;
   estado?: "activo" | "inactivo";
