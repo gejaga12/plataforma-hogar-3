@@ -12,10 +12,25 @@ import type { AgendaItem, AgendaState, AgendaType } from "@/utils/types";
 
 type ColumnId = AgendaState;
 
-const columnsMeta: Record<ColumnId, { title: string; border: string; bg: string }> = {
-  pendiente:  { title: "Pendiente",  border: "border-yellow-300", bg: "bg-yellow-50/50 dark:bg-yellow-900/10" },
-  progreso:   { title: "En progreso", border: "border-blue-300",  bg: "bg-blue-50/50 dark:bg-blue-900/10" },
-  finalizado: { title: "Finalizado", border: "border-green-300", bg: "bg-green-50/50 dark:bg-green-900/10" },
+const columnsMeta: Record<
+  ColumnId,
+  { title: string; border: string; bg: string }
+> = {
+  pendiente: {
+    title: "Pendiente",
+    border: "border-yellow-300",
+    bg: "bg-yellow-50/50 dark:bg-yellow-900/10",
+  },
+  progreso: {
+    title: "En progreso",
+    border: "border-blue-300",
+    bg: "bg-blue-50/50 dark:bg-blue-900/10",
+  },
+  finalizado: {
+    title: "Finalizado",
+    border: "border-green-300",
+    bg: "bg-green-50/50 dark:bg-green-900/10",
+  },
 };
 
 // Estilos por tipo (afectan borde de la card, fondo suave y badge)
@@ -23,11 +38,36 @@ const typeStyles: Record<
   AgendaType,
   { border: string; bg: string; badgeBg: string; badgeText: string }
 > = {
-  meeting:   { border: "border-violet-300",  bg: "bg-violet-50/60 dark:bg-violet-900/10",  badgeBg: "bg-violet-100 dark:bg-violet-900",  badgeText: "text-violet-800 dark:text-violet-200" },
-  task:      { border: "border-orange-300",   bg: "bg-orange-50/60 dark:bg-orange-900/10",    badgeBg: "bg-orange-100 dark:bg-orange-900",    badgeText: "text-orange-800 dark:text-orange-200" },
-  deadline:  { border: "border-rose-300",    bg: "bg-rose-50/60 dark:bg-rose-900/10",      badgeBg: "bg-rose-100 dark:bg-rose-900",      badgeText: "text-rose-800 dark:text-rose-200" },
-  training:  { border: "border-emerald-300", bg: "bg-emerald-50/60 dark:bg-emerald-900/10",badgeBg: "bg-emerald-100 dark:bg-emerald-900",badgeText: "text-emerald-800 dark:text-emerald-200" },
-  reminder:  { border: "border-sky-300",     bg: "bg-sky-50/60 dark:bg-sky-900/10",        badgeBg: "bg-sky-100 dark:bg-sky-900",        badgeText: "text-sky-800 dark:text-sky-200" },
+  meeting: {
+    border: "border-violet-300",
+    bg: "bg-violet-50/60 dark:bg-violet-900/10",
+    badgeBg: "bg-violet-100 dark:bg-violet-900",
+    badgeText: "text-violet-800 dark:text-violet-200",
+  },
+  task: {
+    border: "border-orange-300",
+    bg: "bg-orange-50/60 dark:bg-orange-900/10",
+    badgeBg: "bg-orange-100 dark:bg-orange-900",
+    badgeText: "text-orange-800 dark:text-orange-200",
+  },
+  deadline: {
+    border: "border-rose-300",
+    bg: "bg-rose-50/60 dark:bg-rose-900/10",
+    badgeBg: "bg-rose-100 dark:bg-rose-900",
+    badgeText: "text-rose-800 dark:text-rose-200",
+  },
+  training: {
+    border: "border-emerald-300",
+    bg: "bg-emerald-50/60 dark:bg-emerald-900/10",
+    badgeBg: "bg-emerald-100 dark:bg-emerald-900",
+    badgeText: "text-emerald-800 dark:text-emerald-200",
+  },
+  reminder: {
+    border: "border-sky-300",
+    bg: "bg-sky-50/60 dark:bg-sky-900/10",
+    badgeBg: "bg-sky-100 dark:bg-sky-900",
+    badgeText: "text-sky-800 dark:text-sky-200",
+  },
 };
 
 type BoardProps = {
@@ -46,7 +86,9 @@ export function AgendaBoard({ events, onDropState, onCardClick }: BoardProps) {
     };
     for (const e of events) {
       const col: ColumnId =
-        e.state === "pendiente" || e.state === "progreso" || e.state === "finalizado"
+        e.state === "pendiente" ||
+        e.state === "progreso" ||
+        e.state === "finalizado"
           ? e.state
           : "pendiente";
       g[col].push(e);
@@ -98,7 +140,8 @@ export function AgendaBoard({ events, onDropState, onCardClick }: BoardProps) {
               }
               // encontrar data “fresh” desde events (fuente de verdad)
               const original = events.find((e) => e.id === cardId) ?? movedCard;
-              if (original) next[targetCol].push({ ...original, state: targetCol });
+              if (original)
+                next[targetCol].push({ ...original, state: targetCol });
               return next;
             });
 
@@ -116,7 +159,9 @@ export function AgendaBoard({ events, onDropState, onCardClick }: BoardProps) {
     return () => cleanups.forEach((fn) => fn());
   }, [events, onDropState, grouped]);
 
-  const Card: React.FC<{ ev: AgendaItem & { description?: string } }> = ({ ev }) => {
+  const Card: React.FC<{ ev: AgendaItem & { description?: string } }> = ({
+    ev,
+  }) => {
     const ref = useRef<HTMLDivElement | null>(null);
 
     useEffect(() => {
@@ -193,27 +238,32 @@ export function AgendaBoard({ events, onDropState, onCardClick }: BoardProps) {
   }, []);
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-[calc(100vh-200px)] min-h-[520px]">
       {(Object.keys(columns) as ColumnId[]).map((colId) => {
         const meta = columnsMeta[colId];
         return (
-          <div key={colId} className="flex flex-col">
+          <div key={colId} className="flex flex-col min-h-0">
             <div className="mb-2 flex items-center justify-between">
               <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
                 {meta.title}
               </h3>
-              <span className="text-xs text-gray-500">{columns[colId].length}</span>
+              <span className="text-xs text-gray-500">
+                {columns[colId].length}
+              </span>
             </div>
             <div
               ref={colRefs[colId]}
               className={cn(
-                "min-h-[320px] rounded-lg border p-2 space-y-2",
+                "flex-1 overflow-y-auto rounded-lg border p-2 space-y-2",
                 meta.border,
                 meta.bg
               )}
             >
               {columns[colId].map((ev) => (
-                <Card key={ev.id} ev={ev as AgendaItem & { description?: string }} />
+                <Card
+                  key={ev.id}
+                  ev={ev as AgendaItem & { description?: string }}
+                />
               ))}
             </div>
           </div>

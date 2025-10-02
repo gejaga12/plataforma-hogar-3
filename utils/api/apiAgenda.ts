@@ -1,14 +1,14 @@
 import axios from "axios";
 import { getAuthToken } from "../authToken";
 import { BASE_URL } from "../baseURL";
-import { AgendaItem, AgendaState, AgendaType } from "../types";
+import { AgendaItem, AgendaPriority, AgendaState, AgendaType } from "../types";
 
 export interface payloadCreateAgenda {
   name: string;
   until: string;
   type?: AgendaType;
   userId: number;
-  priority?: "alta" | "media" | "baja";
+  priority?: AgendaPriority;
   description?: string;
 }
 

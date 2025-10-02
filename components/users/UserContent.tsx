@@ -34,6 +34,7 @@ import {
   TelPayload,
   TelService,
 } from "@/utils/api/apiTel";
+import ModalPortal from "../ui/ModalPortal";
 
 const mapPhonesToPayload = (
   userId: number,
@@ -545,28 +546,30 @@ const UsersContent = () => {
       </div>
 
       {/* Modals */}
-      <UserModal
-        isOpen={modalState.isOpen}
-        onClose={() => setModalState({ isOpen: false, mode: "create" })}
-        user={userActual}
-        mode={modalState.mode}
-        rolesDisponibles={rolesDisponibles}
-        zonas={zonas}
-        onSubmit={handleSubmit}
-        isloading={
-          modalState.mode === "edit"
-            ? editMutation.isPending
-            : createMutation.isPending
-        }
-      />
+      <ModalPortal>
+        <UserModal
+          isOpen={modalState.isOpen}
+          onClose={() => setModalState({ isOpen: false, mode: "create" })}
+          user={userActual}
+          mode={modalState.mode}
+          rolesDisponibles={rolesDisponibles}
+          zonas={zonas}
+          onSubmit={handleSubmit}
+          isloading={
+            modalState.mode === "edit"
+              ? editMutation.isPending
+              : createMutation.isPending
+          }
+        />
 
-      <DeleteUSerModal
-        isOpen={deleteModal.isOpen}
-        onClose={() => setDeleteModal({ isOpen: false })}
-        onConfirm={confirmDelete}
-        userName={deleteModal.user?.fullName || ""}
-        isLoading={deleteMutation.isPending}
-      />
+        <DeleteUSerModal
+          isOpen={deleteModal.isOpen}
+          onClose={() => setDeleteModal({ isOpen: false })}
+          onConfirm={confirmDelete}
+          userName={deleteModal.user?.fullName || ""}
+          isLoading={deleteMutation.isPending}
+        />
+      </ModalPortal>
     </div>
   );
 };

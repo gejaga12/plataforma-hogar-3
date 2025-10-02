@@ -13,6 +13,7 @@ import {
   AgendaUserLite,
   ListarAgendasResponse,
 } from "@/utils/types";
+import ConfirmDeleteModal from "../ui/ConfirmDeleteModal";
 
 const flattenAgendas = (resp: ListarAgendasResponse): AgendaItem[] => {
   const all: AgendaItem[] = [
@@ -30,7 +31,7 @@ export type AgendaUpdateInput = {
   changes: Partial<
     Pick<
       AgendaItem,
-      "name" | "until" | "type" | "description" | "priority" | "user"
+      "name" | "until" | "type" | "description" | "priority" | "user" | "state"
     >
   >;
 };
@@ -43,6 +44,7 @@ export const AgendaContent = () => {
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<AgendaItem | null>(null);
   const [editMode, setEditMode] = useState(false);
+  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
 
   const queryClient = useQueryClient();
 
@@ -56,6 +58,8 @@ export const AgendaContent = () => {
     select: (resp: ListarAgendasResponse) => flattenAgendas(resp),
     staleTime: 5 * 60 * 1000,
   });
+
+  console.log('Eventos traidos:', events);
 
   const { data: rawApiData } = useQuery({
     queryKey: ["agenda-raw"],
@@ -118,6 +122,7 @@ export const AgendaContent = () => {
       queryClient.invalidateQueries({ queryKey: ["agenda-events"] });
       setShowDetailModal(false);
       setSelectedEvent(null);
+      setShowConfirmDelete(false);
     },
   });
 
@@ -204,10 +209,23 @@ export const AgendaContent = () => {
           onClose={() => setShowDetailModal(false)}
           event={selectedEvent as any}
           onEdit={handleEditFromDetail}
-          onDelete={() => handleDeleteEvent(selectedEvent.id)}
+          onDelete={() => setShowConfirmDelete(true)}
           isLoading={deleteMutation.isPending}
         />
       )}
+
+      <ConfirmDeleteModal
+        isOpen={showConfirmDelete}
+        onClose={() => setShowConfirmDelete(false)}
+        onConfirm={() => {
+          if (selectedEvent) handleDeleteEvent(selectedEvent.id);
+        }}
+        title="Confirmar eliminacion"
+        message={`¿Seguro que deseas eliminar "${selectedEvent?.name}"? Esta acción no se puede deshacer.`}
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+        isLoading={deleteMutation.isPending}
+      />
     </div>
   );
 };

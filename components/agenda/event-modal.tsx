@@ -16,6 +16,7 @@ import type { AgendaItem, AgendaType, UserAdapted } from "@/utils/types";
 import { getUserTimeZone, toDateInputValue, toUTC } from "@/utils/formatDate";
 import { AuthService } from "@/utils/api/apiAuth";
 import { payloadCreateAgenda } from "@/utils/api/apiAgenda";
+import ModalPortal from "../ui/ModalPortal";
 
 // ---- Tipos ----
 type BaseUser = {
@@ -64,7 +65,7 @@ export function EventModal({
   const [name, setName] = useState("");
   const [type, setType] = useState<AgendaType>("meeting");
   const [description, setDescription] = useState("");
-  const [priority, setPriority] = useState<"alta" | "media" | "baja">("media");
+  const [priority, setPriority] = useState<"Alta" | "Media" | "Baja">("Media");
 
   // until = date + time (local) -> se convertirá a UTC en submit
   const [dateInput, setDateInput] = useState<string>(
@@ -118,7 +119,7 @@ export function EventModal({
       setName("");
       setType("meeting");
       setDescription("");
-      setPriority("media");
+      setPriority("Media");
       const now = new Date();
       setDateInput(toDateInputValue(now.toISOString()));
       setTimeInput(
@@ -134,7 +135,7 @@ export function EventModal({
     setName(event.name);
     setType(event.type ?? "meeting");
     setDescription(event.description || "");
-    setPriority(event.priority ?? "media");
+    setPriority(event.priority ?? "Media");
 
     const d = new Date(event.until); // UTC string del back
     setDateInput(toDateInputValue(d.toISOString()));
@@ -250,299 +251,301 @@ export function EventModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-lg w-full max-w-3xl max-h-[90vh] overflow-y-auto">
-        {/* Header */}
-        <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-            {mode === "edit" ? "Editar agenda" : "Nueva agenda"}
-          </h2>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-          >
-            <X size={20} />
-          </button>
-        </div>
+    <ModalPortal>
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white dark:bg-gray-800 rounded-lg w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+          {/* Header */}
+          <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+              {mode === "edit" ? "Editar agenda" : "Nueva agenda"}
+            </h2>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+            >
+              <X size={20} />
+            </button>
+          </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          {/* Nombre + Tipo */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="md:col-span-2">
+          <form onSubmit={handleSubmit} className="p-6 space-y-6">
+            {/* Nombre + Tipo */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Nombre *
+                </label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                  placeholder="Ej: Reunión de planificación"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 bg-white dark:bg-gray-700"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Tipo *
+                </label>
+                <select
+                  value={type}
+                  onChange={(e) => setType(e.target.value as AgendaType)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 bg-white dark:bg-gray-700"
+                  required
+                >
+                  <option value="meeting">Reunión</option>
+                  <option value="task">Tarea</option>
+                  <option value="deadline">Fecha límite</option>
+                  <option value="training">Capacitación</option>
+                  <option value="reminder">Recordatorio</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Descripción */}
+            <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Nombre *
+                Descripción
               </label>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-                placeholder="Ej: Reunión de planificación"
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 bg-white dark:bg-gray-700"
+              <textarea
+                rows={3}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Detalle o id externo (p. ej. id de la tarea)"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 bg-white dark:bg-gray-700 resize-none"
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Tipo *
-              </label>
-              <select
-                value={type}
-                onChange={(e) => setType(e.target.value as AgendaType)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 bg-white dark:bg-gray-700"
-                required
-              >
-                <option value="meeting">Reunión</option>
-                <option value="task">Tarea</option>
-                <option value="deadline">Fecha límite</option>
-                <option value="training">Capacitación</option>
-                <option value="reminder">Recordatorio</option>
-              </select>
-            </div>
-          </div>
 
-          {/* Descripción */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Descripción
-            </label>
-            <textarea
-              rows={3}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Detalle o id externo (p. ej. id de la tarea)"
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 bg-white dark:bg-gray-700 resize-none"
-            />
-          </div>
-
-          {/* Fecha/Hora (until) */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Fecha *
-              </label>
-              <div className="flex items-center">
-                <Calendar size={18} className="text-gray-400 mr-2" />
-                <input
-                  type="date"
-                  value={dateInput}
-                  onChange={(e) => setDateInput(e.target.value)}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 bg-white dark:bg-gray-700"
-                />
+            {/* Fecha/Hora (until) */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Fecha *
+                </label>
+                <div className="flex items-center">
+                  <Calendar size={18} className="text-gray-400 mr-2" />
+                  <input
+                    type="date"
+                    value={dateInput}
+                    onChange={(e) => setDateInput(e.target.value)}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 bg-white dark:bg-gray-700"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Hora *
+                </label>
+                <div className="flex items-center">
+                  <Clock size={18} className="text-gray-400 mr-2" />
+                  <input
+                    type="time"
+                    value={timeInput}
+                    onChange={(e) => setTimeInput(e.target.value)}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 bg-white dark:bg-gray-700"
+                  />
+                </div>
               </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Hora *
-              </label>
-              <div className="flex items-center">
-                <Clock size={18} className="text-gray-400 mr-2" />
-                <input
-                  type="time"
-                  value={timeInput}
-                  onChange={(e) => setTimeInput(e.target.value)}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 bg-white dark:bg-gray-700"
-                />
-              </div>
-            </div>
-          </div>
 
-          {/* Asignado + Prioridad */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Asignado */}
-            <div className="relative" ref={dropdownRef}>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Asignado a *
-              </label>
-              {assignee ? (
-                <div className="flex items-center justify-between border border-gray-300 dark:border-gray-600 rounded-lg p-2">
-                  <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center">
-                      <span className="text-xs font-medium text-gray-800 dark:text-gray-200">
-                        {assignee.name?.charAt(0)}
-                      </span>
+            {/* Asignado + Prioridad */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Asignado */}
+              <div className="relative" ref={dropdownRef}>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Asignado a *
+                </label>
+                {assignee ? (
+                  <div className="flex items-center justify-between border border-gray-300 dark:border-gray-600 rounded-lg p-2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center">
+                        <span className="text-xs font-medium text-gray-800 dark:text-gray-200">
+                          {assignee.name?.charAt(0)}
+                        </span>
+                      </div>
+                      <div className="text-sm text-gray-900 dark:text-gray-100">
+                        {assignee.name}
+                      </div>
                     </div>
-                    <div className="text-sm text-gray-900 dark:text-gray-100">
-                      {assignee.name}
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setAssignee(null)}
+                      className="text-gray-500 hover:text-gray-700"
+                      title="Quitar"
+                    >
+                      <X size={16} />
+                    </button>
                   </div>
+                ) : (
                   <button
                     type="button"
-                    onClick={() => setAssignee(null)}
-                    className="text-gray-500 hover:text-gray-700"
-                    title="Quitar"
+                    onClick={() => setShowAssigneeSearch((s) => !s)}
+                    className="w-full flex items-center justify-between px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
                   >
-                    <X size={16} />
+                    <span className="flex items-center gap-2">
+                      <Users size={16} />
+                      Seleccionar usuario
+                    </span>
+                    <ChevronDown size={16} />
                   </button>
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setShowAssigneeSearch((s) => !s)}
-                  className="w-full flex items-center justify-between px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
-                >
-                  <span className="flex items-center gap-2">
-                    <Users size={16} />
-                    Seleccionar usuario
-                  </span>
-                  <ChevronDown size={16} />
-                </button>
-              )}
+                )}
 
-              {showAssigneeSearch && (
-                <div className="absolute z-10 mt-1 w-full bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-                  <div className="p-2 border-b border-gray-200 dark:border-gray-700">
-                    <div className="relative">
-                      <Search
-                        size={16}
-                        className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-                      />
-                      <input
-                        type="text"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-9 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 bg-white dark:bg-gray-700"
-                        placeholder="Buscar usuarios…"
-                        autoFocus
-                      />
-                    </div>
-                  </div>
-
-                  <div className="p-2 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-750">
-                    <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2 flex items-center">
-                      <Filter size={12} className="mr-1" />
-                      Filtrar por:
-                    </div>
-                    <div className="grid grid-cols-3 gap-2">
-                      <select
-                        value={zoneFilter}
-                        onChange={(e) => setZoneFilter(e.target.value)}
-                        className="text-xs px-2 py-1 border border-gray-300 dark:border-gray-600 rounded focus:ring-1 focus:ring-orange-500 bg-white dark:bg-gray-700"
-                      >
-                        <option value="">Zonas</option>
-                        {zones.map((z) => (
-                          <option key={z} value={z}>
-                            {z}
-                          </option>
-                        ))}
-                      </select>
-                      <select
-                        value={areaFilter}
-                        onChange={(e) => setAreaFilter(e.target.value)}
-                        className="text-xs px-2 py-1 border border-gray-300 dark:border-gray-600 rounded focus:ring-1 focus:ring-orange-500 bg-white dark:bg-gray-700"
-                      >
-                        <option value="">Áreas</option>
-                        {areas.map((a) => (
-                          <option key={a} value={a}>
-                            {a}
-                          </option>
-                        ))}
-                      </select>
-                      <select
-                        value={positionFilter}
-                        onChange={(e) => setPositionFilter(e.target.value)}
-                        className="text-xs px-2 py-1 border border-gray-300 dark:border-gray-600 rounded focus:ring-1 focus:ring-orange-500 bg-white dark:bg-gray-700"
-                      >
-                        <option value="">Puestos</option>
-                        {positions.map((p) => (
-                          <option key={p} value={p}>
-                            {p}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    {(zoneFilter || areaFilter || positionFilter) && (
-                      <button
-                        type="button"
-                        onClick={resetFilters}
-                        className="text-xs text-orange-600 dark:text-orange-400 hover:underline mt-2"
-                      >
-                        Limpiar filtros
-                      </button>
-                    )}
-                  </div>
-
-                  <div className="max-h-60 overflow-y-auto p-2">
-                    {loadingUsers ? (
-                      <div className="p-4 flex justify-center">
-                        <LoadingSpinner />
+                {showAssigneeSearch && (
+                  <div className="absolute z-10 mt-1 w-full bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+                    <div className="p-2 border-b border-gray-200 dark:border-gray-700">
+                      <div className="relative">
+                        <Search
+                          size={16}
+                          className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                        />
+                        <input
+                          type="text"
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                          className="w-full pl-9 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 bg-white dark:bg-gray-700"
+                          placeholder="Buscar usuarios…"
+                          autoFocus
+                        />
                       </div>
-                    ) : filteredUsers.length ? (
-                      filteredUsers.map((u) => (
-                        <div
-                          key={u.id}
-                          onClick={() => onPickAssignee(u)}
-                          className="flex items-center p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg cursor-pointer"
+                    </div>
+
+                    <div className="p-2 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-750">
+                      <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2 flex items-center">
+                        <Filter size={12} className="mr-1" />
+                        Filtrar por:
+                      </div>
+                      <div className="grid grid-cols-3 gap-2">
+                        <select
+                          value={zoneFilter}
+                          onChange={(e) => setZoneFilter(e.target.value)}
+                          className="text-xs px-2 py-1 border border-gray-300 dark:border-gray-600 rounded focus:ring-1 focus:ring-orange-500 bg-white dark:bg-gray-700"
                         >
-                          <div className="w-8 h-8 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center mr-3">
-                            <span className="text-xs font-medium text-gray-800 dark:text-gray-200">
-                              {u.name?.charAt(0)}
-                            </span>
-                          </div>
-                          <div>
-                            <div className="text-gray-900 dark:text-gray-100 font-medium">
-                              {u.name}
-                            </div>
-                            <div className="text-xs text-gray-500 dark:text-gray-400">
-                              {u.position ? <span>{u.position}</span> : null}
-                              {u.area ? <span> • {u.area}</span> : null}
-                              {u.zone ? <span> • {u.zone}</span> : null}
-                            </div>
-                          </div>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="p-4 text-center text-gray-500 dark:text-gray-400">
-                        No se encontraron usuarios
+                          <option value="">Zonas</option>
+                          {zones.map((z) => (
+                            <option key={z} value={z}>
+                              {z}
+                            </option>
+                          ))}
+                        </select>
+                        <select
+                          value={areaFilter}
+                          onChange={(e) => setAreaFilter(e.target.value)}
+                          className="text-xs px-2 py-1 border border-gray-300 dark:border-gray-600 rounded focus:ring-1 focus:ring-orange-500 bg-white dark:bg-gray-700"
+                        >
+                          <option value="">Áreas</option>
+                          {areas.map((a) => (
+                            <option key={a} value={a}>
+                              {a}
+                            </option>
+                          ))}
+                        </select>
+                        <select
+                          value={positionFilter}
+                          onChange={(e) => setPositionFilter(e.target.value)}
+                          className="text-xs px-2 py-1 border border-gray-300 dark:border-gray-600 rounded focus:ring-1 focus:ring-orange-500 bg-white dark:bg-gray-700"
+                        >
+                          <option value="">Puestos</option>
+                          {positions.map((p) => (
+                            <option key={p} value={p}>
+                              {p}
+                            </option>
+                          ))}
+                        </select>
                       </div>
-                    )}
+
+                      {(zoneFilter || areaFilter || positionFilter) && (
+                        <button
+                          type="button"
+                          onClick={resetFilters}
+                          className="text-xs text-orange-600 dark:text-orange-400 hover:underline mt-2"
+                        >
+                          Limpiar filtros
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="max-h-60 overflow-y-auto p-2">
+                      {loadingUsers ? (
+                        <div className="p-4 flex justify-center">
+                          <LoadingSpinner />
+                        </div>
+                      ) : filteredUsers.length ? (
+                        filteredUsers.map((u) => (
+                          <div
+                            key={u.id}
+                            onClick={() => onPickAssignee(u)}
+                            className="flex items-center p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg cursor-pointer"
+                          >
+                            <div className="w-8 h-8 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center mr-3">
+                              <span className="text-xs font-medium text-gray-800 dark:text-gray-200">
+                                {u.name?.charAt(0)}
+                              </span>
+                            </div>
+                            <div>
+                              <div className="text-gray-900 dark:text-gray-100 font-medium">
+                                {u.name}
+                              </div>
+                              <div className="text-xs text-gray-500 dark:text-gray-400">
+                                {u.position ? <span>{u.position}</span> : null}
+                                {u.area ? <span> • {u.area}</span> : null}
+                                {u.zone ? <span> • {u.zone}</span> : null}
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="p-4 text-center text-gray-500 dark:text-gray-400">
+                          No se encontraron usuarios
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
+
+              {/* Prioridad */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Prioridad
+                </label>
+                <select
+                  value={priority}
+                  onChange={(e) =>
+                    setPriority(e.target.value as "Alta" | "Media" | "Baja")
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 bg-white dark:bg-gray-700"
+                >
+                  <option value="baja">Baja</option>
+                  <option value="media">Media</option>
+                  <option value="alta">Alta</option>
+                </select>
+              </div>
             </div>
 
-            {/* Prioridad */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Prioridad
-              </label>
-              <select
-                value={priority}
-                onChange={(e) =>
-                  setPriority(e.target.value as "alta" | "media" | "baja")
-                }
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 bg-white dark:bg-gray-700"
+            {/* Footer */}
+            <div className="flex justify-end gap-3 pt-6 border-t border-gray-200 dark:border-gray-700">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                disabled={isLoading}
               >
-                <option value="baja">Baja</option>
-                <option value="media">Media</option>
-                <option value="alta">Alta</option>
-              </select>
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                disabled={isLoading || !assignee}
+                className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg disabled:opacity-50 flex items-center gap-2"
+              >
+                {isLoading ? <LoadingSpinner size="sm" /> : null}
+                <span>{mode === "edit" ? "Actualizar" : "Crear"}</span>
+              </button>
             </div>
-          </div>
-
-          {/* Footer */}
-          <div className="flex justify-end gap-3 pt-6 border-t border-gray-200 dark:border-gray-700">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
-              disabled={isLoading}
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={isLoading || !assignee}
-              className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg disabled:opacity-50 flex items-center gap-2"
-            >
-              {isLoading ? <LoadingSpinner size="sm" /> : null}
-              <span>{mode === "edit" ? "Actualizar" : "Crear"}</span>
-            </button>
-          </div>
-        </form>
+          </form>
+        </div>
       </div>
-    </div>
+    </ModalPortal>
   );
 }

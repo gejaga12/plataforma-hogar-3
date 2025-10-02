@@ -280,6 +280,8 @@ export interface Novedad {
 // AGENDA
 export type AgendaState = "pendiente" | "progreso" | "finalizado";
 
+export type AgendaPriority = "Alta" | "Media" | "Baja";
+
 export type AgendaType =
   | "meeting"
   | "task"
@@ -308,8 +310,9 @@ export interface AgendaItem {
   id: string;
   name: string;
   until: string;
-  priority?: "alta" | "media" | "baja";
+  priority?: AgendaPriority;
   description?: string;
+  location?: string;
   state: AgendaState;
   assignedBy: AgendaUserLite;
   user: AgendaUserLite;

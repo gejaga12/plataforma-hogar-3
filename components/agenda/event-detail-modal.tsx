@@ -1,38 +1,25 @@
 "use client";
 
-import {
-  Calendar,
-  Clock,
-  MapPin,
-  Users,
-  User,
-  X,
-  Trash2,
-  Tag,
-} from "lucide-react";
+import { Calendar, Clock, MapPin, Users, User, X, Tag } from "lucide-react";
 import { cn } from "@/utils/cn";
 import type {
   AgendaItem,
+  AgendaPriority,
   AgendaState,
   AgendaType,
   AgendaUserLite,
 } from "@/utils/types";
-import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import {
   formatDateForUser,
   formatHourForUser,
   getUserTimeZone,
 } from "@/utils/formatDate";
+import ModalPortal from "../ui/ModalPortal";
 
 interface EventDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
-  event: AgendaItem & {
-    description?: string;
-    location?: string;
-    // soporta múltiples asignados si en un futuro llega así:
-    assignees?: AgendaUserLite[];
-  };
+  event: AgendaItem;
   onEdit: () => void;
   onDelete: () => void;
   isLoading: boolean;
@@ -94,6 +81,31 @@ const stateColor = (state: AgendaState) => {
   }
 };
 
+const priorityLabel = (p?: AgendaPriority) => {
+  if (!p) return "—";
+  switch (p) {
+    case "Alta":
+      return "Alta";
+    case "Media":
+      return "Media";
+    case "Baja":
+      return "Baja";
+  }
+};
+
+const priorityColor = (p?: AgendaPriority) => {
+  switch (p) {
+    case "Alta":
+      return "bg-rose-100 dark:bg-rose-900/20 text-rose-800 dark:text-rose-300";
+    case "Media":
+      return "bg-amber-100 dark:bg-amber-900/20 text-amber-800 dark:text-amber-300";
+    case "Baja":
+      return "bg-emerald-100 dark:bg-emerald-900/20 text-emerald-800 dark:text-emerald-300";
+    default:
+      return "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300";
+  }
+};
+
 export function EventDetailModal({
   isOpen,
   onClose,
@@ -110,241 +122,264 @@ export function EventDetailModal({
     name,
     type,
     state,
+    priority,
     until,
     assignedBy,
     user,
-    assignees,
     description,
     location,
   } = event;
 
-  const assignedList: AgendaUserLite[] = (
-    assignees && assignees.length ? assignees : [user].filter(Boolean as any)
-  ) as AgendaUserLite[];
+  // ✅ por ahora, un solo asignado (user)
+  const assignedList: AgendaUserLite[] = [user].filter(Boolean);
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-lg w-full max-w-5xl max-h-[90vh] overflow-y-auto">
-        {/* Header */}
-        <div className="p-5 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span
-              className={cn(
-                "px-2.5 py-1 rounded-full text-xs font-medium",
-                typeColor(type)
-              )}
-            >
-              {typeLabel(type)}
-            </span>
-            <span
-              className={cn(
-                "px-2.5 py-1 rounded-full text-xs font-medium",
-                stateColor(state)
-              )}
-            >
-              {stateLabel(state)}
-            </span>
-          </div>
-
-          <button
-            onClick={onClose}
-            className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-            aria-label="Cerrar"
-          >
-            <X size={18} />
-          </button>
-        </div>
-
-        {/* Body: Left content / Right sidebar */}
-        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-6 p-6">
-          {/* LEFT: contenido principal */}
-          <div className="space-y-6">
-            {/* Título */}
-            <div>
-              <h2 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-gray-100">
-                {name}
-              </h2>
+    <ModalPortal>
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white dark:bg-gray-800 rounded-lg w-full max-w-5xl max-h-[90vh] overflow-y-auto">
+          {/* Header */}
+          <div className="p-5 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span
+                className={cn(
+                  "px-2.5 py-1 rounded-full text-xs font-medium",
+                  typeColor(type)
+                )}
+              >
+                {typeLabel(type)}
+              </span>
+              <span
+                className={cn(
+                  "px-2.5 py-1 rounded-full text-xs font-medium",
+                  stateColor(state)
+                )}
+              >
+                {stateLabel(state)}
+              </span>
+              <span
+                className={cn(
+                  "px-2.5 py-1 rounded-full text-xs font-medium",
+                  priorityColor(priority)
+                )}
+                title="Prioridad"
+              >
+                {priorityLabel(priority)}
+              </span>
             </div>
 
-            {/* Descripción */}
-            {description ? (
-              <div className="bg-gray-50 dark:bg-gray-700/60 rounded-lg p-4">
-                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Descripción
-                </h3>
-                <p className="text-gray-800 dark:text-gray-100 whitespace-pre-line">
-                  {description}
-                </p>
-              </div>
-            ) : (
-              <div className="bg-gray-50 dark:bg-gray-700/40 rounded-lg p-4">
-                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Descripción
-                </h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  Sin descripción
-                </p>
-              </div>
-            )}
+            <button
+              onClick={onClose}
+              className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              aria-label="Cerrar"
+            >
+              <X size={18} />
+            </button>
+          </div>
 
-            {/* Ubicación opcional */}
-            <div className="bg-gray-50 dark:bg-gray-700/40 rounded-lg p-4">
-              <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Ubicación
-              </h3>
-              {location ? (
-                <div className="flex items-center gap-2 text-gray-800 dark:text-gray-100">
-                  <MapPin
-                    size={16}
-                    className="text-gray-500 dark:text-gray-400"
-                  />
-                  <span>{location}</span>
+          {/* Body: Left content / Right sidebar */}
+          <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-6 p-6">
+            {/* LEFT: contenido principal */}
+            <div className="space-y-6">
+              {/* Título */}
+              <div>
+                <h2 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-gray-100">
+                  {name}
+                </h2>
+              </div>
+
+              {/* Descripción */}
+              {description ? (
+                <div className="bg-gray-50 dark:bg-gray-700/60 rounded-lg p-4">
+                  <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Descripción
+                  </h3>
+                  <p className="text-gray-800 dark:text-gray-100 whitespace-pre-line">
+                    {description}
+                  </p>
                 </div>
               ) : (
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  Sin ubicación
-                </p>
+                <div className="bg-gray-50 dark:bg-gray-700/40 rounded-lg p-4">
+                  <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Descripción
+                  </h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Sin descripción
+                  </p>
+                </div>
               )}
-            </div>
-          </div>
 
-          {/* RIGHT: sidebar de detalles */}
-          <aside className="space-y-6 lg:pl-2">
-            <div className="rounded-lg border border-gray-200 dark:border-gray-700">
-              <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-                <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                  Detalles
-                </h4>
+              {/* Ubicación opcional */}
+              <div className="bg-gray-50 dark:bg-gray-700/40 rounded-lg p-4">
+                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Ubicación
+                </h3>
+                {location ? (
+                  <div className="flex items-center gap-2 text-gray-800 dark:text-gray-100">
+                    <MapPin
+                      size={16}
+                      className="text-gray-500 dark:text-gray-400"
+                    />
+                    <span>{location}</span>
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Sin ubicación
+                  </p>
+                )}
               </div>
+            </div>
 
-              <div className="p-4 space-y-4">
-                {/* Tipo */}
-                <div className="flex items-start gap-3">
-                  <Tag className="w-4 h-4 text-gray-400 mt-0.5" />
-                  <div className="min-w-0">
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      Tipo
-                    </p>
-                    <p className="text-sm text-gray-900 dark:text-gray-100">
-                      {typeLabel(type)}
-                    </p>
-                  </div>
+            {/* RIGHT: sidebar de detalles */}
+            <aside className="space-y-6 lg:pl-2">
+              <div className="rounded-lg border border-gray-200 dark:border-gray-700">
+                <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+                  <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    Detalles
+                  </h4>
                 </div>
 
-                {/* Estado */}
-                <div className="flex items-start gap-3">
-                  <span className="w-4 h-4 rounded-full mt-0.5 border border-gray-300 dark:border-gray-600" />
-                  <div className="min-w-0">
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      Estado
-                    </p>
-                    <p className="text-sm text-gray-900 dark:text-gray-100">
-                      {stateLabel(state)}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Fecha y hora */}
-                <div className="flex items-start gap-3">
-                  <Calendar className="w-4 h-4 text-gray-400 mt-0.5" />
-                  <div className="min-w-0">
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      Fecha
-                    </p>
-                    <p className="text-sm text-gray-900 dark:text-gray-100">
-                      {formatDateForUser(until, tz)}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <Clock className="w-4 h-4 text-gray-400 mt-0.5" />
-                  <div className="min-w-0">
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      Hora
-                    </p>
-                    <p className="text-sm text-gray-900 dark:text-gray-100">
-                      {formatHourForUser(until, tz)}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Creador */}
-                <div className="flex items-start gap-3">
-                  <User className="w-4 h-4 text-gray-400 mt-0.5" />
-                  <div className="min-w-0">
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      Creado por
-                    </p>
-                    <p className="text-sm text-gray-900 dark:text-gray-100 truncate">
-                      {assignedBy?.fullName}
-                    </p>
-                    {assignedBy?.email && (
-                      <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                        {assignedBy.email}
+                <div className="p-4 space-y-4">
+                  {/* Tipo */}
+                  <div className="flex items-start gap-3">
+                    <Tag className="w-4 h-4 text-gray-400 mt-0.5" />
+                    <div className="min-w-0">
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        Tipo
                       </p>
-                    )}
+                      <p className="text-sm text-gray-900 dark:text-gray-100">
+                        {typeLabel(type)}
+                      </p>
+                    </div>
                   </div>
-                </div>
 
-                {/* Asignados */}
-                <div className="flex items-start gap-3">
-                  <Users className="w-4 h-4 text-gray-400 mt-0.5" />
-                  <div className="min-w-0 w-full">
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      Asignado a
-                    </p>
-                    <div className="mt-1 space-y-2">
-                      {assignedList.length ? (
-                        assignedList.map((p) => (
-                          <div
-                            key={String(p.id)}
-                            className="flex items-center gap-2"
-                          >
-                            <div className="w-7 h-7 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center text-xs font-medium text-gray-700 dark:text-gray-100">
-                              {(p.fullName || p.email).charAt(0).toUpperCase()}
-                            </div>
-                            <div className="min-w-0">
-                              <p className="text-sm text-gray-900 dark:text-gray-100 truncate">
-                                {p.fullName}
-                              </p>
-                              {p.email && (
-                                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                                  {p.email}
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                        ))
-                      ) : (
-                        <p className="text-sm text-gray-900 dark:text-gray-100">
-                          —
+                  {/* Estado */}
+                  <div className="flex items-start gap-3">
+                    <span className="w-4 h-4 rounded-full mt-0.5 border border-gray-300 dark:border-gray-600" />
+                    <div className="min-w-0">
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        Estado
+                      </p>
+                      <p className="text-sm text-gray-900 dark:text-gray-100">
+                        {stateLabel(state)}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <span className="w-4 h-4 rounded-full mt-0.5 border border-gray-300 dark:border-gray-600" />
+                    <div className="min-w-0">
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        Prioridad
+                      </p>
+                      <p className="text-sm text-gray-900 dark:text-gray-100">
+                        {priorityLabel(priority)}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Fecha y hora */}
+                  <div className="flex items-start gap-3">
+                    <Calendar className="w-4 h-4 text-gray-400 mt-0.5" />
+                    <div className="min-w-0">
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        Fecha
+                      </p>
+                      <p className="text-sm text-gray-900 dark:text-gray-100">
+                        {formatDateForUser(until, tz)}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Clock className="w-4 h-4 text-gray-400 mt-0.5" />
+                    <div className="min-w-0">
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        Hora
+                      </p>
+                      <p className="text-sm text-gray-900 dark:text-gray-100">
+                        {formatHourForUser(until, tz)}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Creador */}
+                  <div className="flex items-start gap-3">
+                    <User className="w-4 h-4 text-gray-400 mt-0.5" />
+                    <div className="min-w-0">
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        Creado por
+                      </p>
+                      <p className="text-sm text-gray-900 dark:text-gray-100 truncate">
+                        {assignedBy?.fullName}
+                      </p>
+                      {assignedBy?.email && (
+                        <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                          {assignedBy.email}
                         </p>
                       )}
                     </div>
                   </div>
+
+                  {/* Asignados */}
+                  <div className="flex items-start gap-3">
+                    <Users className="w-4 h-4 text-gray-400 mt-0.5" />
+                    <div className="min-w-0 w-full">
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        Asignado a
+                      </p>
+                      <div className="mt-1 space-y-2">
+                        {assignedList.length ? (
+                          assignedList.map((p) => (
+                            <div
+                              key={String(p.id)}
+                              className="flex items-center gap-2"
+                            >
+                              <div className="w-7 h-7 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center text-xs font-medium text-gray-700 dark:text-gray-100">
+                                {(p.fullName || p.email)
+                                  .charAt(0)
+                                  .toUpperCase()}
+                              </div>
+                              <div className="min-w-0">
+                                <p className="text-sm text-gray-900 dark:text-gray-100 truncate">
+                                  {p.fullName}
+                                </p>
+                                {p.email && (
+                                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                                    {p.email}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <p className="text-sm text-gray-900 dark:text-gray-100">
+                            —
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Acciones rápidas (sidebar) */}
-            <div className="flex gap-2">
-              <button
-                onClick={onEdit}
-                className="flex-1 px-3 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg text-sm"
-              >
-                Editar
-              </button>
-              <button
-                onClick={onDelete}
-                disabled={isLoading}
-                className="flex-1 px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm disabled:opacity-50"
-              >
-                {isLoading ? "Eliminando…" : "Eliminar"}
-              </button>
-            </div>
-          </aside>
+              {/* Acciones rápidas (sidebar) */}
+              <div className="flex gap-2">
+                <button
+                  onClick={onEdit}
+                  className="flex-1 px-3 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg text-sm"
+                >
+                  Editar
+                </button>
+                <button
+                  onClick={onDelete}
+                  disabled={isLoading}
+                  className="flex-1 px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm disabled:opacity-50"
+                >
+                  {isLoading ? "Eliminando…" : "Eliminar"}
+                </button>
+              </div>
+            </aside>
+          </div>
         </div>
       </div>
-    </div>
+    </ModalPortal>
   );
 }
