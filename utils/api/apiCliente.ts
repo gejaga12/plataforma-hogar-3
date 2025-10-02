@@ -17,8 +17,7 @@ export class ClientService {
       return response.data;
     } catch (error: any) {
       const msg =
-        error?.response?.data?.message || error.message || "Error desconocido";
-      console.log("❌ Error al crear un cliente:", msg);
+        error?.response?.data?.message;
       throw new Error(msg);
     }
   }

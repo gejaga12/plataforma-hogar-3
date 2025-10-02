@@ -19,6 +19,7 @@ import { capitalizeFirstLetter } from "@/utils/normalize";
 import toast from "react-hot-toast";
 import ConfirmDeleteModal from "../ui/ConfirmDeleteModal";
 import QRsList from "./QRsList";
+import TipoEquipoModal from "./TipoEquipoModal";
 
 type SortField = "nombre" | "fechaInstalacion";
 type SortDirection = "asc" | "desc";
@@ -43,6 +44,7 @@ const EquiposContent = () => {
   } | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [equipoToDelete, setEquipoToDelete] = useState<string | null>(null);
+  const [showTipoEquipoModal, setShowTipoEquipoModal] = useState(false);
 
   const router = useRouter();
 
@@ -51,7 +53,7 @@ const EquiposContent = () => {
     queryFn: EquipoService.listarEquipos,
   });
 
-  console.log('equipos:', equipos);
+  // console.log('equipos:', equipos);
 
   const generarQRMutation = useMutation({
     mutationFn: EquipoService.generarQR,
@@ -91,7 +93,6 @@ const EquiposContent = () => {
   });
 
   const sortedEquipos = [...filteredEquipos].sort((a, b) => {
-    // Map SortField to actual Equipo property
     const getSortValue = (equipo: Equipo, field: SortField) => {
       switch (field) {
         case "nombre":
@@ -139,6 +140,16 @@ const EquiposContent = () => {
     console.log("editando equipo", equipos);
   };
 
+  const handleCreateTipoEquipo = async (data: any) => {
+    try {
+      console.log("Creando tipo de equipo:", data);
+      await EquipoService.crearEquipoAdmin(data);
+      queryClient.invalidateQueries({ queryKey: ["tipos-equipos"] });
+    } catch (error: any) {
+      console.error("Error al crear el tipo de equipo:", error);
+    }
+  };
+
   const handleViewDetail = (equipoId: string) => {
     router.push(`/equipos/${equipoId}`);
   };
@@ -161,6 +172,14 @@ const EquiposContent = () => {
   const closeDeleteModal = () => {
     setIsDeleteModalOpen(false);
     setEquipoToDelete(null);
+  };
+
+  const handleOpenTipoEquipoModal = () => {
+    setShowTipoEquipoModal(true);
+  };
+
+  const handleCloseTipoEquipoModal = () => {
+    setShowTipoEquipoModal(false);
   };
 
   const getEstadoColor = (estado: EstadoEquipo): string => {
@@ -193,6 +212,13 @@ const EquiposContent = () => {
         </div>
 
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
+          <button
+            onClick={handleOpenTipoEquipoModal}
+            className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg flex items-center justify-center space-x-2 transition-colors"
+          >
+            <Plus size={20} />
+            <span>Nuevo tipo de Equipo</span>
+          </button>
           <button
             onClick={() => generarQRMutation.mutate()}
             disabled={generarQRMutation.isPending}
@@ -462,6 +488,12 @@ const EquiposContent = () => {
           equipo={selectedEquipo}
         />
       )}
+
+      <TipoEquipoModal
+        onSubmit={handleCreateTipoEquipo}
+        isOpen={showTipoEquipoModal}
+        onClose={handleCloseTipoEquipoModal}
+      />
 
       {/* Modal para QR generado sin datos */}
       {showQRGeneratorModal && generatedQR && (
