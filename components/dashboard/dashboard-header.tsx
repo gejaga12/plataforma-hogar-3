@@ -1,21 +1,18 @@
 "use client";
 
 import { ReactNode, useState } from "react";
-import { Bell, X, ThumbsUp, Heart, Eye, Plus } from "lucide-react";
+import { Bell, Plus } from "lucide-react";
 import { NovedadCard } from "./novedad-card";
 import { NovedadModal } from "./novedad-modal";
-import { MovimientoIngresoEgreso, Novedad } from "@/utils/types";
+import { CrearHoraExtra, MovimientoIngresoEgreso, Novedad } from "@/utils/types";
 import MovimientoModal from "../ingreso-egreso/MovimientoModal";
 import HoraExtraModal from "../horas-extras/HoraExtraModal";
-import { HoraExtra } from "@/utils/api/apiIngreso";
 
 interface DashboardHeaderProps {
   nombreUsuario: string;
   panelTitle: string;
   icon: ReactNode;
   novedades: Novedad[];
-  onCerrarNovedad: (id: string) => void;
-  onReaccionar: (id: string, tipo: "like" | "love" | "seen") => void;
 }
 
 export function DashboardHeader({
@@ -23,19 +20,10 @@ export function DashboardHeader({
   panelTitle,
   icon,
   novedades,
-  onCerrarNovedad,
-  onReaccionar,
 }: DashboardHeaderProps) {
   const [selectedNovedad, setSelectedNovedad] = useState<Novedad | null>(null);
   const [showMovimientoModal, setShowMovimientoModal] = useState(false);
   const [showHoraExtraModal, setShowHoraExtraModal] = useState(false);
-
-  // Ordenar novedades: primero las fijadas, luego por fecha
-  const sortedNovedades = [...novedades].sort((a, b) => {
-    if (a.pin && !b.pin) return -1;
-    if (!a.pin && b.pin) return 1;
-    return new Date(b.fecha).getTime() - new Date(a.fecha).getTime();
-  });
 
   const today = new Date().toLocaleDateString("es-ES", {
     weekday: "long",
@@ -47,7 +35,6 @@ export function DashboardHeader({
   const handleOpenNovedad = (novedad: Novedad) => {
     setSelectedNovedad(novedad);
     // Marcar como vista automáticamente
-    onReaccionar(novedad.id, "seen");
   };
 
   const handleAbrirModalMovimiento = () => {
@@ -79,7 +66,7 @@ export function DashboardHeader({
     createdAt: new Date().toISOString(),
   };
 
-  const nuevaHoraExta: HoraExtra = {
+  const nuevaHoraExtra: CrearHoraExtra = {
     lan: 0,
     lng: 0,
     horaInicio: "",
@@ -124,7 +111,7 @@ export function DashboardHeader({
       </div>
 
       {/* Novedades */}
-      {sortedNovedades.length > 0 && (
+      {novedades.length > 0 && (
         <div className="mt-6">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center">
@@ -132,17 +119,17 @@ export function DashboardHeader({
               Novedades
             </h2>
             <span className="text-sm text-gray-500 dark:text-gray-400">
-              {sortedNovedades.length}{" "}
-              {sortedNovedades.length === 1 ? "novedad" : "novedades"}
+              {novedades.length}{" "}
+              {novedades.length === 1 ? "novedad" : "novedades"}
             </span>
           </div>
 
           <div className="space-y-3">
-            {sortedNovedades.map((novedad) => (
+            {novedades.map((novedad) => (
               <NovedadCard
                 key={novedad.id}
                 novedad={novedad}
-                onCerrar={() => onCerrarNovedad(novedad.id)}
+                onCerrar={() => handleOpenNovedad(novedad.id)}
                 onReaccionar={(tipo) => onReaccionar(novedad.id, tipo)}
                 onClick={() => handleOpenNovedad(novedad)}
               />
@@ -176,7 +163,7 @@ export function DashboardHeader({
         isOpen={showHoraExtraModal}
         onClose={() => setShowHoraExtraModal(false)}
         mode="create"
-        horaExtra={nuevaHoraExta}
+        horaExtra={nuevaHoraExtra}
       />
     </div>
   );

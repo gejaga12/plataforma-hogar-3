@@ -264,17 +264,16 @@ export enum Verificacion {
 // Interfaz para novedades
 export interface Novedad {
   id: string;
-  titulo: string;
-  fecha: string;
-  descripcion: string;
-  icono: string;
-  reacciones: {
-    like: number;
-    love: number;
-    seen: number;
-  };
-  rolesDestinatarios: string[]; // ej: ['rrhh', 'admin', 'tecnico']
-  pin?: boolean; // para fijar arriba
+  name: string;
+  fecha?: string;
+  desc: string;
+  icono?: string;
+  likes?: number;
+  views?: number;
+  hearts?: number;
+  like?: boolean;
+  heart?: boolean;
+  file?: File | null;
 }
 
 // AGENDA

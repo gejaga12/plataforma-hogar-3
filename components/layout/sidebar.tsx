@@ -38,7 +38,7 @@ import {
   Type,
   ChevronDown,
   ChevronRight,
-  ChevronLeft, // 👈 flecha para colapsar
+  ChevronLeft,
   Shield,
   Sigma as Sitemap,
   Cog,

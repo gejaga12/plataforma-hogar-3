@@ -1,4 +1,4 @@
-import { format, parseISO } from "date-fns";
+import { parseISO } from "date-fns";
 import { formatInTimeZone, fromZonedTime, toZonedTime } from "date-fns-tz";
 
 // Detectar zona horaria del usuario con el navegador
