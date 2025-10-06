@@ -262,6 +262,8 @@ export enum Verificacion {
 //----------------------------------------//
 
 // Interfaz para novedades
+;
+
 export interface Novedad {
   id: string;
   name: string;
@@ -274,6 +276,7 @@ export interface Novedad {
   like?: boolean;
   heart?: boolean;
   file?: File | null;
+  imagePath?: boolean;
 }
 
 // AGENDA

@@ -30,25 +30,16 @@ export function NovedadModal({
     }
   }, [onReaccionar, novedad.id]);
 
-  const hasImage = useMemo(
-    () =>
-      Boolean(
-        (novedad as any)?.hasImage ??
-          (novedad as any)?.imageUrl ??
-          (novedad as any)?.image ??
-          (novedad as any)?.img
-      ),
-    [novedad]
-  );
+  const hasImage = !!novedad.imagePath;
 
   const {
     data,
     isLoading: imgLoading,
     isError: imgError,
   } = useQuery({
-    queryKey: ["novedad-image", novedad.id],
+    queryKey: ["novedad-image", novedad.id, hasImage],
     queryFn: () => NovedadesService.fetchImagesNovedades(novedad.id),
-    enabled: !!novedad?.id && hasImage,
+    enabled: Boolean(novedad.id && hasImage), // solo si hay imagen
     staleTime: 60_000,
     refetchOnMount: "always",
   });
@@ -139,7 +130,7 @@ export function NovedadModal({
 
           {/* Contenido en 2 columnas (imagen izq, texto der) */}
           <div
-            className={`grid grid-cols-1 ${
+            className={`grid grid-cols-1 min-h-[280px] ${
               hasImage ? "md:grid-cols-5" : "md:grid-cols-1"
             } gap-6 mb-6`}
           >
@@ -153,7 +144,7 @@ export function NovedadModal({
                     <img
                       src={imageSrc}
                       alt={novedad.name}
-                      className="h-full w-full object-cover"
+                      className="h-full w-full object-center"
                       draggable={false}
                     />
                   ) : (

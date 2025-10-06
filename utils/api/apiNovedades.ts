@@ -3,57 +3,66 @@ import { getAuthToken } from "../authToken";
 import { Novedad } from "../types";
 import { BASE_URL } from "../baseURL";
 
+export type Segregacion = {
+  users?: number[];
+  zonas?: string[];
+  areas?: string[];
+};
+
+type CrearNovedadPayload = {
+  name: string;
+  desc?: string;
+  segregacion?: Segregacion;
+  icono?: string;
+};
+
 export class NovedadesService {
   static async crearNovedad(
-    payload: {
-      name: string;
-      desc: string;
-      icono?: string;
-      users?: number[];
-      zonas?: string[];
-      areas?: string[];
-    },
-    file?: File
+    payload: CrearNovedadPayload,
+    file?: File,
+    fileFieldName: "file" | "image" = "file",
   ): Promise<Novedad> {
     const token = getAuthToken();
     const fd = new FormData();
 
     fd.append("name", payload.name);
-    fd.append("desc", payload.desc);
-    if (payload.icono) fd.append("icono", payload.icono);
 
-    // Arrays del DTO como JSON string
-    if (payload.users && payload.users.length) {
-      fd.append("users", JSON.stringify(payload.users));
+    if (payload.desc && payload.desc.trim().length > 0) {
+      fd.append("desc", payload.desc.trim());
     }
-    if (payload.zonas && payload.zonas.length) {
-      fd.append("zonas", JSON.stringify(payload.zonas));
+
+    if (payload.icono) {
+      fd.append("icono", payload.icono);
     }
-    if (payload.areas && payload.areas.length) {
-      fd.append("areas", JSON.stringify(payload.areas));
+
+    // 👇 el back quiere un único objeto 'segregacion'
+    if (payload.segregacion) {
+      fd.append("segregacion", JSON.stringify(payload.segregacion));
     }
 
     if (file) {
-      fd.append("file", file);
+      // 👇 usa 'image' por defecto (ajustable con fileFieldName)
+      fd.append(fileFieldName, file);
     }
 
     try {
       const response = await axios.post<Novedad>(`${BASE_URL}/novedades`, fd, {
         headers: {
           Authorization: `Bearer ${token}`,
-          "Content-Type": "multipart/form-data",
         },
       });
       return response.data;
     } catch (error: any) {
-      const msg = error?.response?.data?.message;
+      const raw = error?.response?.data?.message ?? error?.message ?? "Error";
+      const msg = Array.isArray(raw) ? raw.join(" | ") : String(raw);
       throw new Error(msg);
     }
   }
 
   static async obtenerNovedades(
-    limit: number = 10,
-    offset: number = 0
+    limit: number,
+    offset: number,
+    isAdmin: boolean,
   ): Promise<Novedad[]> {
     const token = getAuthToken();
     try {
@@ -62,7 +71,7 @@ export class NovedadesService {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
-        params: { limit, offset },
+        params: { limit, offset, isAdmin },
       });
 
       return response.data;

@@ -7,13 +7,21 @@ import { cn } from "@/utils/cn";
 import { NovedadCard } from "../dashboard/novedad-card";
 import { NovedadModal } from "../dashboard/novedad-modal";
 import { NovedadFormModal } from "../dashboard/novedad-form-modal";
-import { NovedadesService } from "@/utils/api/apiNovedades";
+import { NovedadesService, Segregacion } from "@/utils/api/apiNovedades";
 import ConfirmDeleteModal from "../ui/ConfirmDeleteModal";
 import ModalPortal from "../ui/ModalPortal";
+import toast from "react-hot-toast";
+import { useAuth } from "@/hooks/useAuth";
 
-type ReaccionTipo = "likes" | "hearts" | "views";
+export type ReaccionTipo = "likes" | "hearts" | "views";
 
 export function NovedadesAdmin() {
+  const { user } = useAuth();
+  const isAdmin = user?.roles?.[0].name === "admin";
+
+  const limit = 10;
+  const offset = 0;
+
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [showFormModal, setShowFormModal] = useState(false);
@@ -28,9 +36,11 @@ export function NovedadesAdmin() {
 
   // ===== Query: listar novedades =====
   const { data: novedades = [], isLoading } = useQuery({
-    queryKey: ["novedades", { limit: 10, offset: 0 }],
-    queryFn: () => NovedadesService.obtenerNovedades(10, 0),
+    queryKey: ["novedades", { limit, offset, isAdmin }],
+    queryFn: () => NovedadesService.obtenerNovedades(limit, offset, isAdmin),
   });
+
+  console.log("novedades:", novedades);
 
   const { data: usersNovedades = [], isLoading: isLoadingUsersNovedades } =
     useQuery({
@@ -38,24 +48,46 @@ export function NovedadesAdmin() {
       queryFn: () => NovedadesService.usuariosNovedaddes(),
     });
 
-  console.log("usuarios de novedades:", usersNovedades);
-
   // ===== CREATE =====
   const createMutation = useMutation({
     mutationFn: ({
       data,
       file,
     }: {
-      data: Partial<Novedad> & {
+      data: Omit<Novedad, "id" | "file"> & {
         users?: number[];
         zonas?: string[];
         areas?: string[];
       };
       file?: File;
-    }) => NovedadesService.crearNovedad(data, file),
+    }) => {
+      const { users, zonas, areas, name, desc, icono } = data;
+
+      const segregacion =
+        (users && users.length) ||
+        (zonas && zonas.length) ||
+        (areas && areas.length)
+          ? { users, zonas, areas } // ← objeto plano
+          : undefined;
+
+      const payloadForService = {
+        name: name.trim(),
+        desc: desc?.trim() || undefined,
+        icono,
+        segregacion,
+      } as const;
+
+      console.log("payloadForService:", payloadForService);
+
+      return NovedadesService.crearNovedad(payloadForService, file, "file");
+    },
     onSuccess: () => {
+      toast.success("Novedad creada con exito");
       queryClient.invalidateQueries({ queryKey: ["novedades"] });
       setShowFormModal(false);
+    },
+    onError: () => {
+      toast.error("Error al crear novedad");
     },
   });
 

@@ -11,6 +11,7 @@ import {
   Wrench,
 } from "lucide-react";
 import { StatsCard } from "./stats-card";
+import { NovedadesService } from "@/utils/api/apiNovedades";
 
 // Mock function - replace with actual API call
 const fetchDashboardStats = async (): Promise<DashboardStats> => {
@@ -27,41 +28,26 @@ const fetchDashboardStats = async (): Promise<DashboardStats> => {
   };
 };
 
-// Mock novedades
-const mockNovedades: Novedad[] = [
-  {
-    id: "1",
-    name: "Actualización del sistema",
-    fecha: "2025-06-08T10:00:00Z",
-    desc: "Se ha actualizado el sistema a la versión 2.5.0. Esta actualización incluye mejoras en el rendimiento y correcciones de errores.",
-    icono: "🔔",
-    reacciones: {
-      like: 12,
-      love: 5,
-      seen: 45,
-    },
-  },
-  {
-    id: "2",
-    name: "Mantenimiento programado",
-    fecha: "2025-06-10T15:30:00Z",
-    desc: "Se realizará un mantenimiento programado el día 15 de junio de 2025 de 22:00 a 02:00 horas. Durante este período, el sistema no estará disponible.",
-    icono: "⚠️",
-    reacciones: {
-      like: 3,
-      love: 0,
-      seen: 28,
-    },
-  },
-];
-
 export function DashboardContent() {
   const { user } = useAuth();
+  const isAdmin = user?.roles?.[0].name === "admin";
 
   const { data: stats, isLoading } = useQuery({
     queryKey: ["dashboard-stats"],
     queryFn: fetchDashboardStats,
-    staleTime: 1000 * 60 * 5, // 5 minutesF
+  });
+
+  // Fetch novedades
+  const limit = 3;
+  const offset = 0;
+
+  const {
+    data: novedades = [],
+    isLoading: isLoadingNovedades,
+  } = useQuery({
+    queryKey: ["novedades", { limit, offset, isAdmin }],
+    queryFn: () => NovedadesService.obtenerNovedades(limit, offset, isAdmin),
+    staleTime: 60_000,
   });
 
   return (
@@ -71,7 +57,8 @@ export function DashboardContent() {
         nombreUsuario={user?.fullName || user?.email || "Usuario"}
         panelTitle="Panel de Control Técnico"
         icon={<Wrench size={16} />}
-        novedades={mockNovedades}
+        novedades={novedades}
+        loadingNovedades={isLoadingNovedades}
       />
 
       {/* Stats Grid */}

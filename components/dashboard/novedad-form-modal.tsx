@@ -9,7 +9,14 @@ import { getUserTimeZone } from "@/utils/formatDate";
 interface NovedadFormModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (novedad: Omit<Novedad, "id">, file?: File) => void;
+  onSubmit: (
+    novedad: Omit<Novedad, "id" | "file"> & {
+      users?: number[];
+      zonas?: string[];
+      areas?: string[];
+    },
+    file?: File
+  ) => void;
   novedad?: Novedad;
   isLoading?: boolean;
   usersNovedades: any;
@@ -27,11 +34,10 @@ export function NovedadFormModal({
 }: NovedadFormModalProps) {
   const timeZone = getUserTimeZone();
 
-  const [formData, setFormData] = useState<Omit<Novedad, "id">>({
+  const [formData, setFormData] = useState<Omit<Novedad, "id" | "file">>({
     name: "",
     desc: "",
     icono: "🔔",
-    file: null,
   });
   const [selectedFile, setSelectedFile] = useState<File | undefined>(undefined);
 
@@ -46,35 +52,37 @@ export function NovedadFormModal({
     });
 
     setSelectedFile(undefined);
-  }, [isOpen, novedad, timeZone]);
+  }, [isOpen, novedad]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    const users: number[] = selectedUsers
-      .map((x) => Number(x))
-      .filter((n) => !Number.isNaN(n));
-    const zonas: string[] = selectedZonas; // ya son string[]
-    const areas: string[] = selectedAreas; // ya son string[]
+    const users = selectedUsers.map(Number).filter((n) => !Number.isNaN(n));
+    const zonas = selectedZonas;
+    const areas = selectedAreas;
 
     const payload = {
-      ...formData, // name, desc, icono
+      name: formData.name.trim(),
+      desc: formData.desc.trim(),
+      icono: formData.icono,
       users: users.length ? users : undefined,
       zonas: zonas.length ? zonas : undefined,
       areas: areas.length ? areas : undefined,
     };
 
-    onSubmit(payload as Omit<Novedad, "id">, selectedFile);
+    onSubmit(payload, selectedFile);
   };
 
   // ===== Derivar arrays desde usersNovedades (tolerante a forma)
   const areas: string[] = (usersNovedades as any)?.area ?? [];
+
   const zonas: Array<{ id: string; name: string }> = (
     (usersNovedades as any)?.zona ?? []
   ).map((z: any) => ({
     id: String(z?.id ?? z?.name ?? crypto.randomUUID()),
     name: String(z?.name ?? z?.id ?? ""),
   }));
+
   const usuarios: Array<{
     id: number;
     fullName: string;

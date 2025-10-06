@@ -1,20 +1,22 @@
 "use client";
 
 import { useState } from "react";
-import { X, ThumbsUp, Heart, Eye, Pin } from "lucide-react";
+import { X } from "lucide-react";
 import { Novedad } from "@/utils/types";
 import { cn } from "@/utils/cn";
-import { fromUTC, toDateInputValue } from "@/utils/formatDate";
+import { toDateInputValue } from "@/utils/formatDate";
 
 interface NovedadCardProps {
   novedad: Novedad;
   onCerrar: () => void;
   onReaccionar: (tipo: "like" | "love" | "seen") => void;
   onClick: () => void;
+  onlyTitle?: boolean;
 }
 
 export function NovedadCard({
   novedad,
+  onlyTitle,
   onCerrar,
   onReaccionar,
   onClick,
@@ -56,13 +58,18 @@ export function NovedadCard({
             <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 pr-6">
               {novedad.name}
             </h3>
-            <span className="text-xs text-gray-500 dark:text-gray-400">
-              {toDateInputValue(novedad.fecha)}
-            </span>
+            {/* Fecha: oculta en modo solo título */}
+            {!onlyTitle && (
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                {toDateInputValue(novedad.fecha)}
+              </span>
+            )}
           </div>
-          <p className="text-sm text-gray-600 dark:text-gray-300 mt-1 line-clamp-2">
-            {novedad.desc}
-          </p>
+          {!onlyTitle && (
+            <p className="text-sm text-gray-600 dark:text-gray-300 mt-1 line-clamp-2">
+              {novedad.desc}
+            </p>
+          )}
         </div>
       </div>
 
