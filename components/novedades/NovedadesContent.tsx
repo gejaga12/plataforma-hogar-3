@@ -40,7 +40,7 @@ export function NovedadesAdmin() {
     queryFn: () => NovedadesService.obtenerNovedades(limit, offset, isAdmin),
   });
 
-  console.log("novedades:", novedades);
+  // console.log("novedades:", novedades);
 
   const { data: usersNovedades = [], isLoading: isLoadingUsersNovedades } =
     useQuery({
