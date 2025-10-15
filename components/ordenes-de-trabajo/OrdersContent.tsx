@@ -14,19 +14,21 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { LoadingSpinner } from "../ui/loading-spinner";
 import { cn } from "@/utils/cn";
-import { OTService } from "@/api/apiOTs";
+import { OTService } from "@/utils/api/apiOTs";
 import { queryClient } from "@/utils/query-client";
 import CrearOTModal from "./CrearOTModal";
 import toast from "react-hot-toast";
 import { Ots } from "@/utils/types";
 import BacklogOT from "./BacklogOT";
 import { AsignarOTModal } from "./AsignarClienteOtModal";
-import { formatDateText } from "@/utils/formatDate";
 import {
   getEstadoBadgeClass,
   getEstadoLabel,
   getPrioridadClass,
 } from "../ui/EstadosBadge";
+import { formatForUser, fromUTC, getUserTimeZone } from "@/utils/formatDate";
+import { formatInTimeZone } from "date-fns-tz";
+import ConfirmDeleteModal from "../ui/ConfirmDeleteModal";
 
 type SortField = "id" | "fecha" | "tecnico";
 type SortDirection = "asc" | "desc";
@@ -39,6 +41,8 @@ export function OrdersContent() {
   const [openModal, setOpenModal] = useState(false);
   const [openAsignarModal, setOpenAsignarModal] = useState(false);
   const [selectedOT, setSelectedOT] = useState<Ots | null>(null);
+  const [otToDelete, setOtToDelete] = useState<Ots | null>(null);
+
   const router = useRouter();
 
   const {
@@ -46,12 +50,11 @@ export function OrdersContent() {
     isLoading: isLoadingOts,
     isError,
   } = useQuery<Ots[]>({
-    //UNIFICAR TIPO DESPUES CON BACKLOG
     queryKey: ["ots-backlog"],
     queryFn: () => OTService.listarOTs({ limit: 50, offset: 0 }),
   });
 
-  // console.log('Ots:', ots);
+  console.log('Ots:', ots);
 
   const crearOTMutation = useMutation({
     mutationFn: async (payload: {
@@ -70,6 +73,18 @@ export function OrdersContent() {
     },
     onError: () => {
       toast.error("Ocurrio un error al crear la OT. Intente nuevamente");
+    },
+  });
+
+  const eliminarOtmutation = useMutation({
+    mutationFn: (id: number) => OTService.eliminarOT(id),
+    onSuccess: () => {
+      toast.success("OT eliminada con exito.");
+      queryClient.invalidateQueries({ queryKey: ["ots-backlog"] });
+      queryClient.invalidateQueries({ queryKey: ["ots-table"] });
+    },
+    onError: () => {
+      toast.error("Ocurrio un error al eliminar la OT");
     },
   });
 
@@ -144,8 +159,8 @@ export function OrdersContent() {
   };
 
   const handleDeleteOrder = (orderId: number) => {
-    console.log("Eliminar orden:", orderId);
-    // Aquí mostrarías un modal de confirmación
+    const ot = ots?.find((o) => o.id === orderId);
+    setOtToDelete(ot || null);
   };
 
   const SortButton = ({
@@ -256,6 +271,9 @@ export function OrdersContent() {
                   <SortButton field="id">ID</SortButton>
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Formulario
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   <SortButton field="tecnico">Técnico</SortButton>
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
@@ -299,7 +317,15 @@ export function OrdersContent() {
                   <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-gray-100">
                     {order.id}
                   </td>
-
+                  <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
+                    {typeof order.task === "string"
+                      ? order.task
+                      : order.task?.code || (
+                          <span className="text-gray-400 dark:text-gray-500 italic">
+                            S/ formulario
+                          </span>
+                        )}
+                  </td>
                   <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
                     <div
                       className="max-w-32 truncate"
@@ -327,7 +353,9 @@ export function OrdersContent() {
                     </span>
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
-                    {formatDateText(getFechaFromOT(order))}
+                    {order.Audit?.createdAt
+                      ? formatForUser(order.Audit.createdAt, getUserTimeZone())
+                      : "-"}
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
                     <span
@@ -430,6 +458,23 @@ export function OrdersContent() {
         open={openAsignarModal}
         onClose={() => setOpenAsignarModal(false)}
         ot={selectedOT}
+      />
+
+      <ConfirmDeleteModal
+        isOpen={!!otToDelete}
+        onClose={() => setOtToDelete(null)}
+        onConfirm={() => {
+          if (otToDelete) {
+            eliminarOtmutation.mutate(otToDelete.id, {
+              onSuccess: () => setOtToDelete(null),
+            });
+          }
+        }}
+        title="Eliminar Orden de Trabajo"
+        message={`¿Seguro que deseas eliminar la OT #${otToDelete?.id}? Esta acción no se puede deshacer.`}
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+        isLoading={eliminarOtmutation.isPending}
       />
     </div>
   );

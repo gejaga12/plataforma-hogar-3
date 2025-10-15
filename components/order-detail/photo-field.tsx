@@ -1,7 +1,8 @@
-'use client';
+"use client";
 
-import { useState, useRef } from 'react';
-import { Camera, Plus, X, Eye } from 'lucide-react';
+import { useState, useEffect, useRef } from "react";
+import { Camera, Plus, X, Eye } from "lucide-react";
+import { OTService } from "@/utils/api/apiOTs"; // 👈 donde está traerImagesById
 
 interface CampoFormulario {
   id: string;
@@ -17,43 +18,38 @@ interface CampoFormulario {
 
 interface PhotoFieldProps {
   campo: CampoFormulario;
-  onChange?: (fotos: string[]) => void; // 🔹 notifica al padre
+  onChange?: (fotos: string[]) => void;
 }
 
 export function PhotoField({ campo, onChange }: PhotoFieldProps) {
-  const [fotos, setFotos] = useState<string[]>(campo.fotos || []);
+  const [fotos, setFotos] = useState<string[]>([]);
   const [fotoSeleccionada, setFotoSeleccionada] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  // 🔹 Actualizar estado local + notificar al padre
-  const updateFotos = (newFotos: string[]) => {
-    setFotos(newFotos);
-    onChange?.(newFotos);
-  };
+  // 🔹 Cargar fotos del backend
+  useEffect(() => {
+    const fetchFotos = async () => {
+      try {
+        if (campo.fotos && campo.fotos.length > 0) {
+          const urls = await Promise.all(
+            campo.fotos.map(async (fotoId) => {
+              return await OTService.traerImagesById(fotoId);
+            })
+          );
+          setFotos(urls);
+          onChange?.(urls);
+        }
+      } catch (error) {
+        console.error("Error al traer imágenes:", error);
+      }
+    };
 
-  // 🔹 Simular agregar foto con archivo local (mock)
+    fetchFotos();
+  }, [campo.fotos, onChange]);
+
+  // 🔹 Subir nueva foto
   const handleAgregarFoto = () => {
     fileInputRef.current?.click();
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files?.length) return;
-    const file = e.target.files[0];
-
-    // Simulación: usar ObjectURL (mock)
-    const url = URL.createObjectURL(file);
-    updateFotos([...fotos, url]);
-  };
-
-  // 🔹 Simular reemplazo de foto
-  const handleReemplazarFoto = (index: number) => {
-    const nuevaFoto = `https://picsum.photos/seed/${Math.floor(Math.random() * 1000)}/300/200`;
-    updateFotos(fotos.map((foto, i) => (i === index ? nuevaFoto : foto)));
-  };
-
-  // 🔹 Eliminar foto
-  const handleDeshabilitarFoto = (index: number) => {
-    updateFotos(fotos.filter((_, i) => i !== index));
   };
 
   // 🔹 Ver foto en modal
@@ -68,7 +64,6 @@ export function PhotoField({ campo, onChange }: PhotoFieldProps) {
         ref={fileInputRef}
         type="file"
         accept="image/*"
-        onChange={handleFileChange}
         className="hidden"
       />
 
@@ -82,8 +77,7 @@ export function PhotoField({ campo, onChange }: PhotoFieldProps) {
                 alt={`Foto ${index + 1}`}
                 className="w-full h-32 object-cover rounded-lg border border-gray-200 dark:border-gray-600"
               />
-              
-              {/* Overlay con botones */}
+
               <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center space-x-2">
                 <button
                   onClick={() => handleVerFoto(foto)}
@@ -92,20 +86,6 @@ export function PhotoField({ campo, onChange }: PhotoFieldProps) {
                 >
                   <Eye size={16} />
                 </button>
-                <button
-                  onClick={() => handleReemplazarFoto(index)}
-                  className="p-2 bg-orange-600 hover:bg-orange-700 text-white rounded-full transition-colors"
-                  title="Reemplazar foto"
-                >
-                  <Camera size={16} />
-                </button>
-                <button
-                  onClick={() => handleDeshabilitarFoto(index)}
-                  className="p-2 bg-red-600 hover:bg-red-700 text-white rounded-full transition-colors"
-                  title="Eliminar foto"
-                >
-                  <X size={16} />
-                </button>
               </div>
             </div>
           ))}
@@ -113,11 +93,13 @@ export function PhotoField({ campo, onChange }: PhotoFieldProps) {
       ) : (
         <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center">
           <Camera className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500 mb-2" />
-          <p className="text-sm text-gray-600 dark:text-gray-400">No hay fotos cargadas</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            No hay fotos cargadas
+          </p>
         </div>
       )}
 
-      {/* Botones de acción */}
+      {/* Botón para agregar */}
       <div className="flex flex-wrap gap-2">
         <button
           onClick={handleAgregarFoto}
@@ -126,16 +108,6 @@ export function PhotoField({ campo, onChange }: PhotoFieldProps) {
           <Plus size={16} />
           <span>Agregar foto</span>
         </button>
-
-        {fotos.length > 0 && (
-          <button
-            onClick={() => handleReemplazarFoto(fotos.length - 1)}
-            className="flex items-center space-x-2 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors text-sm"
-          >
-            <Camera size={16} />
-            <span>Reemplazar última</span>
-          </button>
-        )}
       </div>
 
       {/* Modal para ver foto */}

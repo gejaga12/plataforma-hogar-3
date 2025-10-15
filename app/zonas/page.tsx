@@ -1,7 +1,7 @@
 "use client";
 import { ProtectedLayout } from "@/components/layout/protected-layout";
 import ZonaContent from "@/components/zonas/ZonaContent";
-import { CreateRegionDto, ZonaService } from "@/api/apiZonas";
+import { CreateRegionDto, ZonaService } from "@/utils/api/apiZonas";
 import { Zona } from "@/utils/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React, { useState } from "react";

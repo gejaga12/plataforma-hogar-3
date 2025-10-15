@@ -17,7 +17,7 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { EquipoQR } from "@/components/equipos/equipo-qr";
 import { cn } from "@/utils/cn";
 import { useQuery } from "@tanstack/react-query";
-import { EquipoService } from "@/api/apiEquipo";
+import { EquipoService } from "@/utils/api/apiEquipo";
 import { capitalizeFirstLetter } from "@/utils/normalize";
 
 interface EquipoAPI {

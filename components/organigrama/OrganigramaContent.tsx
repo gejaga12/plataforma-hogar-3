@@ -16,14 +16,14 @@ import {
   crearJerarquiaData,
   JerarquiaNodo,
   JerarquiaService,
-} from "@/api/apiJerarquia";
+} from "@/utils/api/apiJerarquia";
 import { useJerarquia } from "@/hooks/useJerarquia";
 import { AddEmployeeModal } from "./add-employee-modal";
 import { CrearJerarquiaModal } from "./CrearJerarquiaModal";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import ConfirmDeleteModal from "../ui/ConfirmDeleteModal";
-
+import ModalPortal from "../ui/ModalPortal";
 
 const OrganigramaContent = () => {
   const queryClient = useQueryClient();
@@ -215,7 +215,10 @@ const OrganigramaContent = () => {
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
         <div>
           <div className="flex gap-2 items-center">
-            <Route size={26} className="text-red-600 dark:text-red-500 -rotate-45"/>
+            <Route
+              size={26}
+              className="text-red-600 dark:text-red-500 -rotate-45"
+            />
             <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
               Organigrama Empresarial
             </h1>
@@ -371,58 +374,63 @@ const OrganigramaContent = () => {
       </div>
 
       {/* Modals */}
-      <NodeDetailModal
-        isOpen={showNodeModal}
-        onClose={() => setShowNodeModal(false)}
-        employee={selectedEmployee || undefined}
-      />
+      <ModalPortal>
+        <NodeDetailModal
+          isOpen={showNodeModal}
+          onClose={() => setShowNodeModal(false)}
+          employee={selectedEmployee || undefined}
+        />
 
-      <AddEmployeeModal
-        isOpen={showAddEmployeeModal}
-        onClose={() => setShowAddEmployeeModal(false)}
-        nodoId={nodoId}
-      />
+        <AddEmployeeModal
+          isOpen={showAddEmployeeModal}
+          onClose={() => setShowAddEmployeeModal(false)}
+          nodoId={nodoId}
+        />
 
-      <CrearJerarquiaModal
-        isOpen={showCrearModal}
-        onClose={() => {
-          setShowCrearModal(false);
-          setNodoId(undefined);
-        }}
-        onSubmit={handleCrearJerarquia}
-        areas={areas}
-        areasLoading={isLoading}
-      />
+        <CrearJerarquiaModal
+          isOpen={showCrearModal}
+          onClose={() => {
+            setShowCrearModal(false);
+            setNodoId(undefined);
+          }}
+          onSubmit={handleCrearJerarquia}
+          areas={areas}
+          areasLoading={isLoading}
+        />
 
-      <ConfirmDeleteModal
-        isOpen={modalDeleteType !== null}
-        onClose={() => {
-          setModalDeleteType(null);
-          setItemToDelete(null);
-        }}
-        onConfirm={() => {
-          if (!itemToDelete) return;
+        <ConfirmDeleteModal
+          isOpen={modalDeleteType !== null}
+          onClose={() => {
+            setModalDeleteType(null);
+            setItemToDelete(null);
+          }}
+          onConfirm={() => {
+            if (!itemToDelete) return;
 
-          if (modalDeleteType === "nodo") {
-            eliminarNodo.mutate(itemToDelete.id);
-          } else if (modalDeleteType === "asociacion" && itemToDelete.userid) {
-            eliminarAsociacion.mutate({
-              id: itemToDelete.id,
-              userid: itemToDelete.userid,
-            });
+            if (modalDeleteType === "nodo") {
+              eliminarNodo.mutate(itemToDelete.id);
+            } else if (
+              modalDeleteType === "asociacion" &&
+              itemToDelete.userid
+            ) {
+              eliminarAsociacion.mutate({
+                id: itemToDelete.id,
+                userid: itemToDelete.userid,
+              });
+            }
+            setModalDeleteType(null);
+            setItemToDelete(null);
+          }}
+          title={modalDeleteType === "nodo" ? "Eliminar nodo" : "Liberar nodo"}
+          message={
+            modalDeleteType === "nodo"
+              ? "¿Seguro que deseas eliminar este nodo?"
+              : "¿Deseas liberar este nodo? El usuario ya no estará asociado a esta posición."
           }
-          setModalDeleteType(null);
-          setItemToDelete(null);
-        }}
-        title={modalDeleteType === "nodo" ? "Eliminar nodo" : "Liberar nodo"}
-        message={
-          modalDeleteType === "nodo"
-            ? "¿Seguro que deseas eliminar este nodo?"
-            : "¿Deseas liberar este nodo? El usuario ya no estará asociado a esta posición."
-        }
-        confirmText={modalDeleteType === "nodo" ? "Eliminar" : "Liberar"}
-        cancelText="Cancelar"
-      />
+          confirmText={modalDeleteType === "nodo" ? "Eliminar" : "Liberar"}
+          cancelText="Cancelar"
+        />
+      </ModalPortal>
     </div>
   );
 };

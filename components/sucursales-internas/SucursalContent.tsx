@@ -4,6 +4,7 @@ import { useState } from "react";
 import ConfirmDeleteModal from "../ui/ConfirmDeleteModal";
 import { Sucursal } from "@/utils/types";
 import { CrearSucursalInternaModal } from "./SucursalHogarModal";
+import ModalPortal from "../ui/ModalPortal";
 
 interface SucursalProps {
   sucursales: Sucursal[];
@@ -127,24 +128,26 @@ const SucursalesContent: React.FC<SucursalProps> = ({
         )}
       </div>
 
-      <CrearSucursalInternaModal
-        isOpen={modalSucursal.isOpen}
-        onClose={() => setModalSucursal({ isOpen: false })}
-        onSubmit={onCrearSucursal}
-      />
+      <ModalPortal>
+        <CrearSucursalInternaModal
+          isOpen={modalSucursal.isOpen}
+          onClose={() => setModalSucursal({ isOpen: false })}
+          onSubmit={onCrearSucursal}
+        />
 
-      <ConfirmDeleteModal
-        isOpen={isDeleteModalOpen}
-        onClose={() => {
-          setIsDeleteModalOpen(false);
-          setSucursalSeleccionada(null);
-        }}
-        onConfirm={handleConfirmEliminar}
-        title="Eliminar sucursal"
-        message={`¿Estás seguro de que deseas eliminar la sucursal "${sucursalSeleccionada?.name}"?`}
-        confirmText="Eliminar"
-        cancelText="Cancelar"
-      />
+        <ConfirmDeleteModal
+          isOpen={isDeleteModalOpen}
+          onClose={() => {
+            setIsDeleteModalOpen(false);
+            setSucursalSeleccionada(null);
+          }}
+          onConfirm={handleConfirmEliminar}
+          title="Eliminar sucursal"
+          message={`¿Estás seguro de que deseas eliminar la sucursal "${sucursalSeleccionada?.name}"?`}
+          confirmText="Eliminar"
+          cancelText="Cancelar"
+        />
+      </ModalPortal>
     </div>
   );
 };

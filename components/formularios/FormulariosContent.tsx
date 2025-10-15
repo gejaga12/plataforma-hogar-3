@@ -11,7 +11,7 @@ import { LoadingSpinner } from "../ui/loading-spinner";
 import { PlanTasks } from "@/utils/types";
 import FormulariosModal from "./FormulariosModal";
 import { useQuery } from "@tanstack/react-query";
-import { TaskServices } from "@/api/apiFormularios";
+import { TaskServices } from "@/utils/api/apiFormularios";
 
 type SortField = "nombre" | "descripcion";
 type SortDirection = "asc" | "desc";

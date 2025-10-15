@@ -4,7 +4,7 @@ import { ProtectedLayout } from "@/components/layout/protected-layout";
 import FormulariosContent from "@/components/formularios/FormulariosContent";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { TaskServices } from "@/api/apiFormularios";
+import { TaskServices } from "@/utils/api/apiFormularios";
 import { PlanTasks, Task } from "@/utils/types";
 import toast from "react-hot-toast";
 

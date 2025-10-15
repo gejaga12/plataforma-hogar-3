@@ -16,8 +16,9 @@ import React from "react";
 import { LoadingSpinner } from "../ui/loading-spinner";
 import RoleFormModal from "./RoleFormModal";
 import DeleteConfirmModal from "./RoleDeleteModal";
-import { ApiRoles, Permiso } from "@/api/apiRoles";
+import { ApiRoles, Permiso } from "@/utils/api/apiRoles";
 import { useQuery } from "@tanstack/react-query";
+import ModalPortal from "../ui/ModalPortal";
 
 interface Props {
   roles: RoleList[];
@@ -74,11 +75,9 @@ const RolesContent = ({
     return availableViews?.find((v) => v.key === vistaId)?.label || vistaId;
   };
 
-  const {
-    data: availableViews,
-    isLoading: isLoadingPermissions,
-    error: errorPermissions,
-  } = useQuery<Permiso[]>({
+  const { data: availableViews, isLoading: isLoadingPermissions } = useQuery<
+    Permiso[]
+  >({
     queryKey: ["permisos-disponibles"],
     queryFn: ApiRoles.obtenerPermisosDisponibles,
   });
@@ -230,23 +229,25 @@ const RolesContent = ({
       </div>
 
       {/* Modals */}
-      <RoleFormModal
-        createRole={createRole}
-        updateRole={updateRole}
-        isOpen={modalState.isOpen}
-        onClose={() => setModalState({ isOpen: false, mode: "create" })}
-        role={modalState.role}
-        mode={modalState.mode}
-        availableViews={availableViews || []}
-      />
+      <ModalPortal>
+        <RoleFormModal
+          createRole={createRole}
+          updateRole={updateRole}
+          isOpen={modalState.isOpen}
+          onClose={() => setModalState({ isOpen: false, mode: "create" })}
+          role={modalState.role}
+          mode={modalState.mode}
+          availableViews={availableViews || []}
+        />
 
-      <DeleteConfirmModal
-        isOpen={deleteModal.isOpen}
-        onClose={() => setDeleteModal({ isOpen: false })}
-        onConfirm={confirmDelete}
-        roleName={deleteModal.role?.name || ""}
-        isLoading={isDeleting}
-      />
+        <DeleteConfirmModal
+          isOpen={deleteModal.isOpen}
+          onClose={() => setDeleteModal({ isOpen: false })}
+          onConfirm={confirmDelete}
+          roleName={deleteModal.role?.name || ""}
+          isLoading={isDeleting}
+        />
+      </ModalPortal>
     </div>
   );
 };

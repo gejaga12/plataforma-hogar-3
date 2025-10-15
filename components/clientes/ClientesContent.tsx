@@ -1,4 +1,4 @@
-import { ClientService } from "@/api/apiCliente";
+import { ClientService } from "@/utils/api/apiCliente";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Edit, Pencil, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
@@ -6,6 +6,7 @@ import toast from "react-hot-toast";
 import CreateClientModal from "./CrearClienteModal";
 import ConfirmDeleteModal from "../ui/ConfirmDeleteModal";
 import { Cliente } from "@/utils/types";
+import ModalPortal from "../ui/ModalPortal";
 
 export const ClientesContent = () => {
   const queryClient = useQueryClient();
@@ -163,26 +164,27 @@ export const ClientesContent = () => {
           </table>
         </div>
       </div>
+      <ModalPortal>
+        <CreateClientModal
+          isOpen={openModal}
+          onClose={() => setOpenModal(false)}
+          mutate={crearCliente.mutate}
+        />
 
-      <CreateClientModal
-        isOpen={openModal}
-        onClose={() => setOpenModal(false)}
-        mutate={crearCliente.mutate}
-      />
-
-      <ConfirmDeleteModal
-        isOpen={deleteOpenModal}
-        onClose={() => {
-          setDeleteOpenModal(false);
-          setClienteAEliminar(null);
-        }}
-        onConfirm={handleEliminarCliente}
-        isLoading={borrarCliente.isPending}
-        title="Eliminar cliente"
-        message="¿Estás seguro de que deseas eliminar este cliente? Esta acción no se puede deshacer."
-        confirmText="Eliminar"
-        cancelText="Cancelar"
-      />
+        <ConfirmDeleteModal
+          isOpen={deleteOpenModal}
+          onClose={() => {
+            setDeleteOpenModal(false);
+            setClienteAEliminar(null);
+          }}
+          onConfirm={handleEliminarCliente}
+          isLoading={borrarCliente.isPending}
+          title="Eliminar cliente"
+          message="¿Estás seguro de que deseas eliminar este cliente? Esta acción no se puede deshacer."
+          confirmText="Eliminar"
+          cancelText="Cancelar"
+        />
+      </ModalPortal>
     </div>
   );
 };

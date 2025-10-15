@@ -3,7 +3,7 @@
 import { LogIn, LogOut } from "lucide-react";
 import { ProtectedLayout } from "@/components/layout/protected-layout";
 import { useQuery } from "@tanstack/react-query";
-import { ingresoService } from "@/api/apiIngreso";
+import { ingresoService } from "@/utils/api/apiIngreso";
 import { MovimientoIngresoEgreso } from "@/utils/types";
 import IngresoEgresoContent from "@/components/ingreso-egreso/IngresoEgresoContent";
 

@@ -1,4 +1,4 @@
-import { CrearLaborDTO } from "@/api/apiLabor";
+import { CrearLaborDTO } from "@/utils/api/apiLabor";
 import { FormDataLabor } from "@/components/users/FormDatosLaborales";
 import { formatDateInput } from "./formatDate";
 import { UserAdapted } from "./types";

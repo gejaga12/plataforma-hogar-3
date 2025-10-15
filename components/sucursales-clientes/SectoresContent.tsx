@@ -5,7 +5,7 @@ import { Building2, Plus, Pencil, Trash2, ArrowLeft } from "lucide-react";
 import { Sector } from "@/utils/types";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { SectorPatch, SucursalesService } from "@/api/apiSucursales";
+import { SectorPatch, SucursalesService } from "@/utils/api/apiSucursales";
 import toast from "react-hot-toast";
 import { LoadingSpinner } from "../ui/loading-spinner";
 import SectorModal from "./ModalSector";

@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { X } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useMutation } from "@tanstack/react-query";
-import { JerarquiaService } from "@/api/apiJerarquia";
+import { JerarquiaService } from "@/utils/api/apiJerarquia";
 import toast from "react-hot-toast";
 import { queryClient } from "@/utils/query-client";
 

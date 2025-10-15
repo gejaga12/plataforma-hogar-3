@@ -14,12 +14,13 @@ import { EquipoForm } from "./equipo-form";
 import { EquipoQR } from "./equipo-qr";
 import { Equipo, EstadoEquipo } from "@/utils/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { EquipoService } from "@/api/apiEquipo";
+import { EquipoService } from "@/utils/api/apiEquipo";
 import { capitalizeFirstLetter } from "@/utils/normalize";
 import toast from "react-hot-toast";
 import ConfirmDeleteModal from "../ui/ConfirmDeleteModal";
 import QRsList from "./QRsList";
 import TipoEquipoModal from "./TipoEquipoModal";
+import ModalPortal from "../ui/ModalPortal";
 
 type SortField = "nombre" | "fechaInstalacion";
 type SortDirection = "asc" | "desc";
@@ -126,21 +127,9 @@ const EquiposContent = () => {
     }
   };
 
-  const handleCreateTipoEquipo = async (data: any) => {
-    try {
-      // console.log("📤 Datos enviados al crear tipo equipo:", data);
-      await EquipoService.crearEquipoAdmin(data);
-      queryClient.invalidateQueries({ queryKey: ["tipos-equipos"] });
-      setShowTipoEquipoModal(false);
-    } catch (error) {
-      console.error("Error al crear el tipo de equipo:", error);
-    }
-  };
 
   const handleCreateEquipo = async (data: any) => {
     try {
-      // console.log("📤 Datos enviados al crear equipo:", data);
-
       await EquipoService.crearEquipo(data);
       queryClient.invalidateQueries({ queryKey: ["equipos"] });
       setShowFormModal(false);
@@ -153,6 +142,16 @@ const EquiposContent = () => {
     console.log("editando equipo", equipos);
   };
 
+  const handleCreateTipoEquipo = async (data: any) => {
+    try {
+      console.log("Creando tipo de equipo:", data);
+      await EquipoService.crearEquipoAdmin(data);
+      queryClient.invalidateQueries({ queryKey: ["tipos-equipos"] });
+    } catch (error: any) {
+      console.error("Error al crear el tipo de equipo:", error);
+    }
+  };
+
   const handleViewDetail = (equipoId: string) => {
     router.push(`/equipos/${equipoId}`);
   };
@@ -160,11 +159,6 @@ const EquiposContent = () => {
   const handleEdit = (equipo: Equipo) => {
     setEditingEquipo(equipo);
     setShowFormModal(true);
-  };
-
-  const handleShowQR = (equipo: Equipo) => {
-    setSelectedEquipo(equipo);
-    setShowQRModal(true);
   };
 
   const handleDownloadQR = (equipo: Equipo) => {
@@ -472,126 +466,127 @@ const EquiposContent = () => {
       <QRsList />
 
       {/* Modals */}
-      {showFormModal && (
-        <EquipoForm
-          isOpen={showFormModal}
-          onClose={() => {
-            setShowFormModal(false);
-            setEditingEquipo(null);
-          }}
-          onSubmit={editingEquipo ? handleEditEquipo : handleCreateEquipo}
-          equipo={editingEquipo}
-          isLoading={isLoading}
+      <ModalPortal>
+        {showFormModal && (
+          <EquipoForm
+            isOpen={showFormModal}
+            onClose={() => {
+              setShowFormModal(false);
+              setEditingEquipo(null);
+            }}
+            onSubmit={editingEquipo ? handleEditEquipo : handleCreateEquipo}
+            equipo={editingEquipo}
+            isLoading={isLoading}
+          />
+        )}
+
+        {showQRModal && selectedEquipo && (
+          <EquipoQR
+            isOpen={showQRModal}
+            onClose={() => {
+              setShowQRModal(false);
+              setSelectedEquipo(null);
+            }}
+            equipo={selectedEquipo}
+          />
+        )}
+
+        <TipoEquipoModal
+          onSubmit={handleCreateTipoEquipo}
+          isOpen={showTipoEquipoModal}
+          onClose={handleCloseTipoEquipoModal}
         />
-      )}
 
-      <TipoEquipoModal
-        onSubmit={handleCreateTipoEquipo}
-        isOpen={showTipoEquipoModal}
-        onClose={handleCloseTipoEquipoModal}
-      />
-
-      {showQRModal && selectedEquipo && (
-        <EquipoQR
-          isOpen={showQRModal}
-          onClose={() => {
-            setShowQRModal(false);
-            setSelectedEquipo(null);
-          }}
-          equipo={selectedEquipo}
-        />
-      )}
-
-      {/* Modal para QR generado sin datos */}
-      {showQRGeneratorModal && generatedQR && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full">
-            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-                  QR Generado
-                </h2>
-                <button
-                  onClick={() => setShowQRGeneratorModal(false)}
-                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                >
-                  x
-                </button>
-              </div>
-            </div>
-
-            <div className="p-6">
-              <div className="text-center mb-6">
-                <div className="bg-white p-4 rounded-lg border-2 border-gray-200 dark:border-gray-600 inline-block">
-                  <div className="w-48 h-48 bg-gray-100 dark:bg-gray-700 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg flex items-center justify-center">
-                    <div className="text-center">
-                      <QrCode
-                        size={64}
-                        className="text-gray-400 dark:text-gray-500 mx-auto mb-2"
-                      />
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {generatedQR.qrCode}
-                      </p>
-                    </div>
-                  </div>
+        {/* Modal para QR generado sin datos */}
+        {showQRGeneratorModal && generatedQR && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full">
+              <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+                    QR Generado
+                  </h2>
+                  <button
+                    onClick={() => setShowQRGeneratorModal(false)}
+                    className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  >
+                    x
+                  </button>
                 </div>
               </div>
 
-              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
-                <h4 className="text-sm font-medium text-blue-900 dark:text-blue-400 mb-2">
-                  Instrucciones:
-                </h4>
-                <ul className="text-sm text-blue-800 dark:text-blue-300 space-y-1">
-                  <li>• Imprime este código QR y pégalo en el equipo</li>
-                  <li>
-                    • Escanea el código con la app móvil para cargar los datos
-                  </li>
-                  <li>• El equipo quedará vinculado a este código único</li>
-                </ul>
-              </div>
+              <div className="p-6">
+                <div className="text-center mb-6">
+                  <div className="bg-white p-4 rounded-lg border-2 border-gray-200 dark:border-gray-600 inline-block">
+                    <div className="w-48 h-48 bg-gray-100 dark:bg-gray-700 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg flex items-center justify-center">
+                      <div className="text-center">
+                        <QrCode
+                          size={64}
+                          className="text-gray-400 dark:text-gray-500 mx-auto mb-2"
+                        />
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          {generatedQR.qrCode}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
 
-              <div className="flex space-x-3">
-                <button
-                  onClick={() => {
-                    console.log("Descargando QR:", generatedQR.qrCode);
-                    // Aquí implementarías la descarga del QR
-                  }}
-                  className="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center justify-center space-x-2 transition-colors"
-                >
-                  <Download size={16} />
-                  <span>Descargar</span>
-                </button>
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
+                  <h4 className="text-sm font-medium text-blue-900 dark:text-blue-400 mb-2">
+                    Instrucciones:
+                  </h4>
+                  <ul className="text-sm text-blue-800 dark:text-blue-300 space-y-1">
+                    <li>• Imprime este código QR y pégalo en el equipo</li>
+                    <li>
+                      • Escanea el código con la app móvil para cargar los datos
+                    </li>
+                    <li>• El equipo quedará vinculado a este código único</li>
+                  </ul>
+                </div>
 
-                <button
-                  onClick={() => {
-                    console.log("Imprimiendo QR:", generatedQR.qrCode);
-                    window.print();
-                  }}
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center justify-center space-x-2 transition-colors"
-                >
-                  <QrCode size={16} />
-                  <span>Imprimir</span>
-                </button>
+                <div className="flex space-x-3">
+                  <button
+                    onClick={() => {
+                      console.log("Descargando QR:", generatedQR.qrCode);
+                      // Aquí implementarías la descarga del QR
+                    }}
+                    className="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center justify-center space-x-2 transition-colors"
+                  >
+                    <Download size={16} />
+                    <span>Descargar</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      console.log("Imprimiendo QR:", generatedQR.qrCode);
+                      window.print();
+                    }}
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center justify-center space-x-2 transition-colors"
+                  >
+                    <QrCode size={16} />
+                    <span>Imprimir</span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
-
-      <ConfirmDeleteModal
-        isOpen={isDeleteModalOpen}
-        onClose={closeDeleteModal}
-        onConfirm={() => {
-          if (equipoToDelete) {
-            eliminarEquipo(equipoToDelete);
-          }
-        }}
-        isLoading={isDeleting}
-        title="Eliminar Equipo"
-        message="¿Seguro que deseas eliminar este equipo? Esta acción no se puede deshacer."
-        confirmText="Eliminar"
-        cancelText="Cancelar"
-      />
+        )}
+        <ConfirmDeleteModal
+          isOpen={isDeleteModalOpen}
+          onClose={closeDeleteModal}
+          onConfirm={() => {
+            if (equipoToDelete) {
+              eliminarEquipo(equipoToDelete);
+            }
+          }}
+          isLoading={isDeleting}
+          title="Eliminar Equipo"
+          message="¿Seguro que deseas eliminar este equipo? Esta acción no se puede deshacer."
+          confirmText="Eliminar"
+          cancelText="Cancelar"
+        />
+      </ModalPortal>
     </div>
   );
 };

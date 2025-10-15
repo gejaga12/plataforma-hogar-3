@@ -3,9 +3,10 @@ import React, { useState } from "react";
 import { LoadingSpinner } from "../ui/loading-spinner";
 import { Pais, Provincia, Zona } from "@/utils/types";
 import ZonaModals from "./ZonaModals";
-import { CreateRegionDto } from "@/api/apiZonas";
+import { CreateRegionDto } from "@/utils/api/apiZonas";
 import ProvinciaModal from "./Zona-provincia-modal";
 import ConfirmDeleteModal from "../ui/ConfirmDeleteModal";
+import ModalPortal from "../ui/ModalPortal";
 
 interface Props {
   zonas: Zona[];
@@ -187,7 +188,7 @@ const ZonaContent: React.FC<Props> = ({
                     <div className="flex gap-4 items-center justify-center">
                       <button
                         onClick={() => handleAbrirModalProvincias(zona.id)}
-                        className="text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-200"
+                        className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-200"
                         title="Asignar provincias"
                       >
                         <Edit size={16} className="mx-auto" />
@@ -219,48 +220,50 @@ const ZonaContent: React.FC<Props> = ({
       </div>
 
       {/* Modals */}
-      <ZonaModals
-        isOpen={modalState.isOpen}
-        onClose={() => setModalState({ isOpen: false, mode: "create" })}
-        mode={modalState.mode}
-        isloading={isLoading}
-        onSubmit={createZona}
-        paises={paises}
-        provincias={provincias}
-      />
-
-      {showModalProvincias && (
-        <ProvinciaModal
+      <ModalPortal>
+        <ZonaModals
+          isOpen={modalState.isOpen}
+          onClose={() => setModalState({ isOpen: false, mode: "create" })}
+          mode={modalState.mode}
+          isloading={isLoading}
+          onSubmit={createZona}
+          paises={paises}
           provincias={provincias}
-          isOpen={showModalProvincias}
-          onClose={() => {
-            setShowModalProvincias(false);
-            setSelectedZonaId(null);
-          }}
-          zonaId={selectedZonaId}
-          onSubmit={handleAsignarProvincias}
-          zonas={zonas}
         />
-      )}
 
-      <ConfirmDeleteModal
-        isOpen={isDeleteModalOpen}
-        onClose={() => {
-          setIsDeleteModalOpen(false);
-          setZonaSeleccionada(null);
-        }}
-        onConfirm={() => {
-          if (zonaSeleccionada) {
-            deleteZona({ zonaId: zonaSeleccionada.id });
+        {showModalProvincias && (
+          <ProvinciaModal
+            provincias={provincias}
+            isOpen={showModalProvincias}
+            onClose={() => {
+              setShowModalProvincias(false);
+              setSelectedZonaId(null);
+            }}
+            zonaId={selectedZonaId}
+            onSubmit={handleAsignarProvincias}
+            zonas={zonas}
+          />
+        )}
+
+        <ConfirmDeleteModal
+          isOpen={isDeleteModalOpen}
+          onClose={() => {
             setIsDeleteModalOpen(false);
             setZonaSeleccionada(null);
-          }
-        }}
-        title="Eliminar zona"
-        message={`¿Estás seguro de que deseas eliminar la zona "${zonaSeleccionada?.name}"?`}
-        confirmText="Eliminar"
-        cancelText="Cancelar"
-      />
+          }}
+          onConfirm={() => {
+            if (zonaSeleccionada) {
+              deleteZona({ zonaId: zonaSeleccionada.id });
+              setIsDeleteModalOpen(false);
+              setZonaSeleccionada(null);
+            }
+          }}
+          title="Eliminar zona"
+          message={`¿Estás seguro de que deseas eliminar la zona "${zonaSeleccionada?.name}"?`}
+          confirmText="Eliminar"
+          cancelText="Cancelar"
+        />
+      </ModalPortal>
     </div>
   );
 };

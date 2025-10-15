@@ -2,7 +2,7 @@
 "use client";
 
 import React, { createContext, useEffect, useState } from "react";
-import { AuthService, UserLoginData } from "@/api/apiAuth";
+import { AuthService, UserLoginData } from "@/utils/api/apiAuth";
 import { useRouter } from "next/navigation";
 import { UserAdapted } from "@/utils/types";
 
@@ -82,10 +82,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const refetchUsuarios = async () => {
     try {
-      const data = await AuthService.getUsers(100, 0);
-
-      console.log(data);
-      
+      const data = await AuthService.getUsers(100, 0);      
       setUsuarios(data);
     } catch (e) {
       console.error("Error al cargar usuarios:", e);

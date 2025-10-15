@@ -3,23 +3,30 @@
 import { useState } from 'react';
 import { Clock, Save } from 'lucide-react';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { formatHourForUser, getUserTimeZone } from '@/utils/formatDate';
 
 interface OrderWorkTimeSectionProps {
   orden: {
-    horaInicio: string | null;
-    horaFin: string | null;
+    me_recibio?: string | null;
+    finalizado?: string | null;
   };
   onUpdateTiempo: (data: any) => void;
   isLoading: boolean;
 }
 
 export function OrderWorkTimeSection({ orden, onUpdateTiempo, isLoading }: OrderWorkTimeSectionProps) {
-  const [horaInicio, setHoraInicio] = useState(orden.horaInicio || '');
-  const [horaFin, setHoraFin] = useState(orden.horaFin || '');
+  const tz = getUserTimeZone();
+
+  // Formateamos las horas iniciales
+  const horaInicioDefault = orden.me_recibio ? formatHourForUser(orden.me_recibio, tz) : "";
+  const horaFinDefault = orden.finalizado ? formatHourForUser(orden.finalizado, tz) : "";
+
+  const [horaInicio, setHoraInicio] = useState(horaInicioDefault);
+  const [horaFin, setHoraFin] = useState(horaFinDefault);
   const [minutosTrabajados, setMinutosTrabajados] = useState(() => {
-    if (orden.horaInicio && orden.horaFin) {
-      const inicio = new Date(`2000-01-01T${orden.horaInicio}:00`);
-      const fin = new Date(`2000-01-01T${orden.horaFin}:00`);
+    if (horaInicio && horaFin) {
+      const inicio = new Date(`2000-01-01T${horaInicio}:00`);
+      const fin = new Date(`2000-01-01T${horaFin}:00`);
       const diff = fin.getTime() - inicio.getTime();
       return Math.floor(diff / (1000 * 60));
     }
@@ -28,15 +35,10 @@ export function OrderWorkTimeSection({ orden, onUpdateTiempo, isLoading }: Order
 
   const calcularMinutos = (inicio: string, fin: string) => {
     if (!inicio || !fin) return 0;
-    
-    try {
-      const inicioDate = new Date(`2000-01-01T${inicio}:00`);
-      const finDate = new Date(`2000-01-01T${fin}:00`);
-      const diff = finDate.getTime() - inicioDate.getTime();
-      return Math.max(0, Math.floor(diff / (1000 * 60)));
-    } catch {
-      return 0;
-    }
+    const inicioDate = new Date(`2000-01-01T${inicio}:00`);
+    const finDate = new Date(`2000-01-01T${fin}:00`);
+    const diff = finDate.getTime() - inicioDate.getTime();
+    return Math.max(0, Math.floor(diff / (1000 * 60)));
   };
 
   const handleHoraInicioChange = (value: string) => {
@@ -58,7 +60,7 @@ export function OrderWorkTimeSection({ orden, onUpdateTiempo, isLoading }: Order
     onUpdateTiempo({
       horaInicio,
       horaFin,
-      minutosTrabajados
+      minutosTrabajados,
     });
   };
 
@@ -77,6 +79,7 @@ export function OrderWorkTimeSection({ orden, onUpdateTiempo, isLoading }: Order
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Hora de Inicio */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Hora de Inicio
@@ -89,6 +92,7 @@ export function OrderWorkTimeSection({ orden, onUpdateTiempo, isLoading }: Order
             />
           </div>
 
+          {/* Hora de Fin */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Hora de Fin
@@ -101,6 +105,7 @@ export function OrderWorkTimeSection({ orden, onUpdateTiempo, isLoading }: Order
             />
           </div>
 
+          {/* Minutos Trabajados */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Minutos Trabajados
@@ -122,6 +127,7 @@ export function OrderWorkTimeSection({ orden, onUpdateTiempo, isLoading }: Order
           </div>
         </div>
 
+        {/* Botón */}
         <div className="flex justify-end">
           <button
             type="submit"

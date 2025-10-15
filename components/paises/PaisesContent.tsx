@@ -1,4 +1,4 @@
-import { ZonaService } from "@/api/apiZonas";
+import { ZonaService } from "@/utils/api/apiZonas";
 import { useQuery } from "@tanstack/react-query";
 import { Globe, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";

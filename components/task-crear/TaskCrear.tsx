@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import type { Task, Subtasks, PlanTasks } from "@/utils/types";
 import FlowArea from "@/components/flowArea/FlowArea";
-import { TaskServices } from "@/api/apiFormularios";
+import { TaskServices } from "@/utils/api/apiFormularios";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 
@@ -80,7 +80,7 @@ const TaskCrear = ({ campo }: TaskFormModalProps) => {
         <div className="p-4 border-b border-gray-200">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold text-gray-900">
-              Crear Nueva Task
+              Crear Nueva Tarea
             </h2>
           </div>
         </div>

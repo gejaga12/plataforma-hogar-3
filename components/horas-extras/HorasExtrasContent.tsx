@@ -7,63 +7,66 @@ import {
   Clock,
   Download,
   Eye,
-  MapPin,
   Search,
 } from "lucide-react";
 import { useState } from "react";
 import { LoadingSpinner } from "../ui/loading-spinner";
 import { cn } from "@/utils/cn";
-import { HoraExtra, ingresoService } from "@/api/apiIngreso";
-import { useQuery } from "@tanstack/react-query";
+import { ingresoService } from "@/utils/api/apiIngreso";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import toast from "react-hot-toast";
+import { queryClient } from "@/utils/query-client";
+import { EstadoHoraExtra, HorasExtras } from "@/utils/types";
+import { getStateBadgeHoras } from "../ui/EstadosBadge";
+import { capitalizeFirstLetter } from "@/utils/normalize";
+import HoraExtraDetalleModal from "./HorasExtrasDetalle";
 
 type SortField = "horaInicio" | "horaFinal" | "razon";
 type SortDirection = "asc" | "desc";
 
 const HorasExtrasContent = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [fechaDesde, setFechaDesde] = useState("");
-  const [fechaHasta, setFechaHasta] = useState("");
+  const [estadoFiltro, setEstadoFiltro] = useState<EstadoHoraExtra | "">("");
   const [selected, setSelected] = useState<number[]>([]);
   const [sortField, setSortField] = useState<SortField>("horaInicio");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
+  const [selectedHoraExtra, setSelectedHoraExtra] =
+    useState<HorasExtras | null>(null);
 
-  const { data: horasExtras = [], isLoading } = useQuery<HoraExtra[]>({
+  const { data: horasExtras = [], isLoading } = useQuery<HorasExtras[]>({
     queryKey: ["horas-extras"],
     queryFn: () => ingresoService.fetchHorasExtras({ limit: 20 }),
     staleTime: 5000 * 60,
     refetchOnWindowFocus: false,
   });
 
-  const filtered = (horasExtras ?? []).filter((h) => {
-    const searchLower = searchTerm.toLowerCase();
-    const matchesSearch =
-      h.razon.toLowerCase().includes(searchLower) ||
-      (h.comentario?.toLowerCase().includes(searchLower) ?? false);
+  console.log("horas extras traidas:", horasExtras);
 
-    let matchesFecha = true;
-    if (fechaDesde || fechaHasta) {
-      const inicio = new Date(h.horaInicio);
-      if (fechaDesde) {
-        matchesFecha = matchesFecha && inicio >= new Date(fechaDesde);
-      }
-      if (fechaHasta) {
-        const hasta = new Date(fechaHasta);
-        hasta.setHours(23, 59, 59, 999);
-        matchesFecha = matchesFecha && inicio <= hasta;
-      }
+  const { mutate: mutateAprobacion, isPending: isUpdating } = useMutation({
+    mutationFn: ({ id, approved }: { id: string; approved: boolean }) =>
+      ingresoService.aprobarHoraExtra(id, approved),
+    onSuccess: () => {
+      toast.success("Solicitud actualizada");
+      queryClient.invalidateQueries({ queryKey: ["horas-extras"] });
+    },
+    onError: () => {
+      toast.error("Error al aprobar o rechazar la solicitud.");
+    },
+  });
+
+  const filtered = (horasExtras ?? []).filter((h) => {
+    let matchesEstado = true;
+
+    if (estadoFiltro) {
+      matchesEstado = h.state === estadoFiltro;
     }
 
-    return matchesSearch && matchesFecha;
+    return matchesEstado;
   });
 
   const sorted = [...filtered].sort((a, b) => {
     let aValue: any = a[sortField];
     let bValue: any = b[sortField];
-
-    if (sortField === "horaInicio" || sortField === "horaFinal") {
-      aValue = new Date(aValue);
-      bValue = new Date(bValue);
-    }
 
     if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
     if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
@@ -78,15 +81,6 @@ const HorasExtrasContent = () => {
       setSortDirection("asc");
     }
   };
-
-  const formatDateTime = (date: string) =>
-    new Date(date).toLocaleString("es-ES", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
 
   const SortButton = ({
     field,
@@ -145,8 +139,9 @@ const HorasExtrasContent = () => {
 
       {/* Filters */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="md:col-span-2 relative">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+          {/* Búsqueda */}
+          <div className="relative md:col-span-3">
             <Search
               className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
               size={20}
@@ -160,18 +155,24 @@ const HorasExtrasContent = () => {
             />
           </div>
 
-          <input
-            type="date"
-            value={fechaDesde}
-            onChange={(e) => setFechaDesde(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-          />
-          <input
-            type="date"
-            value={fechaHasta}
-            onChange={(e) => setFechaHasta(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-          />
+          {/* Estado */}
+          <div className="md:col-span-1">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Estado
+            </label>
+            <select
+              value={estadoFiltro}
+              onChange={(e) =>
+                setEstadoFiltro(e.target.value as EstadoHoraExtra | "")
+              }
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+            >
+              <option value="">Todos</option>
+              <option value="pendiente">Pendiente</option>
+              <option value="aprobado">Aprobado</option>
+              <option value="no aprobado">No aprobado</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -195,6 +196,9 @@ const HorasExtrasContent = () => {
                   />
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Solicitante
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   <SortButton field="horaInicio">Hora Inicio</SortButton>
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
@@ -204,10 +208,7 @@ const HorasExtrasContent = () => {
                   <SortButton field="razon">Razón</SortButton>
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Comentario
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Ubicación
+                  Estado
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Acciones
@@ -237,32 +238,32 @@ const HorasExtrasContent = () => {
                     />
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-900">
+                    {capitalizeFirstLetter(h.solicitante)}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-gray-900">
                     <Calendar size={14} className="inline mr-1 text-gray-400" />
-                    {formatDateTime(h.horaInicio)}
+                    {h.horaInicio}
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-900">
-                    {formatDateTime(h.horaFinal)}
+                    {h.horaFinal}
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-900">{h.razon}</td>
-                  <td className="px-4 py-3 text-sm text-gray-900">
-                    {h.comentario || "-"}
+                  <td className="px-4 py-3 text-sm text-gray-900 truncate">
+                    {h.razon}
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-900">
-                    {h.lan && h.lng ? (
-                      <div className="flex items-center space-x-1">
-                        <MapPin size={14} className="text-gray-400" />
-                        <span>
-                          {h.lan}, {h.lng}
-                        </span>
-                      </div>
-                    ) : (
-                      <span className="text-gray-400">-</span>
-                    )}
+                  <td className="px-4 py-3 text-sm">
+                    <span
+                      className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStateBadgeHoras(
+                        h.state
+                      )}`}
+                    >
+                      {capitalizeFirstLetter(h.state)}
+                    </span>
                   </td>
                   <td className="px-4 py-3 text-center">
                     <button
-                      className="text-blue-600 hover:text-blue-800 transition-colors"
-                      title="Ver detalle"
+                      onClick={() => setSelectedHoraExtra(h)}
+                      className="text-blue-600 hover:text-blue-900 transition-colors"
+                      title="Ver detalles"
                     >
                       <Eye size={16} />
                     </button>
@@ -280,13 +281,21 @@ const HorasExtrasContent = () => {
               No hay solicitudes
             </h3>
             <p className="mt-1 text-sm text-gray-500">
-              {searchTerm || fechaDesde || fechaHasta
+              {searchTerm || estadoFiltro
                 ? "No se encontraron horas extras con los filtros aplicados."
                 : "No hay solicitudes de horas extras registradas en este momento."}
             </p>
           </div>
         )}
       </div>
+
+      <HoraExtraDetalleModal
+        isOpen={!!selectedHoraExtra}
+        onClose={() => setSelectedHoraExtra(null)}
+        horaExtra={selectedHoraExtra}
+        onDecision={(id, approved) => mutateAprobacion({ id, approved })}
+        isUpdating={isUpdating}
+      />
     </div>
   );
 };

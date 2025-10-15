@@ -1,6 +1,7 @@
 import { getAuthToken } from "@/utils/authToken";
 import { BASE_URL } from "@/utils/baseURL";
 import axios from "axios";
+import { CrearHoraExtra } from "../types";
 
 type Ingreso = {
   lan?: number;
@@ -8,15 +9,6 @@ type Ingreso = {
   typeAction: string;
   reason: string;
   modo: string;
-};
-
-export type HoraExtra = {
-  lan: number;
-  lng: number;
-  horaInicio: string;
-  horaFinal: string;
-  razon: string;
-  comentario?: string;
 };
 
 type FiltrosIngreso = {
@@ -75,7 +67,7 @@ export class ingresoService {
   }
 
   //horas extras
-  static async createHorasExtras(data: HoraExtra): Promise<any> {
+  static async createHorasExtras(data: CrearHoraExtra): Promise<any> {
     const token = getAuthToken();
 
     try {
@@ -145,6 +137,24 @@ export class ingresoService {
     } catch (error: any) {
       console.warn("Error al obtener la hora extra", error?.message || error);
       throw error;
+    }
+  }
+
+  static async aprobarHoraExtra(id: string, approved: boolean) {
+    const token = getAuthToken();
+
+    try {
+      const response = await axios.post(`${BASE_URL}/horas-extras/a/${id}`, { approved }, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      return response.data;
+    } catch (error: any) {
+      const msg = error?.response?.data?.message;
+      console.log("Error:", msg);
+      throw new Error(msg);
     }
   }
 }
