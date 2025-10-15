@@ -2,21 +2,35 @@ import { FormDataLabor } from "@/components/users/FormDatosLaborales";
 import { getAuthToken } from "@/utils/authToken";
 import { BASE_URL } from "@/utils/baseURL";
 import axios from "axios";
-import { formatDateInput } from "../formatDate";
 
+/**
+ * Normaliza un valor de fecha del form a ISO string.
+ * Nunca devuelve null. Devuelve string (ISO) o undefined si es inválido/ausente.
+ */
+function formatDateInput(value?: string | Date | null): string | undefined {
+  if (!value) return undefined;
+  const date = value instanceof Date ? value : new Date(value);
+  if (isNaN(date.getTime())) return undefined; // evita "Invalid Date"
+  return date.toISOString(); // formato estándar ISO
+}
+
+/**
+ * DTO para crear/actualizar Labor (request al backend).
+ * Recomendación: enviar strings ISO (no objetos Date) y omitir campos vacíos (undefined).
+ */
 export interface CrearLaborDTO {
-  userId?: number;
-  cuil?: number; // 11 dígitos (CUIL argentino)
-  fechaIngreso: string | Date; // se normaliza a ISO
-  fechaAlta?: string | Date; // opcional según tu UI
+  userId: number;
+  cuil?: number;               // 11 dígitos (CUIL argentino)
+  fechaIngreso?: string;       // ISO (opcional si no está seteada en el form)
+  fechaAlta?: string;          // ISO (opcional)
   categoryArca?: string;
   antiguedad?: string;
   tipoDeContrato?: string;
-  horasTrabajo?: string; // la doc la muestra como string ("40")
+  horasTrabajo?: string;       // ej: "40"
   sueldo?: number;
   relacionLaboral?: string;
   area?: string;
-  jerarquiaId?: string; // ID de la jerarquía asociada
+  jerarquiaId?: string;        // ID de la jerarquía asociada
 }
 
 export interface CrearPuestoDTO {
@@ -24,7 +38,11 @@ export interface CrearPuestoDTO {
   laborid: string;
 }
 
-//Helper para mapear formdatalabor a crearlaborDTO
+/**
+ * Mapea el form tipado a un DTO limpio para el backend.
+ * - No envía fechas inválidas ni campos vacíos (manda undefined).
+ * - Convierte sueldo a number si corresponde.
+ */
 export function buildCrearLaborPayload(
   form: FormDataLabor,
   userId: number
@@ -33,13 +51,18 @@ export function buildCrearLaborPayload(
     userId,
     cuil: form.cuil,
     fechaIngreso: formatDateInput(form.fechaIngreso),
-    fechaAlta: form.fechaAlta ? formatDateInput(form.fechaAlta) : undefined,
+    fechaAlta: formatDateInput(form.fechaAlta),
     categoryArca: form.categoryArca?.trim() || undefined,
     antiguedad: form.antiguedad?.trim() || undefined,
-    tipoDeContrato: form.tipoDeContrato,
+    tipoDeContrato: form.tipoDeContrato || undefined,
     horasTrabajo: form.horasTrabajo?.trim() || undefined,
-    sueldo: form.sueldo ? Number(form.sueldo) : undefined,
-    relacionLaboral: form.relacionLaboral,
+    sueldo: form.sueldo !== undefined && form.sueldo !== null && `${form.sueldo}`.trim() !== ""
+      ? Number(form.sueldo)
+      : undefined,
+    relacionLaboral: form.relacionLaboral || undefined,
+    // si necesitás area/jerarquiaId y vienen del form, agregalos acá
+    // area: form.area || undefined,
+    // jerarquiaId: form.jerarquiaId || undefined,
   };
 }
 
@@ -47,14 +70,12 @@ export class LaborService {
   static async crearLabor(data: CrearLaborDTO): Promise<any> {
     try {
       const token = getAuthToken();
-
       const response = await axios.post(`${BASE_URL}/labor`, data, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
       });
-
       return response.data;
     } catch (error: any) {
       const message = error?.response?.data?.message || "Error al crear labor";
@@ -68,34 +89,28 @@ export class LaborService {
   ): Promise<any> {
     try {
       const token = getAuthToken();
-
       const response = await axios.put(`${BASE_URL}/labor/${id}`, data, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
       });
-
       return response.data;
     } catch (error: any) {
-      const message =
-        error?.response?.data?.message || "Error al actualizar labor";
+      const message = error?.response?.data?.message || "Error al actualizar labor";
       throw new Error(message);
     }
   }
 
-  //crear puesto
   static async crearPuesto(data: CrearPuestoDTO): Promise<any> {
     try {
       const token = getAuthToken();
-
       const response = await axios.post(`${BASE_URL}/labor/puesto`, data, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
       });
-
       return response.data;
     } catch (error: any) {
       const message = error?.response?.data?.message || "Error al crear puesto";
@@ -106,13 +121,11 @@ export class LaborService {
   static async actualizarPuesto(id: string, data: any): Promise<any> {
     try {
       const token = getAuthToken();
-
       const response = await axios.put(`${BASE_URL}/puesto/${id}`, data, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-
       return response.data;
     } catch (error: any) {
       const message =
