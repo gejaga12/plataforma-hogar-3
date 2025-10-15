@@ -271,4 +271,27 @@ export class SucursalesService {
       throw new Error(err);
     }
   }
+
+  // ASIGNAR SUCURSAL A USUARIO CREADO
+  static async asignarSucursal(sucId: string, userId: number) {
+    const token = getAuthToken();
+
+    try {
+      const response = await axios.put(
+        `${BASE_URL}/sucursal/add/${sucId}/user/${userId}`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      return response.data;
+    } catch (error: any) {
+      const msg = error?.response?.data?.message;
+      console.log("Error:", msg);
+      throw new Error(error);
+    }
+  }
 }

@@ -1,6 +1,6 @@
 import { UserAdapted, Zona } from "@/utils/types";
 import { X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import FormUsers from "./FormUsers";
 import { EstadoContractual, FormDataLabor } from "./FormDatosLaborales";
 import { toDateInputValue } from "@/utils/formatDate";
@@ -17,6 +17,8 @@ interface UserModalProps {
     labor?: FormDataLabor;
     phones?: PhoneForm[];
   }) => void;
+  onAssignZona: (zonaId: string, userId: number) => Promise<void> | void;
+  onAssignSucursal: (sucId: string, userId: number) => Promise<void> | void;
   rolesDisponibles: Record<string, string>;
   isloading: boolean;
   zonas: Zona[];
@@ -29,7 +31,6 @@ const initialFormData: CreateUserData = {
   password: "",
   address: "",
   fechaNacimiento: "",
-  isActive: true,
 };
 
 const initialLabor: FormDataLabor = {
@@ -53,11 +54,13 @@ const initialLabor: FormDataLabor = {
 };
 
 const UserModal: React.FC<UserModalProps> = ({
-  isOpen,
+  onSubmit,
   onClose,
+  onAssignZona,
+  onAssignSucursal,
+  isOpen,
   user,
   mode,
-  onSubmit,
   rolesDisponibles,
   isloading,
   zonas,
@@ -133,7 +136,6 @@ const UserModal: React.FC<UserModalProps> = ({
         password: "", // vacío en edit/view
         address: user.address || "",
         fechaNacimiento: toDateInputValue(user.fechaNacimiento),
-        isActive: user.isActive,
       });
 
       setFormDataLabor(() => {
@@ -154,7 +156,9 @@ const UserModal: React.FC<UserModalProps> = ({
               : undefined,
           puestos: Array.isArray(laborDeUser?.puestos)
             ? laborDeUser.puestos.map((p: any) =>
-                typeof p === "string" ? p : p.id || p.name || ""
+                typeof p === "object"
+                  ? { id: String(p.id ?? ""), name: String(p.name ?? "") }
+                  : { id: "", name: String(p) }
               )
             : [],
           area: user.jerarquia?.area || "",
@@ -178,16 +182,14 @@ const UserModal: React.FC<UserModalProps> = ({
         return laborData;
       });
     }
-  }, [isOpen, mode]);
+  }, [isOpen, mode, user, zonas]);
 
-  const handleRoleChange = (id: string, checked: boolean) => {
-    setFormData((prev) => {
-      const roles = checked
-        ? [...prev.roles, id]
-        : prev.roles.filter((r) => r !== id);
-      return { ...prev, roles };
-    });
-  };
+  const handleRoleChange = useCallback((id: string, checked: boolean) => {
+    setFormData((prev) => ({
+      ...prev,
+      roles: checked ? [...prev.roles, id] : prev.roles.filter((r) => r !== id),
+    }));
+  }, []);
 
   if (!isOpen) return null;
 
@@ -227,7 +229,6 @@ const UserModal: React.FC<UserModalProps> = ({
                   roles: Array.isArray(formData.roles) ? formData.roles : [],
                   address: formData.address ?? "",
                   fechaNacimiento: formData.fechaNacimiento ?? "",
-                  isActive: formData.isActive ?? true,
                 };
 
                 onSubmit({ user: userClean, phones });
@@ -242,6 +243,8 @@ const UserModal: React.FC<UserModalProps> = ({
             setFormData={setFormData}
             isReadOnly={isReadOnly}
             onClose={onClose}
+            onAssignZona={onAssignZona}
+            onAssignSucursal={onAssignSucursal}
             isloading={isloading}
             mode={mode}
             rolesDisponibles={rolesDisponibles}

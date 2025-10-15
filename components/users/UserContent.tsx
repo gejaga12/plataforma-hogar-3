@@ -2,7 +2,7 @@ import { ZonaService } from "@/utils/api/apiZonas";
 import { useAuth } from "@/hooks/useAuth";
 import { Puesto, UserAdapted } from "@/utils/types";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { FormDataLabor } from "./FormDatosLaborales";
 import { ApiRoles } from "@/utils/api/apiRoles";
 import {
@@ -10,7 +10,6 @@ import {
   CreateUserData,
   UpdateUserPayload,
 } from "@/utils/api/apiAuth";
-import { CrearLaborDTO, LaborService } from "@/utils/api/apiLabor";
 import toast from "react-hot-toast";
 import { LoadingSpinner } from "../ui/loading-spinner";
 import {
@@ -28,16 +27,17 @@ import UserModal from "./UserModal";
 import DeleteUSerModal from "./DeleteUserModal";
 import { PhoneForm, TelPayload, TelService } from "@/utils/api/apiTel";
 import ModalPortal from "../ui/ModalPortal";
+import { SucursalesService } from "@/utils/api/apiSucursales";
 
 const mapPhonesToPayload = (
   userId: number,
-  phones: PhoneForm[]
+  phones: PhoneForm[] = []
 ): TelPayload[] =>
   phones
     .map((p) => ({
+      userId,
       tel: (p.tel ?? "").replace(/\D/g, "").trim(),
       phoneType: p.phoneType,
-      userId,
     }))
     .filter((p) => p.tel !== "");
 
@@ -54,35 +54,26 @@ const UsersContent = () => {
     user?: UserAdapted;
   }>({ isOpen: false });
 
-  const [rolesDisponibles, setRolesDisponibles] = useState<
-    Record<string, string>
-  >({});
-
   const { usuarios, loading, refetchUsuarios } = useAuth();
-  console.log('usuarios:', usuarios);
 
   const userActual = usuarios?.find((u) => u.id === modalState.user?.id);
 
-  const { data: zonasResponse } = useQuery({
+  const { data: zonas = [] } = useQuery({
     queryKey: ["zonas"],
-    queryFn: () => ZonaService.allInfoZona(),
+    queryFn: ZonaService.allInfoZona,
+    select: (r) => r?.zonas ?? [],
+    staleTime: 5 * 60_000,
+    gcTime: 30 * 60_000,
+    refetchOnWindowFocus: false,
   });
 
-  const zonas = useMemo(() => zonasResponse?.zonas ?? [], [zonasResponse]);
+  const { data: rolesDisponibles = {} } = useQuery({
+    queryKey: ["roles-disponibles"],
+    queryFn: ApiRoles.listaRolesCreacion,
+    staleTime: Infinity,
+  });
 
-  useEffect(() => {
-    const obtenerRoles = async () => {
-      try {
-        const roles = await ApiRoles.listaRolesCreacion();
-        setRolesDisponibles(roles);
-      } catch (e) {
-        console.error("Error al obtener los roles disponibles:", e);
-      }
-    };
-
-    obtenerRoles();
-  }, []);
-
+  //CREAR USUARIO CON DATOS BASICOS
   const createMutation = useMutation({
     mutationFn: async (payload: {
       user: CreateUserData;
@@ -98,7 +89,7 @@ const UsersContent = () => {
         roles: user.roles,
         address: user.address ?? "",
         fechaNacimiento: user.fechaNacimiento,
-        isActive: user.isActive ?? true,
+        telefonos: [],
       };
 
       console.log("payload de usuario (CREATE):", userPayload);
@@ -111,13 +102,9 @@ const UsersContent = () => {
       const userId: number = newUser.id;
 
       // ✅ Tipamos explícitamente a TelPayload[]
-      const telPayloads: TelPayload[] = (phones ?? [])
-        .map((p) => ({
-          userId, // ahora es number seguro
-          tel: (p.tel ?? "").trim(),
-          phoneType: p.phoneType,
-        }))
-        .filter((tp) => tp.tel !== "");
+      const telPayloads = mapPhonesToPayload(userId, phones);
+
+      console.log("payload de telefonos (CREATE):", telPayloads);
 
       if (telPayloads.length) {
         await Promise.all(
@@ -139,6 +126,49 @@ const UsersContent = () => {
     },
   });
 
+  //MUTATES DEDICADOS PARA ZONA Y SUCURSAL
+  const asignarZonaMutation = useMutation({
+    mutationFn: async (args: { zonaId: string; userId: number }) => {
+      const { zonaId, userId } = args;
+
+      console.group("[UsersContent] asignarZonaMutation");
+      console.log("Payload a enviar:", { zonaId, userId });
+      console.groupEnd();
+
+      return ZonaService.asignarZona(zonaId, userId);
+    },
+    onSuccess: async () => {
+      toast.success("Zona asignada con éxito.");
+      await refetchUsuarios();
+    },
+    onError: (e: any) => {
+      toast.error(e?.message || "No se pudo asignar la zona.");
+      console.log("Error asignarZona:", e);
+    },
+  });
+
+  const asignarSucursalMutation = useMutation({
+    mutationFn: async (args: { sucid: string; userid: number }) => {
+      const { sucid, userid } = args;
+
+      console.group("[UsersContent] asignarSucursalMutation");
+      console.log("Payload a enviar:", { sucid, userid });
+      console.groupEnd();
+
+      return SucursalesService.asignarSucursal(sucid, userid);
+    },
+    onSuccess: async () => {
+      toast.success("Sucursal asignada con éxito.");
+      await refetchUsuarios();
+    },
+    onError: (e: any) => {
+      toast.error(e?.message || "No se pudo asignar la zona.");
+      console.log("Error asignarZona:", e);
+    },
+  });
+
+  //---------------------------------------
+
   const updateMutation = useMutation({
     mutationFn: async (args: {
       id: number;
@@ -159,7 +189,6 @@ const UsersContent = () => {
               fechaNacimiento: user.fechaNacimiento,
             }),
             ...(user.roles !== undefined && { roles: user.roles }),
-            ...(user.isActive !== undefined && { isActive: user.isActive }),
             // ⚠️ password: solo si tu API permite actualizarla acá
             ...(user.password ? { password: user.password } : {}),
           }
@@ -266,32 +295,65 @@ const UsersContent = () => {
     }
 
     if (modalState.mode === "edit" && modalState.user?.id) {
-      updateMutation.mutate({
-        id: modalState.user.id,
-        user,
-        labor,
-      });
+      const userId = modalState.user.id;
+
+      const prevZonaId = modalState.user?.zona?.id ?? "";
+      const nextZonaId = labor?.zona?.id ?? "";
+
+      // 1) Si antes NO tenía zona y ahora SÍ, primero asignamos zona por endpoint dedicado
+
+      console.group("[UsersContent] handleSubmit(edit)");
+      console.log("userId:", userId);
+      console.log("prevZonaId:", prevZonaId || "(sin zona)");
+      console.log("nextZonaId:", nextZonaId || "(sin zona)");
+
+      if (!prevZonaId && nextZonaId) {
+        console.log(
+          "Decisión: asignarZonaMutation primero, luego updateMutation (sin zona en payload)."
+        );
+        console.groupEnd();
+        try {
+          await asignarZonaMutation.mutateAsync({ zonaId: nextZonaId, userId });
+        } catch {
+          // si falla la asignación de zona, detenemos el flujo para que el usuario vea el error
+          return;
+        }
+        // ⚠️ Evitamos mandar zona nuevamente en el update
+        const { zona, ...laborSinZona } = labor ?? {};
+        updateMutation.mutate({ id: userId, user, labor: laborSinZona });
+        return;
+      }
+
+      console.log("Decisión: updateMutation normal.");
+      console.groupEnd();
+
+      updateMutation.mutate({ id: userId, user, labor });
       return;
     }
   };
 
-  const filteredUsers =
-    usuarios?.filter((user) => {
-      const search = searchTerm.toLowerCase();
-      const matchesSearch =
-        user.fullName?.toLowerCase().includes(search) ||
-        user.email?.toLowerCase().includes(search) || // ← protegido con ?
-        user.labor?.puestos?.some((puesto) =>
-          puesto?.name.toLowerCase().includes(search)
-        );
+  const debounced = useMemo(() => {
+    const id = setTimeout(() => {}, 0); // marcador
+    return searchTerm.toLowerCase();
+  }, [searchTerm]);
 
+  const filteredUsers = useMemo(() => {
+    if (!usuarios?.length) return [];
+    const search = debounced;
+    return usuarios.filter((user) => {
+      const matchesSearch =
+        (user.fullName ?? "").toLowerCase().includes(search) ||
+        (user.email ?? "").toLowerCase().includes(search) ||
+        (user.labor?.puestos ?? []).some((p) =>
+          (p?.name ?? "").toLowerCase().includes(search)
+        );
       const matchesStatus =
         !statusFilter ||
         (statusFilter === "activo" && user.isActive) ||
         (statusFilter === "inactivo" && !user.isActive);
-
       return matchesSearch && matchesStatus;
-    }) || [];
+    });
+  }, [usuarios, debounced, statusFilter]);
 
   const handleDeleteUser = (user: UserAdapted) => {
     setDeleteModal({ isOpen: true, user });
@@ -301,6 +363,21 @@ const UsersContent = () => {
     if (deleteModal.user) {
       deleteMutation.mutate(deleteModal.user.id!);
     }
+  };
+
+  const handleAssignZona = async (zonaId: string, userId: number) => {
+    if (!zonaId || !userId) return;
+    console.log("[UsersContent] handleAssignZona →", {
+      zonaId,
+      userId: String(userId),
+    });
+    await asignarZonaMutation.mutateAsync({ zonaId, userId });
+  };
+
+  const handleAssingSucursal = async (sucid: string, userid: number) => {
+    if (!sucid || !userid) return;
+
+    await asignarSucursalMutation.mutateAsync({ sucid, userid });
   };
 
   if (loading) {
@@ -523,10 +600,12 @@ const UsersContent = () => {
           rolesDisponibles={rolesDisponibles}
           zonas={zonas}
           onSubmit={handleSubmit}
+          onAssignZona={handleAssignZona}
+          onAssignSucursal={handleAssingSucursal}
           isloading={
-            modalState.mode === "edit"
-              ? updateMutation.isPending
-              : createMutation.isPending
+            (modalState.mode === "edit" &&
+              (updateMutation.isPending || asignarZonaMutation.isPending)) ||
+            (modalState.mode !== "edit" && createMutation.isPending)
           }
         />
 

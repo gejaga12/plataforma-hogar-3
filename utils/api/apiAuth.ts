@@ -3,7 +3,6 @@ import { BASE_URL } from "@/utils/baseURL";
 
 import { getAuthToken } from "@/utils/authToken";
 import { Role, UserAdapted } from "@/utils/types";
-import { PhoneForm } from "./apiTel";
 import { FormDataLabor } from "@/components/users/FormDatosLaborales";
 
 export type UserLoginData = Pick<
@@ -18,7 +17,6 @@ export type CreateUserData = {
   fechaNacimiento: string;
   address: string;
   roles: string[]; // IDs de roles
-  isActive: boolean;
 };
 
 //types para PATCHs

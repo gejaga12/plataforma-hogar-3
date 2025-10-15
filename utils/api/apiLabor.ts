@@ -7,8 +7,8 @@ import { formatDateInput } from "../formatDate";
 export interface CrearLaborDTO {
   userId?: number;
   cuil?: number; // 11 dígitos (CUIL argentino)
-  fechaIngreso: string | Date; // se normaliza a ISO
-  fechaAlta?: string | Date; // opcional según tu UI
+  fechaIngreso: string | null; // se normaliza a ISO
+  fechaAlta?: string | null; // opcional según tu UI
   categoryArca?: string;
   antiguedad?: string;
   tipoDeContrato?: string;

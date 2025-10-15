@@ -76,7 +76,6 @@ export class ApiRoles {
       });
 
       const rolesCreacion = response.data;
-      // console.log("rolesCreacion:", rolesCreacion);
 
       return rolesCreacion as Record<string, string>;
     } catch (err: any) {

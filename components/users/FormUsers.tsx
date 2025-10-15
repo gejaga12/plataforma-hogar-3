@@ -8,6 +8,45 @@ import { PhoneForm, PhoneType } from "@/utils/api/apiTel";
 import TelefonosModal from "./TelefonosModal";
 import { SucursalesService } from "@/utils/api/apiSucursales";
 import { CreateUserData } from "@/utils/api/apiAuth";
+import { cn } from "@/utils/cn";
+
+// helpers para mostrar tipo de telefono
+const phoneTypeLabel: Record<PhoneType, string> = {
+  [PhoneType.PRIMARY]: "Principal",
+  [PhoneType.SEC]: "Secundario",
+  [PhoneType.EM]: "Emergencia",
+};
+
+const PHONE_BADGE_STYLES: Record<PhoneType, string> = {
+  [PhoneType.PRIMARY]:
+    "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800",
+  [PhoneType.SEC]:
+    "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-900/30 dark:text-slate-300 dark:border-slate-800",
+  [PhoneType.EM]:
+    "bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-900/30 dark:text-rose-300 dark:border-rose-800",
+};
+
+const TypeBadge: React.FC<{ type: PhoneType }> = ({ type }) => (
+  <span
+    className={cn(
+      "inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-medium",
+      "shadow-sm ring-1 ring-black/0", // leve relieve
+      PHONE_BADGE_STYLES[type]
+    )}
+    title={phoneTypeLabel[type]}
+  >
+    {/* opcional: mini dot de color */}
+    <span
+      className={cn(
+        "h-1.5 w-1.5 rounded-full",
+        type === PhoneType.PRIMARY && "bg-blue-500",
+        type === PhoneType.SEC && "bg-slate-500",
+        type === PhoneType.EM && "bg-rose-500"
+      )}
+    />
+    {phoneTypeLabel[type]}
+  </span>
+);
 
 interface FormUsersProps {
   user: UserAdapted | undefined;
@@ -27,17 +66,14 @@ interface FormUsersProps {
   visibleFields: readonly string[];
   phones: PhoneForm[];
   onPhonesChange: (p: PhoneForm[]) => void;
+  onAssignZona: (zonaId: string, userId: number) => void | Promise<void>;
+  onAssignSucursal: (sucId: string, userId: number) => Promise<void> | void;
 }
-
-// helper para mostrar el tipo lindo
-const phoneTypeLabel: Record<PhoneType, string> = {
-  [PhoneType.PRIMARY]: "Principal",
-  [PhoneType.SEC]: "Secundario",
-  [PhoneType.EM]: "Emergencia",
-};
 
 const FormUsers: React.FC<FormUsersProps> = ({
   handleSubmit,
+  onAssignZona,
+  onAssignSucursal,
   setFormData,
   onClose,
   handleRoleChange,
@@ -58,9 +94,11 @@ const FormUsers: React.FC<FormUsersProps> = ({
   const [showPhoneModal, setShowPhoneModal] = useState(false);
   const [phoneDraft, setPhoneDraft] = useState<PhoneForm[]>([]);
 
-  const { data: sucursales, isLoading: isLoadingSucursales } = useQuery({
+  const { data: sucursales = [], isLoading: isLoadingSucursales } = useQuery({
     queryKey: ["sucursalesHogar"],
     queryFn: SucursalesService.getAllSucursalesHogar,
+    staleTime: 10 * 60_000,
+    refetchOnWindowFocus: false,
   });
 
   // abrir modal, precargando con lo existente o una fila vacía
@@ -83,7 +121,7 @@ const FormUsers: React.FC<FormUsersProps> = ({
 
   const savePhones = () => {
     const clean = phoneDraft
-      .map((p) => ({ ...p, tel: p.tel.trim() }))
+      .map((p) => ({ ...p, tel: (p.tel ?? "").replace(/\D/g, "").trim() }))
       .filter((p) => p.tel !== "");
     onPhonesChange(clean); // ← usar prop del padre
     setShowPhoneModal(false);
@@ -150,17 +188,18 @@ const FormUsers: React.FC<FormUsersProps> = ({
                 <div className="max-h-32 overflow-y-auto space-y-2 border border-gray-200 dark:border-gray-700 rounded-md p-2">
                   {Array.isArray(phones) && phones.length > 0 ? (
                     phones.map((p, i) => (
-                      <div key={`${p.tel}-${i}`} className="...">
-                        <span className="text-sm dark:text-gray-200">
+                      <div
+                        key={`${p.tel}-${i}`}
+                        className="flex items-center justify-between rounded-md bg-gray-50 dark:bg-gray-800/60 px-3 py-2"
+                      >
+                        <span className="text-sm font-medium text-gray-800 dark:text-gray-100 tracking-wide">
                           {p.tel}
                         </span>
-                        <span className="text-xs ...">
-                          {phoneTypeLabel[p.phoneType]}
-                        </span>
+                        <TypeBadge type={p.phoneType} />
                       </div>
                     ))
                   ) : (
-                    <div className="...">
+                    <div className="text-sm text-gray-500 dark:text-gray-400 px-1 py-0.5">
                       {isReadOnly
                         ? "Sin teléfonos"
                         : "No hay teléfonos. Clic en Agregar."}
@@ -260,82 +299,6 @@ const FormUsers: React.FC<FormUsersProps> = ({
                 </button>
               </div>
             )}
-
-            {/* Zona * */}
-            {mode !== "create" && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-400">
-                  Zona *
-                </label>
-                {isloading ? (
-                  <LoadingSpinner size="sm" />
-                ) : isReadOnly ? (
-                  <div className="px-3 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-300">
-                    {formDataLabor.zona?.name || "Sin asignar"}
-                  </div>
-                ) : (
-                  <select
-                    value={formDataLabor.zona?.id ?? ""}
-                    onChange={(e) => {
-                      const zonaSeleccionada = zonas.find(
-                        (z) => z.id === e.target.value
-                      );
-                      if (zonaSeleccionada) {
-                        setFormDataLabor((prev) => ({
-                          ...prev,
-                          zona: {
-                            id: zonaSeleccionada.id,
-                            name: zonaSeleccionada.name,
-                          },
-                        }));
-                      }
-                    }}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-800 dark:border-gray-800"
-                    disabled={isReadOnly}
-                  >
-                    <option value="">Seleccionar zona</option>
-                    {zonas.map((zona) => (
-                      <option key={zona.id} value={zona.id}>
-                        {zona.name}
-                      </option>
-                    ))}
-                  </select>
-                )}
-              </div>
-            )}
-
-            {/* Sucursal Hogar * */}
-            {mode !== "create" && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-400">
-                  Sucursal Hogar *
-                </label>
-                <select
-                  value={formDataLabor.sucursalHogar?.id ?? ""}
-                  onChange={(e: any) =>
-                    setFormDataLabor((prev) => ({
-                      ...prev,
-                      sucursalHogar: {
-                        id: e.target.value,
-                        name:
-                          (sucursales || []).find(
-                            (s) => s.id === e.target.value
-                          )?.name ?? "",
-                      },
-                    }))
-                  }
-                  className="w-full px-3 py-2 border ..."
-                  disabled={isReadOnly || isLoadingSucursales}
-                >
-                  <option value="">Seleccionar sucursal</option>
-                  {sucursales?.map((sucursal) => (
-                    <option key={sucursal.id} value={sucursal.id}>
-                      {sucursal.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
           </div>
         </div>
 
@@ -346,6 +309,11 @@ const FormUsers: React.FC<FormUsersProps> = ({
             isReadOnly={isReadOnly}
             mode={mode}
             user={user}
+            zonas={zonas}
+            sucursales={sucursales ?? []}
+            isLoading={isLoadingSucursales}
+            onAssignZona={onAssignZona}
+            onAssignSucursal={onAssignSucursal}
           />
         )}
 
