@@ -523,3 +523,34 @@ export interface UbicacionTec {
   name: string;
   SecId: string;
 }
+
+// ===== AGENDA (compatibilidad rápida con agenda-calendar) =====
+export type AgendaView = 'month' | 'week' | 'day' | 'list';
+
+export interface AgendaParticipant {
+  id?: string | number;
+  name: string;
+  avatar?: string;
+}
+
+export interface AgendaEvent {
+  id: string | number;
+  title: string;
+  startDate: string | Date;
+  endDate?: string | Date;
+  type?: AgendaType;
+  location?: string;
+  participants?: AgendaParticipant[];
+  priority?: AgendaPriorityEn;
+  
+
+  // 👉 nuevos opcionales usados en agenda-list
+  description?: string;
+  relatedOrder?: string | number;
+  status?: 'confirmed' | 'pending' | 'completed' | string;
+}
+
+
+export type AgendaPriorityEn = 'high' | 'medium' | 'low';
+
+export type AgendaEventType = AgendaType;

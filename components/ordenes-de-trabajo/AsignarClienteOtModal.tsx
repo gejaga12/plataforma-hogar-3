@@ -1,9 +1,20 @@
-import { AuthService } from "@/utils/api/apiAuth";
-import { OTService } from "@/utils/api/apiOTs";
-import { Ots, UserAdapted } from "@/utils/types";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
-import toast from "react-hot-toast";
+'use client';
+
+import { useState } from 'react';
+import {
+  Calendar,
+  Clock,
+  MapPin,
+  ChevronUp,
+  ChevronDown,
+  AlertCircle,
+  CheckCircle,
+} from 'lucide-react';
+import { Ots, UserAdapted } from '@/utils/types';
+import { AuthService } from '@/utils/api/apiAuth';
+import { OTService } from '@/utils/api/apiOTs';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import toast from 'react-hot-toast';
 
 export const AsignarOTModal = ({
   open,
@@ -16,17 +27,26 @@ export const AsignarOTModal = ({
 }) => {
   const queryClient = useQueryClient();
   const [selectedUser, setSelectedUser] = useState<number | null>(null);
-  const [comentario, setComentario] = useState("");
+  const [comentario, setComentario] = useState('');
+
+  // Helper para mostrar algo legible del Task
+  const getTaskLabel = (o: Ots | null) => {
+    if (!o?.task) return 'Sin tarea asociada';
+    // Task tiene: code (string), priority ('alta'|'media'|'baja'), etc.
+    const code = o.task.code || 'Tarea';
+    const pr = o.task.priority ? ` · Prioridad: ${o.task.priority}` : '';
+    return `${code}${pr}`;
+  };
 
   // 🔹 Traer lista de usuarios
   const {
-    data: users,
+    data: users = [],
     isLoading,
-    isError
-  } = useQuery({
-    queryKey: ["users", 10, 0], // puedes parametrizar limit/offset
+    isError,
+  } = useQuery<UserAdapted[]>({
+    queryKey: ['users', 10, 0],
     queryFn: () => AuthService.getUsers(10, 0),
-    enabled: open, // solo cuando el modal esté abierto
+    enabled: open,
   });
 
   // 🔹 Mutation asignar OT
@@ -34,12 +54,12 @@ export const AsignarOTModal = ({
     mutationFn: ({ otId, userId }: { otId: number; userId: number }) =>
       OTService.asignarOT(otId, userId),
     onSuccess: () => {
-      toast.success("OT asignada con éxito ✅");
-      queryClient.invalidateQueries({ queryKey: ["ots-backlog"] });
+      toast.success('OT asignada con éxito ✅');
+      queryClient.invalidateQueries({ queryKey: ['ots-backlog'] });
       onClose();
     },
     onError: (error: any) => {
-      toast.error(error.message || "Error al asignar OT ❌");
+      toast.error(error?.message || 'Error al asignar OT ❌');
     },
   });
 
@@ -53,7 +73,7 @@ export const AsignarOTModal = ({
             Asignar OT #{ot.id}
           </h3>
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            {ot.task}
+            {getTaskLabel(ot)}
           </p>
         </div>
 
@@ -72,11 +92,10 @@ export const AsignarOTModal = ({
               Selecciona un usuario
             </h4>
             {isLoading && <p className="text-sm text-gray-500">Cargando...</p>}
-            {isError && (
-              <p className="text-sm text-red-500">Error al cargar usuarios</p>
-            )}
+            {isError && <p className="text-sm text-red-500">Error al cargar usuarios</p>}
+
             <div className="max-h-48 overflow-y-auto border rounded-md divide-y dark:divide-gray-700">
-              {users?.map((u) => (
+              {users.map((u) => (
                 <label
                   key={u.id}
                   className="flex items-center gap-2 px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"
@@ -92,6 +111,11 @@ export const AsignarOTModal = ({
                   </span>
                 </label>
               ))}
+              {users.length === 0 && !isLoading && !isError && (
+                <div className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">
+                  No hay usuarios para asignar.
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -105,14 +129,15 @@ export const AsignarOTModal = ({
             Cancelar
           </button>
           <button
-            onClick={() =>
-              selectedUser &&
-              asignarClienteAOT.mutate({ otId: ot.id, userId: selectedUser })
-            }
+            onClick={() => {
+              if (selectedUser) {
+                asignarClienteAOT.mutate({ otId: ot.id, userId: selectedUser });
+              }
+            }}
             disabled={asignarClienteAOT.isPending || !selectedUser}
             className="px-4 py-2 rounded-md bg-orange-600 text-white hover:bg-orange-700 disabled:opacity-50"
           >
-            {asignarClienteAOT.isPending ? "Asignando..." : "Aceptar"}
+            {asignarClienteAOT.isPending ? 'Asignando...' : 'Aceptar'}
           </button>
         </div>
       </div>

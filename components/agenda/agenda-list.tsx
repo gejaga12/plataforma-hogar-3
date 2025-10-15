@@ -1,17 +1,16 @@
 'use client';
 
 import { useState } from 'react';
-import { 
-  Calendar, 
-  Clock, 
-  MapPin, 
-  Users, 
-  ChevronUp, 
+import {
+  Calendar,
+  Clock,
+  MapPin,
+  ChevronUp,
   ChevronDown,
   AlertCircle,
-  CheckCircle
+  CheckCircle,
 } from 'lucide-react';
-import { AgendaEvent, AgendaEventType } from '@/utils/types';
+import { AgendaEvent } from '@/utils/types';
 import { cn } from '@/utils/cn';
 
 interface AgendaListProps {
@@ -23,40 +22,59 @@ export function AgendaList({ events, onEventClick }: AgendaListProps) {
   const [sortField, setSortField] = useState<'startDate' | 'title' | 'priority'>('startDate');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
-  // Group events by date
+  // 🔧 helper común
+  const toDate = (d: string | Date) => (d instanceof Date ? d : new Date(d));
+
+  // Format time
+  const formatTime = (d: string | Date) =>
+    toDate(d).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+
+  // Check if an event is today
+  const isToday = (d: string | Date) => {
+    const today = new Date();
+    const eventDate = toDate(d);
+    return (
+      eventDate.getDate() === today.getDate() &&
+      eventDate.getMonth() === today.getMonth() &&
+      eventDate.getFullYear() === today.getFullYear()
+    );
+  };
+
+  // Check if an event is in the past
+  const isPast = (d: string | Date) => toDate(d) < new Date();
+
+  // Group events by date (por si luego querés render por grupo)
   const groupedEvents: Record<string, AgendaEvent[]> = {};
-  
+
   // Sort events
   const sortedEvents = [...events].sort((a, b) => {
     if (sortField === 'startDate') {
-      const dateA = new Date(a.startDate).getTime();
-      const dateB = new Date(b.startDate).getTime();
+      const dateA = toDate(a.startDate).getTime();
+      const dateB = toDate(b.startDate).getTime();
       return sortDirection === 'asc' ? dateA - dateB : dateB - dateA;
     } else if (sortField === 'title') {
-      return sortDirection === 'asc' 
-        ? a.title.localeCompare(b.title)
-        : b.title.localeCompare(a.title);
+      return sortDirection === 'asc' ? a.title.localeCompare(b.title) : b.title.localeCompare(a.title);
     } else if (sortField === 'priority') {
-      const priorityOrder = { high: 3, medium: 2, low: 1 };
-      const priorityA = priorityOrder[a.priority as keyof typeof priorityOrder] || 0;
-      const priorityB = priorityOrder[b.priority as keyof typeof priorityOrder] || 0;
+      const priorityOrder = { high: 3, medium: 2, low: 1 } as const;
+      const priorityA = a.priority ? priorityOrder[a.priority] ?? 0 : 0;
+      const priorityB = b.priority ? priorityOrder[b.priority] ?? 0 : 0;
       return sortDirection === 'asc' ? priorityA - priorityB : priorityB - priorityA;
     }
     return 0;
   });
 
-  // Group events by date
-  sortedEvents.forEach(event => {
-    const date = new Date(event.startDate).toLocaleDateString('es-ES', {
+  // Group events by date (no se usa en el render actual, pero queda listo)
+  sortedEvents.forEach((event) => {
+    const date = toDate(event.startDate).toLocaleDateString('es-ES', {
       year: 'numeric',
       month: 'long',
-      day: 'numeric'
+      day: 'numeric',
     });
-    
+
     if (!groupedEvents[date]) {
       groupedEvents[date] = [];
     }
-    
+
     groupedEvents[date].push(event);
   });
 
@@ -70,8 +88,8 @@ export function AgendaList({ events, onEventClick }: AgendaListProps) {
     }
   };
 
-  // Get event type badge
-  const getEventTypeBadge = (type: AgendaEventType) => {
+  // Get event type badge (acepta undefined porque type es opcional)
+  const getEventTypeBadge = (type: AgendaEvent['type']) => {
     switch (type) {
       case 'meeting':
         return (
@@ -108,8 +126,8 @@ export function AgendaList({ events, onEventClick }: AgendaListProps) {
     }
   };
 
-  // Get priority badge
-  const getPriorityBadge = (priority: string) => {
+  // Get priority badge (acepta undefined)
+  const getPriorityBadge = (priority: AgendaEvent['priority']) => {
     switch (priority) {
       case 'high':
         return (
@@ -135,8 +153,8 @@ export function AgendaList({ events, onEventClick }: AgendaListProps) {
     }
   };
 
-  // Get status badge
-  const getStatusBadge = (status: string) => {
+  // Get status badge (acepta undefined y cualquier string)
+  const getStatusBadge = (status: AgendaEvent['status']) => {
     switch (status) {
       case 'confirmed':
         return (
@@ -162,30 +180,6 @@ export function AgendaList({ events, onEventClick }: AgendaListProps) {
     }
   };
 
-  // Format time
-  const formatTime = (dateString: string) => {
-    return new Date(dateString).toLocaleTimeString('es-ES', {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
-  // Check if an event is today
-  const isToday = (dateString: string) => {
-    const today = new Date();
-    const eventDate = new Date(dateString);
-    return (
-      eventDate.getDate() === today.getDate() &&
-      eventDate.getMonth() === today.getMonth() &&
-      eventDate.getFullYear() === today.getFullYear()
-    );
-  };
-
-  // Check if an event is in the past
-  const isPast = (dateString: string) => {
-    return new Date(dateString) < new Date();
-  };
-
   return (
     <div className="space-y-6">
       {/* Table header */}
@@ -195,39 +189,27 @@ export function AgendaList({ events, onEventClick }: AgendaListProps) {
             <thead className="bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  <button 
-                    onClick={() => handleSort('startDate')}
-                    className="flex items-center space-x-1"
-                  >
+                  <button onClick={() => handleSort('startDate')} className="flex items-center space-x-1">
                     <span>Fecha y hora</span>
-                    {sortField === 'startDate' && (
-                      sortDirection === 'asc' ? <ChevronUp size={14} /> : <ChevronDown size={14} />
-                    )}
+                    {sortField === 'startDate' &&
+                      (sortDirection === 'asc' ? <ChevronUp size={14} /> : <ChevronDown size={14} />)}
                   </button>
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  <button 
-                    onClick={() => handleSort('title')}
-                    className="flex items-center space-x-1"
-                  >
+                  <button onClick={() => handleSort('title')} className="flex items-center space-x-1">
                     <span>Evento</span>
-                    {sortField === 'title' && (
-                      sortDirection === 'asc' ? <ChevronUp size={14} /> : <ChevronDown size={14} />
-                    )}
+                    {sortField === 'title' &&
+                      (sortDirection === 'asc' ? <ChevronUp size={14} /> : <ChevronDown size={14} />)}
                   </button>
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Tipo
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  <button 
-                    onClick={() => handleSort('priority')}
-                    className="flex items-center space-x-1"
-                  >
+                  <button onClick={() => handleSort('priority')} className="flex items-center space-x-1">
                     <span>Prioridad</span>
-                    {sortField === 'priority' && (
-                      sortDirection === 'asc' ? <ChevronUp size={14} /> : <ChevronDown size={14} />
-                    )}
+                    {sortField === 'priority' &&
+                      (sortDirection === 'asc' ? <ChevronUp size={14} /> : <ChevronDown size={14} />)}
                   </button>
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
@@ -243,26 +225,28 @@ export function AgendaList({ events, onEventClick }: AgendaListProps) {
             </thead>
             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
               {sortedEvents.map((event, index) => (
-                <tr 
-                  key={event.id} 
+                <tr
+                  key={event.id}
                   onClick={() => onEventClick(event)}
                   className={cn(
-                    "hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors",
-                    index % 2 === 1 && "bg-gray-50 dark:bg-gray-750"
+                    'hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors',
+                    index % 2 === 1 && 'bg-gray-50 dark:bg-gray-750'
                   )}
                 >
                   <td className="px-4 py-4 whitespace-nowrap">
                     <div className="flex flex-col">
                       <div className="flex items-center text-sm font-medium text-gray-900 dark:text-gray-100">
                         <Calendar size={16} className="mr-2 text-gray-400 dark:text-gray-500" />
-                        <span className={cn(
-                          isToday(event.startDate) && "text-orange-600 dark:text-orange-400 font-semibold",
-                          isPast(event.startDate) && !isToday(event.startDate) && "text-gray-500 dark:text-gray-400"
-                        )}>
-                          {new Date(event.startDate).toLocaleDateString('es-ES', {
+                        <span
+                          className={cn(
+                            isToday(event.startDate) && 'text-orange-600 dark:text-orange-400 font-semibold',
+                            isPast(event.startDate) && !isToday(event.startDate) && 'text-gray-500 dark:text-gray-400'
+                          )}
+                        >
+                          {toDate(event.startDate).toLocaleDateString('es-ES', {
                             weekday: 'short',
                             day: 'numeric',
-                            month: 'short'
+                            month: 'short',
                           })}
                         </span>
                       </div>
@@ -281,20 +265,12 @@ export function AgendaList({ events, onEventClick }: AgendaListProps) {
                       </div>
                     )}
                     {event.relatedOrder && (
-                      <div className="text-xs text-blue-600 dark:text-blue-400 mt-1">
-                        Orden: {event.relatedOrder}
-                      </div>
+                      <div className="text-xs text-blue-600 dark:text-blue-400 mt-1">Orden: {event.relatedOrder}</div>
                     )}
                   </td>
-                  <td className="px-4 py-4 whitespace-nowrap">
-                    {getEventTypeBadge(event.type)}
-                  </td>
-                  <td className="px-4 py-4 whitespace-nowrap">
-                    {getPriorityBadge(event.priority)}
-                  </td>
-                  <td className="px-4 py-4 whitespace-nowrap">
-                    {getStatusBadge(event.status)}
-                  </td>
+                  <td className="px-4 py-4 whitespace-nowrap">{getEventTypeBadge(event.type)}</td>
+                  <td className="px-4 py-4 whitespace-nowrap">{getPriorityBadge(event.priority)}</td>
+                  <td className="px-4 py-4 whitespace-nowrap">{getStatusBadge(event.status)}</td>
                   <td className="px-4 py-4">
                     {event.location ? (
                       <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
@@ -310,13 +286,12 @@ export function AgendaList({ events, onEventClick }: AgendaListProps) {
                       <div className="flex items-center">
                         <div className="flex -space-x-2 mr-2">
                           {event.participants.slice(0, 3).map((participant, i) => (
-                            <div key={i} className="w-8 h-8 rounded-full overflow-hidden border-2 border-white dark:border-gray-800">
+                            <div
+                              key={i}
+                              className="w-8 h-8 rounded-full overflow-hidden border-2 border-white dark:border-gray-800"
+                            >
                               {participant.avatar ? (
-                                <img 
-                                  src={participant.avatar} 
-                                  alt={participant.name} 
-                                  className="w-full h-full object-cover"
-                                />
+                                <img src={participant.avatar} alt={participant.name} className="w-full h-full object-cover" />
                               ) : (
                                 <div className="w-full h-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center">
                                   <span className="text-xs font-medium text-gray-800 dark:text-gray-200">
