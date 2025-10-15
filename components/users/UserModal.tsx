@@ -45,7 +45,6 @@ const initialLabor: FormDataLabor = {
   sueldo: undefined,
   puestos: [],
   area: "",
-  // NUEVOS
   zona: undefined,
   sucursalHogar: undefined,
   notificaciones: { mail: true, push: false },
@@ -80,12 +79,11 @@ const UserModal: React.FC<UserModalProps> = ({
         ([
           "fullName",
           "email",
-          "password", // opcional editable si querés permitir reset
+          "password",
           "telefono",
           "fechaNacimiento",
           "address",
           "roles",
-          // extras típicos de UserAdapted que tu <FormUsers/> pudiera renderizar:
           "zona",
           "jerarquia",
           "sucursalHogar",
@@ -140,6 +138,7 @@ const UserModal: React.FC<UserModalProps> = ({
 
       setFormDataLabor(() => {
         const laborDeUser = user.labor;
+        const suc = (user as any).sucursal ?? (user as any).sucursalHogar;
         const laborData: FormDataLabor = {
           cuil: laborDeUser?.cuil,
           fechaIngreso: toDateInputValue(laborDeUser?.fechaIngreso),
@@ -168,8 +167,8 @@ const UserModal: React.FC<UserModalProps> = ({
           zona: user.zona
             ? { id: user.zona.id, name: user.zona.name }
             : undefined,
-          sucursalHogar: user.sucursalHogar
-            ? { id: user.sucursalHogar.id, name: user.sucursalHogar.name }
+          sucursalHogar: suc
+            ? { id: String(suc.id), name: String(suc.name) }
             : undefined,
           isActive: user.isActive,
           notificaciones: user.notificaciones
@@ -182,7 +181,7 @@ const UserModal: React.FC<UserModalProps> = ({
         return laborData;
       });
     }
-  }, [isOpen, mode, user, zonas]);
+  }, [isOpen, mode, user]);
 
   const handleRoleChange = useCallback((id: string, checked: boolean) => {
     setFormData((prev) => ({

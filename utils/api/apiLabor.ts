@@ -1,8 +1,6 @@
-import { FormDataLabor } from "@/components/users/FormDatosLaborales";
 import { getAuthToken } from "@/utils/authToken";
 import { BASE_URL } from "@/utils/baseURL";
 import axios from "axios";
-import { formatDateInput } from "../formatDate";
 
 export interface CrearLaborDTO {
   userId?: number;
@@ -22,25 +20,6 @@ export interface CrearLaborDTO {
 export interface CrearPuestoDTO {
   name: string;
   laborid: string;
-}
-
-//Helper para mapear formdatalabor a crearlaborDTO
-export function buildCrearLaborPayload(
-  form: FormDataLabor,
-  userId: number
-): CrearLaborDTO {
-  return {
-    userId,
-    cuil: form.cuil,
-    fechaIngreso: formatDateInput(form.fechaIngreso),
-    fechaAlta: form.fechaAlta ? formatDateInput(form.fechaAlta) : undefined,
-    categoryArca: form.categoryArca?.trim() || undefined,
-    antiguedad: form.antiguedad?.trim() || undefined,
-    tipoDeContrato: form.tipoDeContrato,
-    horasTrabajo: form.horasTrabajo?.trim() || undefined,
-    sueldo: form.sueldo ? Number(form.sueldo) : undefined,
-    relacionLaboral: form.relacionLaboral,
-  };
 }
 
 export class LaborService {

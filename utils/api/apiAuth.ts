@@ -19,12 +19,6 @@ export type CreateUserData = {
   roles: string[]; // IDs de roles
 };
 
-//types para PATCHs
-export type UpdateUserPayload = {
-  user?: Partial<CreateUserData>;   // por si querés permitir cambiar base en edit (opcional)
-  labor?: Partial<FormDataLabor>;  // el “resto” para UserAdapted
-};
-
 export class AuthService {
   private static currentUser: UserLoginData | null = null;
   private static listeners: ((user: UserLoginData | null) => void)[] = [];
@@ -162,7 +156,7 @@ export class AuthService {
   //PATCH para info de usuario
   static async editUsers(
     id: number,
-    data: UpdateUserPayload
+    data: Partial<CreateUserData>
   ): Promise<{ did: boolean }> {
     const token = getAuthToken();
 
