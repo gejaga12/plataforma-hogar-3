@@ -1,8 +1,8 @@
 import { FormDataLabor } from "@/components/users/FormDatosLaborales";
 import { getAuthToken } from "@/utils/authToken";
 import { BASE_URL } from "@/utils/baseURL";
-import { formatDateInput } from "@/utils/formatDate";
 import axios from "axios";
+import { formatDateInput } from "../formatDate";
 
 export interface CrearLaborDTO {
   userId?: number;

@@ -12,6 +12,7 @@ import { normalizeText } from "@/utils/normalize";
 import { Sucursal } from "@/utils/types";
 import { CrearSucursalClienteModal } from "./CrearSucursalClienteModal";
 import { useRouter } from "next/navigation";
+import ModalPortal from "../ui/ModalPortal";
 
 const SucursalesClienteContent = () => {
   const queryClient = useQueryClient();
@@ -310,31 +311,33 @@ const SucursalesClienteContent = () => {
         </div>
       </div>
 
-      <CrearSucursalClienteModal
-        isOpen={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
-        onSubmit={(data) => {
-          crearSucursalCliente.mutate(data);
-          setIsCreateModalOpen(false);
-        }}
-        sucursalesHogar={sucHogar ?? []}
-        clientes={clientes}
-      />
-
-      {isDeleteModalOpen && (
-        <ConfirmDeleteModal
-          isOpen={isDeleteModalOpen}
-          onClose={() => {
-            setIsDeleteModalOpen(false);
-            setSucursalSeleccionada(null);
+      <ModalPortal>
+        <CrearSucursalClienteModal
+          isOpen={isCreateModalOpen}
+          onClose={() => setIsCreateModalOpen(false)}
+          onSubmit={(data) => {
+            crearSucursalCliente.mutate(data);
+            setIsCreateModalOpen(false);
           }}
-          onConfirm={handleConfirmEliminar}
-          title="Eliminar sucursal"
-          message={`¿Estás seguro de que deseas eliminar la sucursal "${sucursalSeleccionada?.name}"?`}
-          confirmText="Eliminar"
-          cancelText="Cancelar"
+          sucursalesHogar={sucHogar ?? []}
+          clientes={clientes}
         />
-      )}
+
+        {isDeleteModalOpen && (
+          <ConfirmDeleteModal
+            isOpen={isDeleteModalOpen}
+            onClose={() => {
+              setIsDeleteModalOpen(false);
+              setSucursalSeleccionada(null);
+            }}
+            onConfirm={handleConfirmEliminar}
+            title="Eliminar sucursal"
+            message={`¿Estás seguro de que deseas eliminar la sucursal "${sucursalSeleccionada?.name}"?`}
+            confirmText="Eliminar"
+            cancelText="Cancelar"
+          />
+        )}
+      </ModalPortal>
     </div>
   );
 };

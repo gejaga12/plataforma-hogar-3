@@ -3,8 +3,6 @@ import { BASE_URL } from "@/utils/baseURL";
 import { Cliente } from "@/utils/types";
 import axios from "axios";
 
-
-
 export class ClientService {
   static async crearCliente(data: Cliente) {
     const token = getAuthToken();
@@ -19,8 +17,7 @@ export class ClientService {
       return response.data;
     } catch (error: any) {
       const msg =
-        error?.response?.data?.message || error.message || "Error desconocido";
-      console.log("❌ Error al crear un cliente:", msg);
+        error?.response?.data?.message;
       throw new Error(msg);
     }
   }
@@ -42,8 +39,7 @@ export class ClientService {
       return response.data;
     } catch (error: any) {
       const msg =
-        error?.response?.data?.message || error.message || "Error desconocido";
-      console.log("❌ Error al listar los clientes:", msg);
+        error?.response?.data?.message;
       throw new Error(msg);
     }
   }
@@ -103,6 +99,28 @@ export class ClientService {
         error?.response?.data?.message || error.message || "Error desconocido";
       console.log("❌ Error al editar un cliente:", msg);
       throw new Error(msg); // <-- esto lanza el mensaje correcto
+    }
+  }
+
+  static async listarClientesCompletos(limit: number = 10, offset: number = 0) {
+    const token = getAuthToken();
+
+    try {
+      const response = await axios.get(`${BASE_URL}/cliente/eq/all`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        params: {
+          limit,
+          offset,
+        },
+      });
+
+      return response.data;
+    } catch (error: any) {
+      const msg = error?.response?.data?.message;
+      console.log("❌ Error al listar los clientes:", msg);
+      throw new Error(msg);
     }
   }
 }

@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, ChevronLeft, ChevronRight, QrCode } from "lucide-react";
+import { X } from "lucide-react";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useQuery } from "@tanstack/react-query";
 import { EquipoService } from "@/utils/api/apiEquipo";
 import { Equipo, EstadoEquipo } from "@/utils/types";
+import { getUserTimeZone, toUTC } from "@/utils/formatDate";
 
 interface EquipoFormProps {
   isOpen: boolean;
@@ -29,6 +30,7 @@ export function EquipoForm({
     Kv: [],
     habilitado: EstadoEquipo.OK,
     fueraDeServicio: false, // siempre por defecto false
+    ptId: undefined,
   });
 
   // DATA DE QUERYS
@@ -36,6 +38,8 @@ export function EquipoForm({
     queryKey: ["tipos-Equipo"],
     queryFn: EquipoService.listarEquiposAdmin,
   });
+
+  // console.log("tiposEquipo:", tiposEquipo)
 
   useEffect(() => {
     if (equipo) {
@@ -46,6 +50,7 @@ export function EquipoForm({
         Kv: equipo.Kv || [],
         habilitado: equipo.habilitado || EstadoEquipo.OK,
         fueraDeServicio: false,
+        ptId: equipo.ptId || undefined,
       });
     } else {
       setFormData({
@@ -54,12 +59,16 @@ export function EquipoForm({
         Kv: [],
         habilitado: EstadoEquipo.OK,
         fueraDeServicio: false,
+        ptId: undefined,
       });
     }
     setCurrentStep(1);
   }, [equipo, isOpen]);
 
-  const handleInputChange = (field: keyof Equipo, value: any) => {
+  const handleInputChange = (
+    field: keyof (Equipo & { ptId?: string }),
+    value: any
+  ) => {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
@@ -69,6 +78,7 @@ export function EquipoForm({
       setFormData((prev) => ({
         ...prev,
         Kv: [], // resetear Kv al cambiar tipo
+        ptId: undefined, // resetear plan tasks
       }));
     }
   };
@@ -124,8 +134,23 @@ export function EquipoForm({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("📤 Payload final:", formData);
-    onSubmit(formData);
+
+    const kvNormalizado = formData.Kv?.map((item) => {
+      if (item.value instanceof Date) {
+        return {
+          ...item,
+          value: toUTC(item.value, getUserTimeZone()),
+        };
+      }
+      return item;
+    });
+
+    const payload = {
+      ...formData,
+      Kv: kvNormalizado,
+    };
+    console.log("📤 Payload final:", payload);
+    onSubmit(payload);
   };
 
   const isStepValid = (step: number) => {
@@ -273,6 +298,34 @@ export function EquipoForm({
                     <option value={EstadoEquipo.OK}>Ok</option>
                     <option value={EstadoEquipo.Reparacion}>Reparación</option>
                     <option value={EstadoEquipo.No_ok}>No OK</option>
+                  </select>
+                </div>
+
+                {/* Plan Tasks asociados */}
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    Plan de Tareas (PT)
+                  </label>
+                  <select
+                    value={formData.ptId || ""}
+                    onChange={(e) => handleInputChange("ptId", e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg"
+                    disabled={!formData.defId} // 🔹 deshabilitado hasta elegir tipo
+                  >
+                    {!formData.defId ? (
+                      <option value="">Selecciona un tipo primero</option>
+                    ) : (
+                      <>
+                        <option value="">Seleccionar PT</option>
+                        {tiposEquipo
+                          .find((t: any) => t.id === formData.defId)
+                          ?.pts?.map((pt: { id: string; name: string }) => (
+                            <option key={pt.id} value={pt.id}>
+                              {pt.name}
+                            </option>
+                          ))}
+                      </>
+                    )}
                   </select>
                 </div>
               </div>

@@ -2,7 +2,7 @@ import { OTService } from "@/utils/api/apiOTs";
 import { cn } from "@/utils/cn";
 import { Ots } from "@/utils/types";
 import { useQuery } from "@tanstack/react-query";
-import { Eye, Search, UserPlus, Wrench } from "lucide-react";
+import { Eye, Search, UserPlus } from "lucide-react";
 import React, { useMemo, useState } from "react";
 import { LoadingSpinner } from "../ui/loading-spinner";
 import {
@@ -10,7 +10,6 @@ import {
   getEstadoLabel,
   getPrioridadClass,
 } from "../ui/EstadosBadge";
-import { formatDateText } from "@/utils/formatDate";
 
 const BacklogOT = ({ onAsignar }: { onAsignar: (ot: Ots) => void }) => {
   const [search, setSearch] = useState("");
@@ -42,7 +41,7 @@ const BacklogOT = ({ onAsignar }: { onAsignar: (ot: Ots) => void }) => {
     return backlog.filter(
       (o) =>
         o.id.toString().toLowerCase().includes(s) ||
-        (o.task ?? "").toLowerCase().includes(s) ||
+        (o.task?.code ?? "").toLowerCase().includes(s) ||
         (o.commentary ?? "").toLowerCase().includes(s)
     );
   }, [backlog, search]);
@@ -130,7 +129,7 @@ const BacklogOT = ({ onAsignar }: { onAsignar: (ot: Ots) => void }) => {
                     {o.id}
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100 font-mono">
-                    {o.task}
+                    {o.task?.code}
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
                     <div className="max-w-64 truncate" title={o.commentary}>
@@ -154,7 +153,7 @@ const BacklogOT = ({ onAsignar }: { onAsignar: (ot: Ots) => void }) => {
                   </td>
                   {/* Fecha formateada */}
                   <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
-                    {formatDateText(getFechaFromOT(o))}
+                    {getFechaFromOT(o)}
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
                     <span

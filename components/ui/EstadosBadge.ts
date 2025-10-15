@@ -1,4 +1,4 @@
-import { StateOT } from "@/utils/types";
+import { EstadoHoraExtra, StateOT } from "@/utils/types";
 
 export const getEstadoBadgeClass = (state?: StateOT): string => {
   switch (state) {
@@ -49,6 +49,19 @@ export const getPrioridadClass = (priority?: string): string => {
     case "Media":
       return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400";
     case "Alta":
+      return "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400";
+    default:
+      return "bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-300";
+  }
+};
+
+export const getStateBadgeHoras = (state?: EstadoHoraExtra): string => {
+  switch (state) {
+    case "pendiente":
+      return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400";
+    case "aprobado":
+      return "bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-300";
+    case "no aprobado":
       return "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400";
     default:
       return "bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-300";

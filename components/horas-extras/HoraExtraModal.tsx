@@ -4,14 +4,19 @@ import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
-import { HoraExtra, ingresoService } from "@/utils/api/apiIngreso";
+import { ingresoService } from "@/utils/api/apiIngreso";
+import { CrearHoraExtra } from "@/utils/types";
+import { formatISO } from "date-fns";
+import { toZonedTime } from "date-fns-tz";
 
 interface HoraExtraModalProps {
   isOpen: boolean;
   onClose: () => void;
-  horaExtra?: HoraExtra;
+  horaExtra?: CrearHoraExtra;
   mode: "create" | "view";
 }
+
+const TIME_ZONE = "America/Argentina/Buenos_Aires";
 
 const HoraExtraModal = ({
   isOpen,
@@ -21,16 +26,16 @@ const HoraExtraModal = ({
 }: HoraExtraModalProps) => {
   const queryClient = useQueryClient();
 
-  const initialFormData: HoraExtra = {
-    lan: 0,
-    lng: 0,
+  const initialFormData: CrearHoraExtra = {
+    lan: -27.411748784512017,
+    lng: -59.00082803696277,
     horaInicio: "",
     horaFinal: "",
     razon: "",
     comentario: "",
   };
 
-  const [formData, setFormData] = useState<HoraExtra>(initialFormData);
+  const [formData, setFormData] = useState<CrearHoraExtra>(initialFormData);
 
   useEffect(() => {
     if (isOpen && mode === "view" && horaExtra) {
@@ -45,9 +50,15 @@ const HoraExtraModal = ({
     mutationFn: async () => {
       const payload = {
         ...formData,
-        horaInicio: new Date(formData.horaInicio).toISOString(),
-        horaFinal: new Date(formData.horaFinal).toISOString(),
+        horaInicio: formData.horaInicio
+          ? formatISO(toZonedTime(new Date(formData.horaInicio), TIME_ZONE))
+          : "",
+        horaFinal: formData.horaFinal
+          ? formatISO(toZonedTime(new Date(formData.horaFinal), TIME_ZONE))
+          : "",
       };
+
+      console.log("📤 Payload corregido:", payload);
       return await ingresoService.createHorasExtras(payload);
     },
     onSuccess: () => {
@@ -68,6 +79,12 @@ const HoraExtraModal = ({
   const handleClose = () => {
     setFormData(initialFormData); // 🔹 limpiamos al cerrar
     onClose();
+  };
+
+  const toLocalInputValue = (iso?: string) => {
+    if (!iso) return "";
+    const date = new Date(iso);
+    return date.toISOString().slice(0, 16); // formato "YYYY-MM-DDTHH:mm"
   };
 
   return (
@@ -105,13 +122,15 @@ const HoraExtraModal = ({
               </label>
               <input
                 type="datetime-local"
-                value={formData.horaInicio}
-                onChange={(e) =>
+                value={toLocalInputValue(formData.horaInicio)}
+                onChange={(e) => {
+                  const date = new Date(e.target.value);
+                  const zoned = toZonedTime(date, TIME_ZONE);
                   setFormData((prev) => ({
                     ...prev,
-                    horaInicio: e.target.value,
-                  }))
-                }
+                    horaInicio: formatISO(zoned),
+                  }));
+                }}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                 required
                 disabled={isReadOnly}
@@ -123,13 +142,15 @@ const HoraExtraModal = ({
               </label>
               <input
                 type="datetime-local"
-                value={formData.horaFinal}
-                onChange={(e) =>
+                value={toLocalInputValue(formData.horaFinal)}
+                onChange={(e) => {
+                  const date = new Date(e.target.value);
+                  const zoned = toZonedTime(date, TIME_ZONE);
                   setFormData((prev) => ({
                     ...prev,
-                    horaFinal: e.target.value,
-                  }))
-                }
+                    horaFinal: formatISO(zoned),
+                  }));
+                }}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                 required
                 disabled={isReadOnly}
@@ -169,45 +190,6 @@ const HoraExtraModal = ({
               disabled={isReadOnly}
             />
           </div>
-
-          {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Latitud
-              </label>
-              <input
-                type="number"
-                step="any"
-                value={formData.lan}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    lan: parseFloat(e.target.value),
-                  }))
-                }
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                disabled={isReadOnly}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Longitud
-              </label>
-              <input
-                type="number"
-                step="any"
-                value={formData.lng}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    lng: parseFloat(e.target.value),
-                  }))
-                }
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                disabled={isReadOnly}
-              />
-            </div>
-          </div> */}
 
           {/* Footer */}
           {mode === "view" ? (

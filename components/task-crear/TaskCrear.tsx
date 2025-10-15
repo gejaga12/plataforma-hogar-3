@@ -80,7 +80,7 @@ const TaskCrear = ({ campo }: TaskFormModalProps) => {
         <div className="p-4 border-b border-gray-200">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold text-gray-900">
-              Crear Nueva Task (Canvas)
+              Crear Nueva Tarea
             </h2>
           </div>
         </div>
@@ -93,7 +93,7 @@ const TaskCrear = ({ campo }: TaskFormModalProps) => {
           }}
           className="p-3"
         >
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Plan Tasks */}
             <div>
               <label
@@ -297,7 +297,7 @@ const TaskCrear = ({ campo }: TaskFormModalProps) => {
                   : "Abrir canvas"
               }
             >
-              + Agregar (abrir canvas)
+              + Agregar
             </button>
           </div>
         </form>

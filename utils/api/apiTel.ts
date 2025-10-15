@@ -48,4 +48,27 @@ export class TelService {
 
     return response.data;
   }
+
+  static async editarTelefono(id: number, data: Partial<TelPayload>) {
+    const token = getAuthToken();
+    try {
+      const response = await axios.put(
+        `${BASE_URL}/tel/${id}`, // URL
+        data, // body con los campos a actualizar
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      return response.data;
+    } catch (error: any) {
+      console.error(
+        "❌ Error al editar teléfono:",
+        error.response?.data || error.message
+      );
+      throw new Error(error);
+    }
+  }
 }

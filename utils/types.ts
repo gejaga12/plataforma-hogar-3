@@ -13,6 +13,8 @@ export interface UserAdapted {
   jerarquia?: Jerarquia;
   fechaNacimiento: string;
   createdAt: string;
+  fechaIngreso?: string;
+  fechaAlta?: string;
   deletedAt: string | null;
   address: string;
   telefono: PhoneForm[];
@@ -72,7 +74,7 @@ export interface Labor {
   horasTrabajo?: string;
   sueldo?: number;
   relacionLaboral: string;
-  fechaIngreso: Date | string;
+  fechaIngreso: string;
   puestos?: Puesto[];
 }
 
@@ -202,7 +204,7 @@ export interface ProcesoIngreso {
 
 //----------------------------------------//
 
-// INGRESO-EGRESO Y HORAS EXTAS
+// INGRESO-EGRESO Y HORAS EXTRAS
 export interface MovimientoIngresoEgreso {
   id: string;
   usuario: {
@@ -226,52 +228,105 @@ export interface MovimientoIngresoEgreso {
   createdAt: string;
 }
 
+export interface CrearHoraExtra {
+  lan: number;
+  lng: number;
+  horaInicio: string;
+  horaFinal: string;
+  razon: string;
+  comentario?: string;
+}
+
+export interface HorasExtras extends CrearHoraExtra {
+  autorizado: string;
+  controlado: string;
+  fechaSolicitud: string;
+  id: string;
+  solicitante: string;
+  state: EstadoHoraExtra;
+  totalHoras: string;
+  verificacion: Verificacion;
+}
+
+export enum EstadoHoraExtra {
+  PENDIENTE = "pendiente",
+  NOAPPROVED = "no aprobado",
+  APPROVED = "aprobado",
+}
+
+export enum Verificacion {
+  NOVERIFICADO = "no verificado",
+  VERIFICADO = "verificado",
+}
+
 //----------------------------------------//
 
 // Interfaz para novedades
+;
+
 export interface Novedad {
   id: string;
-  titulo: string;
-  fecha: string;
-  descripcion: string;
-  icono: string;
-  reacciones: {
-    like: number;
-    love: number;
-    seen: number;
-  };
-  rolesDestinatarios: string[]; // ej: ['rrhh', 'admin', 'tecnico']
-  pin?: boolean; // para fijar arriba
+  name: string;
+  fecha?: string;
+  desc: string;
+  icono?: string;
+  likes?: number;
+  views?: number;
+  hearts?: number;
+  like?: boolean;
+  heart?: boolean;
+  file?: File | null;
+  imagePath?: boolean;
 }
 
-// Tipos para la agenda de trabajo
-export type AgendaView = "day" | "week" | "month" | "list";
-export type AgendaEventType =
+// AGENDA
+export type AgendaState = "pendiente" | "progreso" | "finalizado";
+
+export type AgendaPriority = "Alta" | "Media" | "Baja";
+
+export type AgendaType =
   | "meeting"
   | "task"
   | "deadline"
   | "training"
   | "reminder";
 
-export interface AgendaEvent {
-  id: string;
-  title: string;
-  description?: string;
-  startDate: string;
-  endDate?: string;
-  type: AgendaEventType;
-  location?: string;
-  participants: {
+export interface AgendaUserLite {
+  id: number | string;
+  email: string;
+  fullName: string;
+  isActive: boolean;
+  fechaNacimiento: boolean | string;
+  address: string;
+  createdAt: string;
+  zona: string;
+  sucursal: Record<string, unknown>;
+  configuraciones: {
     id: string;
-    name: string;
-    avatar?: string;
-  }[];
-  createdBy: string;
-  status: "pending" | "confirmed" | "completed";
-  priority: "low" | "medium" | "high";
-  relatedOrder?: string;
-  recurrence: "daily" | "weekly" | "monthly" | "quarterly" | "yearly" | null;
-  color: string;
+    notificaciones: boolean;
+    correos: boolean;
+  };
+}
+
+export interface AgendaItem {
+  id: string;
+  name: string;
+  until: string;
+  priority?: AgendaPriority;
+  description?: string;
+  location?: string;
+  state: AgendaState;
+  assignedBy: AgendaUserLite;
+  user: AgendaUserLite;
+  type?: AgendaType;
+}
+
+// Respuesta completa del GET /agenda
+export interface ListarAgendasResponse {
+  subordinados: AgendaUserLite[];
+  owner: AgendaItem[];
+  subs: AgendaItem[];
+  agendaByArea: AgendaItem[];
 }
 
 //----------------------------------------//
@@ -340,7 +395,7 @@ export interface Ots {
   id: number;
   state?: StateOT;
   processRef?: string;
-  task?: string;
+  task?: Task;
   priority?: string;
   commentary?: string;
   result?: boolean;
@@ -351,9 +406,17 @@ export interface Ots {
   no_me_recibio?: string;
   finalizado?: string;
   postergado?: string;
+  postergadoPor?: string;
   sin_asignar?: string;
   Audit?: Audit;
   tecnico?: UserAdapted;
+  sucursal?: string;
+  cliente?: string;
+  facility?: string;
+  firma?: string;
+  aclaracion?: string;
+
+  imageSolucioname?: string;
 }
 
 export enum StateOT {
@@ -392,8 +455,8 @@ export interface Sucursal {
   id?: string;
   name: string;
   codigo?: string;
-  sucHogar?: string | Sucursal; // 👈 string en create, objeto en get
-  cliente?: string | Cliente; // idem
+  sucHogar?: string | Sucursal;
+  cliente?: string | Cliente;
   users?: UserAdapted;
   isInternal?: boolean;
   estado?: "activo" | "inactivo";

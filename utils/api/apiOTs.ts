@@ -36,7 +36,7 @@ export class OTService {
       return response.data;
     } catch (error: any) {
       const msg = error?.response?.data?.message || error?.message;
-      console.log("Error:",msg);
+      console.log("Error:", msg);
       throw new Error(msg);
     }
   }
@@ -139,6 +139,24 @@ export class OTService {
         throw new Error("OT no encontrada.");
       }
       throw new Error("Error al cambiar el estado de la OT.");
+    }
+  }
+
+  //IMAGENES
+  static async traerImagesById(id: string) {
+    const token = getAuthToken();
+
+    try {
+      const response = await axios.get(`${BASE_URL}/ot-images/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: "blob",
+      });
+
+      return URL.createObjectURL(response.data);
+    } catch (error: any) {
+      const msg = error?.response?.data?.message || "Error al traer la imagen";
+      console.log("Error:", msg);
+      throw new Error(msg);
     }
   }
 }

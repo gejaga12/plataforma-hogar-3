@@ -76,7 +76,6 @@ export class AuthService {
     roles: string[]; // IDs de los roles
     address: string;
     puesto: string;
-    // zona: string;
     sucursalHogar: string;
     fechaNacimiento: string;
     jerarquia?: string;

@@ -192,4 +192,48 @@ export class EquipoService {
       throw new Error(msg);
     }
   }
+
+  static async listarEqSinPT(limit: number = 10, offset: number = 0) {
+    const token = getAuthToken();
+
+    try {
+      const response = await axios.get(`${BASE_URL}/equipo/blank/all`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        params: {
+          limit,
+          offset,
+        },
+      });
+
+      return response.data;
+    } catch (error: any) {
+      const msg = error?.response?.data?.message;
+      console.log("Error:", msg);
+      throw new Error(msg);
+    }
+  }
+
+  static async asignarPTEquipo(eqid: string, ptid: string) {
+    const token = getAuthToken();
+
+    try {
+      const response = await axios.post(
+        `${BASE_URL}/equipo/assign/${eqid}/pt/${ptid}`,
+        {},
+        {
+          headers: {
+            Authorizarion: `Bearer ${token}`,
+          },
+        }
+      );
+
+      return response.data;
+    } catch (error: any) {
+      const msg = error?.response?.data?.message;
+      console.log("Error:", msg);
+      throw new Error(msg);
+    }
+  }
 }

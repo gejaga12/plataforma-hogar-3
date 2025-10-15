@@ -3,7 +3,7 @@
 import { Cliente, Sucursal } from "@/utils/types";
 import { useQuery } from "@tanstack/react-query";
 import { Building, ChevronRight, Filter, Layers } from "lucide-react";
-import { useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { FiltrosPanoramica } from "./FiltrosPanoramica";
 import { cn } from "@/utils/cn";
 import { LoadingSpinner } from "../ui/loading-spinner";
@@ -33,69 +33,67 @@ const PanoramicaContent = () => {
     queryKey: ["sucursales-panoramica"],
     queryFn: async () => {
       const [sucursalesClientes, sucursalesHogar] = await Promise.all([
-        SucursalesService.listarSucursales(), // devuelve sucursales de clientes
-        SucursalesService.getAllSucursalesHogar(), // devuelve sucursales hogar
+        SucursalesService.listarSucursales(),
+        SucursalesService.getAllSucursalesHogar(),
       ]);
-
-      // Unimos ambas listas
       return [...sucursalesClientes, ...sucursalesHogar];
     },
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
-  const handleSelectSucursal = (sucursal: Sucursal) => {
+  // console.log('sucursales combinadas:', sucursalesCombinadas);
+
+  const handleSelectSucursal = useCallback((sucursal: Sucursal) => {
     setSelectedSucursal(sucursal);
     setIsPanelOpen(true);
-  };
+  }, []);
 
-  const handleClosePanel = () => {
-    setIsPanelOpen(false);
-  };
+  const handleClosePanel = useCallback(() => setIsPanelOpen(false), []);
 
-  const handleFiltroChange = (key: keyof FiltrosSucursales, value: string) => {
-    setFiltros((prev) => ({
-      ...prev,
-      [key]: value,
-    }));
-  };
+  const handleFiltroChange = useCallback(
+    (key: keyof FiltrosSucursales, value: string) => {
+      setFiltros((prev) => ({ ...prev, [key]: value }));
+    },
+    []
+  );
 
-  const handleResetFiltros = () => {
-    setFiltros({
-      estado: "",
-      clienteId: "",
-      busqueda: "",
-    });
-  };
+  const handleResetFiltros = useCallback(() => {
+    setFiltros({ estado: "", clienteId: "", busqueda: "" });
+  }, []);
 
   // Filtrar sucursales según los filtros aplicados
-  const filteredSucursales =
-    sucursalesCombinadas?.filter((sucursal) => {
+  const filteredSucursales = useMemo(() => {
+    const term = (filtros.busqueda || "").toLowerCase().trim();
+    return (sucursalesCombinadas || []).filter((sucursal) => {
       const matchesEstado =
         !filtros.estado || sucursal.estado === filtros.estado;
-
       const matchesCliente =
         !filtros.clienteId ||
         (sucursal.cliente as Cliente)?.id === filtros.clienteId;
-
       const matchesBusqueda =
-        !filtros.busqueda ||
-        sucursal.name.toLowerCase().includes(filtros.busqueda.toLowerCase()) ||
-        sucursal.address
-          ?.toLowerCase()
-          .includes(filtros.busqueda.toLowerCase());
-
+        !term ||
+        sucursal.name.toLowerCase().includes(term) ||
+        (sucursal.address?.toLowerCase().includes(term) ?? false);
       return matchesEstado && matchesCliente && matchesBusqueda;
-    }) || [];
+    });
+  }, [
+    sucursalesCombinadas,
+    filtros.estado,
+    filtros.clienteId,
+    filtros.busqueda,
+  ]);
 
-  // Obtener lista única de clientes para el filtro
-  const clientesUnicos: Cliente[] = sucursalesCombinadas
-    ? Array.from(
-        new Map(
-          sucursalesCombinadas
-            .filter((s) => s.cliente)
-            .map((s) => [(s.cliente! as Cliente).id, s.cliente! as Cliente])
-        ).values()
-      )
-    : [];
+  const clientesUnicos: Cliente[] = useMemo(() => {
+    if (!sucursalesCombinadas?.length) return [];
+    return Array.from(
+      new Map(
+        sucursalesCombinadas
+          .filter((s) => s.cliente)
+          .map((s) => [(s.cliente as Cliente).id, s.cliente as Cliente])
+      ).values()
+    );
+  }, [sucursalesCombinadas]);
 
   return (
     <div className="space-y-6">
