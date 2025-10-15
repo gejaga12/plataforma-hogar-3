@@ -1,34 +1,35 @@
-import { CreateUserData, UserAdapted, Zona } from "@/utils/types";
+import { UserAdapted, Zona } from "@/utils/types";
 import { X } from "lucide-react";
 import { useEffect, useState } from "react";
 import FormUsers from "./FormUsers";
 import { EstadoContractual, FormDataLabor } from "./FormDatosLaborales";
-import { formatDateInput, toDateInputValue } from "@/utils/formatDate";
+import { toDateInputValue } from "@/utils/formatDate";
 import { PhoneForm, PhoneType } from "@/utils/api/apiTel";
+import { CreateUserData } from "@/utils/api/apiAuth";
 
 interface UserModalProps {
   isOpen: boolean;
   onClose: () => void;
   user?: UserAdapted;
   mode: "create" | "edit" | "view";
-  onSubmit: (payload: { user: CreateUserData; labor?: FormDataLabor }) => void;
+  onSubmit: (payload: {
+    user: CreateUserData;
+    labor?: FormDataLabor;
+    phones?: PhoneForm[];
+  }) => void;
   rolesDisponibles: Record<string, string>;
   isloading: boolean;
   zonas: Zona[];
 }
 
 const initialFormData: CreateUserData = {
-  nombreCompleto: "",
-  zona: undefined,
-  fechaNacimiento: "",
-  mail: "",
-  direccion: "",
+  fullName: "",
+  email: "",
   roles: [],
-  telefono: [],
-  notificaciones: { mail: true, push: true },
-  puesto: "",
-  sucursalHogar: "",
-  activo: true,
+  password: "",
+  address: "",
+  fechaNacimiento: "",
+  isActive: true,
 };
 
 const initialLabor: FormDataLabor = {
@@ -43,6 +44,12 @@ const initialLabor: FormDataLabor = {
   sueldo: undefined,
   puestos: [],
   area: "",
+  // NUEVOS
+  zona: undefined,
+  sucursalHogar: undefined,
+  notificaciones: { mail: true, push: false },
+  photoURL: "",
+  certificacionesTitulo: "",
 };
 
 const UserModal: React.FC<UserModalProps> = ({
@@ -55,7 +62,41 @@ const UserModal: React.FC<UserModalProps> = ({
   isloading,
   zonas,
 }) => {
+  const visibleFields =
+    mode === "create"
+      ? ([
+          "fullName",
+          "email",
+          "password",
+          "telefono",
+          "fechaNacimiento",
+          "address",
+          "roles",
+        ] as const)
+      : // en edit/view, mostra todo (los del create + los demás que tu FormUsers soporte)
+        ([
+          "fullName",
+          "email",
+          "password", // opcional editable si querés permitir reset
+          "telefono",
+          "fechaNacimiento",
+          "address",
+          "roles",
+          // extras típicos de UserAdapted que tu <FormUsers/> pudiera renderizar:
+          "zona",
+          "jerarquia",
+          "sucursalHogar",
+          "isActive",
+          "notificaciones",
+          "photoURL",
+          "certificacionesTitulo",
+          "relacionLaboral",
+          "fechaIngreso",
+          "fechaAlta",
+        ] as const);
+
   const [formData, setFormData] = useState<CreateUserData>(initialFormData);
+  const [phones, setPhones] = useState<PhoneForm[]>([]);
 
   const [formDataLabor, setFormDataLabor] =
     useState<FormDataLabor>(initialLabor);
@@ -75,28 +116,24 @@ const UserModal: React.FC<UserModalProps> = ({
       )
         ? (user as any).phoneNumber.map((p: any) => ({
             tel: p?.tel ?? "",
-            phoneType: (p?.phoneType as PhoneType) ?? PhoneType.PRIMARY, // "principal" | "secundario" | "emergencia"
+            phoneType: (p?.phoneType as PhoneType) ?? PhoneType.PRIMARY,
           }))
-        : [];
+        : user.telefono ?? [];
 
-      // intentar encontrar la zona por nombre (en tu Adapted guardás el name)
-      const zonaObj = zonas?.find((z) => z.id === user.zona?.id);
+      setPhones(telefonosFromApi);
+
       const roleIds = (user.roles || []).map((r: any) =>
         typeof r === "string" ? r : r.id
       );
 
       setFormData({
-        nombreCompleto: user.fullName || "",
-        zona: zonaObj,
-        fechaNacimiento: toDateInputValue(user.fechaNacimiento),
-        mail: user.email || "",
-        direccion: user.address || "",
+        fullName: user.fullName || "",
+        email: user.email || "",
         roles: roleIds,
-        notificaciones: user.notificaciones || { mail: true, push: true },
-        sucursalHogar: user.sucursalHogar?.id ?? "",
-        activo: user.isActive ?? true,
-        telefono: telefonosFromApi,
-        puesto: user.labor?.puestos?.[0]?.name || "",
+        password: "", // vacío en edit/view
+        address: user.address || "",
+        fechaNacimiento: toDateInputValue(user.fechaNacimiento),
+        isActive: user.isActive,
       });
 
       setFormDataLabor(() => {
@@ -115,9 +152,27 @@ const UserModal: React.FC<UserModalProps> = ({
             laborDeUser?.sueldo != null
               ? Number(laborDeUser.sueldo)
               : undefined,
-          puestos: laborDeUser?.puestos,
+          puestos: Array.isArray(laborDeUser?.puestos)
+            ? laborDeUser.puestos.map((p: any) =>
+                typeof p === "string" ? p : p.id || p.name || ""
+              )
+            : [],
           area: user.jerarquia?.area || "",
           jerarquiaId: user.jerarquia?.id || "",
+
+          // NUEVOS mapeos desde UserAdapted:
+          zona: user.zona
+            ? { id: user.zona.id, name: user.zona.name }
+            : undefined,
+          sucursalHogar: user.sucursalHogar
+            ? { id: user.sucursalHogar.id, name: user.sucursalHogar.name }
+            : undefined,
+          isActive: user.isActive,
+          notificaciones: user.notificaciones
+            ? { mail: user.notificaciones.mail, push: user.notificaciones.push }
+            : { mail: true, push: false },
+          photoURL: user.photoURL || "",
+          certificacionesTitulo: user.certificacionesTitulo || "",
         };
 
         return laborData;
@@ -137,6 +192,7 @@ const UserModal: React.FC<UserModalProps> = ({
   if (!isOpen) return null;
 
   const isReadOnly = mode === "view";
+  const showOnlyRequired = mode === "create"; // 👈 clave
 
   return (
     <>
@@ -161,6 +217,24 @@ const UserModal: React.FC<UserModalProps> = ({
           <FormUsers
             handleSubmit={(e) => {
               e.preventDefault();
+
+              if (mode === "create") {
+                const userClean: CreateUserData = {
+                  ...formData,
+                  fullName: (formData.fullName ?? "").trim(),
+                  email: (formData.email ?? "").trim(),
+                  password: (formData.password ?? "").trim(),
+                  roles: Array.isArray(formData.roles) ? formData.roles : [],
+                  address: formData.address ?? "",
+                  fechaNacimiento: formData.fechaNacimiento ?? "",
+                  isActive: formData.isActive ?? true,
+                };
+
+                onSubmit({ user: userClean, phones });
+                return;
+              }
+
+              //En edit/view, comportamiento actual
               onSubmit({ user: formData, labor: formDataLabor });
             }}
             formData={formData}
@@ -175,6 +249,10 @@ const UserModal: React.FC<UserModalProps> = ({
             formDataLabor={formDataLabor}
             setFormDataLabor={setFormDataLabor}
             user={user}
+            visibleFields={visibleFields}
+            showOnlyRequired={showOnlyRequired}
+            phones={phones}
+            onPhonesChange={setPhones}
           />
         </div>
       </div>

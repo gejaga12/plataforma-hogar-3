@@ -2,7 +2,7 @@ import { PhoneForm } from "@/utils/api/apiTel";
 
 //USUARIOS
 export interface UserAdapted {
-  id: number;
+  id?: number;
   email: string;
   fullName: string;
   roles: Role[];
@@ -12,47 +12,26 @@ export interface UserAdapted {
   };
   jerarquia?: Jerarquia;
   fechaNacimiento: string;
-  createdAt: string;
+  createdAt?: string;
   fechaIngreso?: string;
   fechaAlta?: string;
-  deletedAt: string | null;
+  deletedAt?: string | null;
   address: string;
-  telefono: PhoneForm[];
-  relacionLaboral: string;
+  telefono?: PhoneForm[];
+  relacionLaboral?: string;
   photoURL?: string;
-  certificacionesTitulo: string;
-  sucursalHogar: {
+  certificacionesTitulo?: string;
+  sucursalHogar?: {
     id: string;
     name: string;
   };
   isActive: boolean;
-  notificaciones: {
-    mail: boolean;
-    push: boolean;
-  };
-  labor?: Labor;
-}
-
-export interface CreateUserData {
-  nombreCompleto: string;
-  contrasena?: string;
-  telefono?: PhoneForm[];
-  zona?: {
-    id: string;
-    name: string;
-  };
-  fechaNacimiento: string;
-  mail: string;
-  direccion: string;
-  roles: string[]; // solo los IDs
   notificaciones?: {
     mail: boolean;
     push: boolean;
   };
-  puesto: string;
-  sucursalHogar: string;
-  activo: boolean;
-  jerarquiaId?: string;
+  labor?: Labor;
+  password?: string;
 }
 
 //---------------------------------------//

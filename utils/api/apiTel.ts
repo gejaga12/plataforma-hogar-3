@@ -7,7 +7,7 @@ export type PhoneForm = { tel: string; phoneType: PhoneType };
 
 export type TelPayload = {
   tel: string;
-  phoneType: PhoneType; // o usar tu enum
+  phoneType: PhoneType;
   userId: number;
 };
 

@@ -1,18 +1,16 @@
 import { ZonaService } from "@/utils/api/apiZonas";
 import { useAuth } from "@/hooks/useAuth";
-import { CreateUserData, Puesto, UserAdapted } from "@/utils/types";
+import { Puesto, UserAdapted } from "@/utils/types";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import React, { useEffect, useMemo, useState } from "react";
 import { FormDataLabor } from "./FormDatosLaborales";
 import { ApiRoles } from "@/utils/api/apiRoles";
-import { formatDateInput } from "@/utils/formatDate";
-import { AuthService } from "@/utils/api/apiAuth";
 import {
-  buildCrearLaborPayload,
-  CrearLaborDTO,
-  LaborService,
-} from "@/utils/api/apiLabor";
-import { PuestoService } from "@/utils/api/apiPuesto";
+  AuthService,
+  CreateUserData,
+  UpdateUserPayload,
+} from "@/utils/api/apiAuth";
+import { CrearLaborDTO, LaborService } from "@/utils/api/apiLabor";
 import toast from "react-hot-toast";
 import { LoadingSpinner } from "../ui/loading-spinner";
 import {
@@ -28,12 +26,7 @@ import {
 import { cn } from "@/utils/cn";
 import UserModal from "./UserModal";
 import DeleteUSerModal from "./DeleteUserModal";
-import {
-  PhoneForm,
-  PhoneType,
-  TelPayload,
-  TelService,
-} from "@/utils/api/apiTel";
+import { PhoneForm, TelPayload, TelService } from "@/utils/api/apiTel";
 import ModalPortal from "../ui/ModalPortal";
 
 const mapPhonesToPayload = (
@@ -66,6 +59,7 @@ const UsersContent = () => {
   >({});
 
   const { usuarios, loading, refetchUsuarios } = useAuth();
+  console.log('usuarios:', usuarios);
 
   const userActual = usuarios?.find((u) => u.id === modalState.user?.id);
 
@@ -75,26 +69,6 @@ const UsersContent = () => {
   });
 
   const zonas = useMemo(() => zonasResponse?.zonas ?? [], [zonasResponse]);
-
-  const hasLaborData = (labor?: FormDataLabor): boolean => {
-    if (!labor) return false;
-
-    const campos = [
-      labor.cuil,
-      labor.fechaIngreso,
-      labor.fechaAlta,
-      labor.tipoDeContrato,
-      labor.relacionLaboral,
-      labor.categoryArca,
-      labor.antiguedad,
-      labor.horasTrabajo,
-      labor.sueldo,
-      labor.area,
-      labor.puestos?.[0],
-    ];
-
-    return campos.some((campo) => campo && campo !== "");
-  };
 
   useEffect(() => {
     const obtenerRoles = async () => {
@@ -112,161 +86,157 @@ const UsersContent = () => {
   const createMutation = useMutation({
     mutationFn: async (payload: {
       user: CreateUserData;
-      labor?: FormDataLabor;
+      phones?: PhoneForm[];
     }) => {
-      const { user, labor } = payload;
+      const { user, phones } = payload;
 
+      // 1) Usuario (solo campos de CreateUserData)
       const userPayload = {
-        email: user.mail,
-        password: user.contrasena || "Abc123", // por defecto si no se carga
-        fullName: user.nombreCompleto,
+        email: user.email,
+        password: user.password || "Abc123",
+        fullName: user.fullName,
         roles: user.roles,
-        address: user.direccion ?? "",
-        puesto: user.puesto ?? "",
-        zona: user.zona?.id ?? "",
-        sucursalHogar: user.sucursalHogar ?? "",
+        address: user.address ?? "",
         fechaNacimiento: user.fechaNacimiento,
-        jerarquia: user.jerarquiaId ?? undefined,
+        isActive: user.isActive ?? true,
       };
 
-      console.log("payload de usuario:", userPayload);
+      console.log("payload de usuario (CREATE):", userPayload);
+
       const newUser = await AuthService.registerUser(userPayload);
 
-      // 2) Teléfonos
-      const telefonos: PhoneForm[] = Array.isArray(user.telefono)
-        ? user.telefono
-        : [];
-      const telPayloads: TelPayload[] = mapPhonesToPayload(
-        newUser.id,
-        telefonos
-      );
+      if (typeof newUser?.id !== "number") {
+        throw new Error("El registro no devolvió un id de usuario válido.");
+      }
+      const userId: number = newUser.id;
+
+      // ✅ Tipamos explícitamente a TelPayload[]
+      const telPayloads: TelPayload[] = (phones ?? [])
+        .map((p) => ({
+          userId, // ahora es number seguro
+          tel: (p.tel ?? "").trim(),
+          phoneType: p.phoneType,
+        }))
+        .filter((tp) => tp.tel !== "");
 
       if (telPayloads.length) {
-        console.log("📤 [POST /tel] Enviando teléfonos:", telPayloads);
         await Promise.all(
           telPayloads.map((tp) => TelService.crearTelefono(tp))
         );
       }
 
-      // 👉 POST a /labor si hay datos cargados
-      if (hasLaborData(labor)) {
-        const laborDTO = buildCrearLaborPayload(labor!, newUser.id); // aseguramos que no sea undefined
-
-        console.log("📤 Payload de labor:", laborDTO);
-
-        const nuevaLabor = await LaborService.crearLabor(laborDTO);
-
-        if (
-          labor?.puestos &&
-          Array.isArray(labor.puestos) &&
-          labor.puestos[0] // hay al menos uno
-        ) {
-          const puestoPayload = {
-            name:
-              labor.puestos[0] && typeof labor.puestos[0] != "string"
-                ? labor.puestos[0]?.name
-                : "",
-            laborId: nuevaLabor.id,
-          };
-
-          console.log("📤 Payload de puesto:", puestoPayload);
-          await PuestoService.crearPuesto(puestoPayload);
-        }
-      }
       return newUser;
     },
     retry: false,
     onSuccess: async () => {
-      toast.success("Usuario creado con exito.");
+      toast.success("Usuario creado con éxito.");
       await refetchUsuarios();
       setModalState({ isOpen: false, mode: "create" });
     },
-
     onError: (e: any) => {
-      toast.error("Ocurrio un error al crear el usuario.");
+      toast.error("Ocurrió un error al crear el usuario.");
       console.log("Error:", e);
     },
   });
 
-  const editMutation = useMutation({
-    mutationFn: async ({
-      id,
-      laborId,
-      formData,
-      laborForm,
-    }: {
+  const updateMutation = useMutation({
+    mutationFn: async (args: {
       id: number;
-      laborId: string;
-      formData: CreateUserData;
-      laborForm?: FormDataLabor;
+      user?: Partial<CreateUserData>;
+      labor?: Partial<FormDataLabor>;
     }) => {
-      //Payload para datos de usuario
-      const payload = {
-        email: formData.mail,
-        password: formData.contrasena || undefined,
-        fullName: formData.nombreCompleto,
-        roles: formData.roles,
-        address: formData.direccion,
-        puesto: formData.puesto,
-        zona: formData.zona?.id,
-        sucursalHogar: formData.sucursalHogar || undefined,
-        fechaNacimiento: formData.fechaNacimiento,
-      };
-      // console.log("📤 Enviando payload al PATCH", payload);
-      await AuthService.editUsers(id, payload);
+      const { id, user, labor } = args;
 
-      const telefonos: PhoneForm[] = Array.isArray(formData.telefono)
-        ? formData.telefono
-        : [];
+      // 1) Normalizá la sección base (solo si hay cambios)
+      const userSection: Partial<CreateUserData> | undefined = user
+        ? {
+            ...(user.fullName !== undefined && {
+              fullName: user.fullName.trim(),
+            }),
+            ...(user.email !== undefined && { email: user.email.trim() }),
+            ...(user.address !== undefined && { address: user.address }),
+            ...(user.fechaNacimiento !== undefined && {
+              fechaNacimiento: user.fechaNacimiento,
+            }),
+            ...(user.roles !== undefined && { roles: user.roles }),
+            ...(user.isActive !== undefined && { isActive: user.isActive }),
+            // ⚠️ password: solo si tu API permite actualizarla acá
+            ...(user.password ? { password: user.password } : {}),
+          }
+        : undefined;
 
-      const telPayloads: TelPayload[] = mapPhonesToPayload(id, telefonos);
+      // 2) Normalizá la sección laboral (solo si hay cambios)
+      //    OJO: respetá el shape de FormDataLabor (ids dentro de objetos si así lo tipaste)
+      const laborSection: Partial<FormDataLabor> | undefined = labor
+        ? {
+            ...(labor.jerarquiaId !== undefined && {
+              jerarquiaId: labor.jerarquiaId,
+            }),
+            ...(labor.area !== undefined && { area: labor.area }),
+            ...(labor.zona !== undefined && { zona: labor.zona }), // {id,name} según tu tipo
+            ...(labor.sucursalHogar !== undefined && {
+              sucursalHogar: labor.sucursalHogar,
+            }), // {id,name}
+            ...(labor.isActive !== undefined && { isActive: labor.isActive }),
+            ...(labor.notificaciones !== undefined && {
+              notificaciones: labor.notificaciones,
+            }),
+            ...(labor.photoURL !== undefined && { photoURL: labor.photoURL }),
+            ...(labor.certificacionesTitulo !== undefined && {
+              certificacionesTitulo: labor.certificacionesTitulo,
+            }),
 
-      if (telPayloads.length) {
-        console.log("📤 [PATCH /tel] Actualizando teléfonos:", telPayloads);
-        await Promise.all(
-          telPayloads.map((tp) => TelService.editarTelefono(id, tp))
-        );
-      }
+            ...(labor.cuil !== undefined && { cuil: labor.cuil }),
+            ...(labor.tipoDeContrato !== undefined && {
+              tipoDeContrato: labor.tipoDeContrato,
+            }),
+            ...(labor.relacionLaboral !== undefined && {
+              relacionLaboral: labor.relacionLaboral,
+            }),
+            ...(labor.fechaIngreso !== undefined && {
+              fechaIngreso: labor.fechaIngreso,
+            }),
+            ...(labor.fechaAlta !== undefined && {
+              fechaAlta: labor.fechaAlta,
+            }),
+            ...(labor.categoryArca !== undefined && {
+              categoryArca: labor.categoryArca,
+            }),
+            ...(labor.antiguedad !== undefined && {
+              antiguedad: labor.antiguedad,
+            }),
+            ...(labor.horasTrabajo !== undefined && {
+              horasTrabajo: labor.horasTrabajo,
+            }),
+            ...(labor.sueldo !== undefined && { sueldo: labor.sueldo }),
+            ...(labor.puestos !== undefined && { puestos: labor.puestos }), // Puesto[]
+          }
+        : undefined;
 
-      if (
-        laborForm &&
-        laborForm?.tipoDeContrato &&
-        laborForm?.relacionLaboral
-      ) {
-        //Payload para datos laborales
-        const laborPayload: Partial<CrearLaborDTO> = {
-          fechaIngreso: laborForm.fechaIngreso,
-          fechaAlta: laborForm.fechaAlta,
-          categoryArca: laborForm.categoryArca,
-          antiguedad: laborForm.antiguedad,
-          tipoDeContrato: laborForm.tipoDeContrato,
-          horasTrabajo: laborForm.horasTrabajo,
-          relacionLaboral: laborForm.relacionLaboral,
-          cuil: laborForm.cuil ? Number(laborForm.cuil) : undefined,
-          sueldo: laborForm.sueldo ? Number(laborForm.sueldo) : undefined,
-        };
+      // 3) Armá el payload EXACTO que espera tu service
+      const data: UpdateUserPayload = {};
+      if (userSection && Object.keys(userSection).length)
+        data.user = userSection;
+      if (laborSection && Object.keys(laborSection).length)
+        data.labor = laborSection;
 
-        // console.log("📤 Payload laboral:", laborPayload);
-        await LaborService.actualizarLabor(laborId, laborPayload);
-      }
+      // Si por algún motivo no hay nada que enviar, evitá el PATCH vacío
+      if (!data.user && !data.labor) return true;
 
-      const puesto = laborForm?.puestos?.[0] as Puesto;
-      const puestoId = puesto?.id;
-      const payloadPuesto = { laborId, name: puesto?.name };
+      // 4) PATCH principal
+      await AuthService.editUsers(id, data);
 
-      console.log("📤 Payload puesto:", { ...payloadPuesto, puestoId });
-
-      await LaborService.actualizarPuesto(puestoId, payloadPuesto);
+      return true;
     },
-
+    retry: false,
     onSuccess: async () => {
-      toast.success("Usuario actualizado correctamente");
+      toast.success("Usuario actualizado con éxito.");
       await refetchUsuarios();
       setModalState({ isOpen: false, mode: "edit" });
     },
-    onError: (error: any) => {
-      console.error("❌ Error en edición:", error.message || error);
-      console.log(error.message || "Error al actualizar usuario");
+    onError: (e: any) => {
+      toast.error("Ocurrió un error al actualizar el usuario.");
+      console.log("Error:", e);
     },
   });
 
@@ -286,22 +256,20 @@ const UsersContent = () => {
   const handleSubmit = async (payload: {
     user: CreateUserData;
     labor?: FormDataLabor;
+    phones?: PhoneForm[];
   }) => {
-    const { user, labor } = payload;
+    const { user, labor, phones } = payload;
 
     if (modalState.mode === "create") {
-      console.log("📤 Ejecutando createMutation");
-      createMutation.mutate({ user, labor });
+      createMutation.mutate({ user, phones });
       return;
     }
 
     if (modalState.mode === "edit" && modalState.user?.id) {
-      console.log("✏️ Ejecutando editMutation");
-      editMutation.mutate({
+      updateMutation.mutate({
         id: modalState.user.id,
-        laborId: modalState.user?.labor?.id ?? "",
-        formData: user,
-        laborForm: labor,
+        user,
+        labor,
       });
       return;
     }
@@ -331,7 +299,7 @@ const UsersContent = () => {
 
   const confirmDelete = () => {
     if (deleteModal.user) {
-      deleteMutation.mutate(deleteModal.user.id);
+      deleteMutation.mutate(deleteModal.user.id!);
     }
   };
 
@@ -557,7 +525,7 @@ const UsersContent = () => {
           onSubmit={handleSubmit}
           isloading={
             modalState.mode === "edit"
-              ? editMutation.isPending
+              ? updateMutation.isPending
               : createMutation.isPending
           }
         />

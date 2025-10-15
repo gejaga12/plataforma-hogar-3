@@ -12,18 +12,26 @@ interface FormDatosLaboralesProps {
 export type EstadoContractual = "Periodo de Prueba" | "Contratado" | undefined;
 
 export interface FormDataLabor {
-  cuil?: number;
-  fechaIngreso: string;
-  fechaAlta?: string;
-  categoryArca?: string;
-  antiguedad?: string;
   tipoDeContrato: string;
-  horasTrabajo?: string;
+  relacionLaboral?: EstadoContractual;
+  fechaIngreso: string;
+  fechaAlta: string;
+  cuil?: number;
+  categoryArca: string;
+  antiguedad: string;
+  horasTrabajo: string;
   sueldo?: number;
-  relacionLaboral: EstadoContractual;
-  area?: string;
-  puestos?: Puesto[];
+  puestos: Puesto[];
+  area: string;
   jerarquiaId?: string;
+
+  // NUEVOS: “resto” de UserAdapted que NO están en CreateUserData
+  zona?: { id: string; name: string };
+  sucursalHogar?: { id: string; name: string };
+  isActive?: boolean;
+  notificaciones?: { mail: boolean; push: boolean };
+  photoURL?: string;
+  certificacionesTitulo?: string;
 }
 
 const FormDatosLaborales: React.FC<FormDatosLaboralesProps> = ({
@@ -66,6 +74,7 @@ const FormDatosLaborales: React.FC<FormDatosLaboralesProps> = ({
             }}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-600 dark:border-gray-800"
             disabled={isReadOnly}
+            required={!isReadOnly}
           />
           <p className="text-xs text-gray-500 mt-1">11 dígitos sin guiones.</p>
         </div>
@@ -77,28 +86,24 @@ const FormDatosLaborales: React.FC<FormDatosLaboralesProps> = ({
           </label>
           <input
             type="text"
-            value={
-              typeof formDataLabor.puestos?.[0] === "string"
-                ? formDataLabor.puestos[0]
-                : formDataLabor.puestos?.[0]?.name || ""
-            }
+            value={formDataLabor.puestos?.[0]?.name ?? ""}
             onChange={(e) =>
-              setFormDataLabor(({ puestos, ...prev }) => {
-                puestos = puestos as Puesto[];
-                return {
-                  ...prev,
-                  puestos: [
-                    {
-                      ...(typeof puestos?.[0] == "string" ? puestos?.[0] : {}),
-                      name: e.target.value,
-                      id: puestos?.[0]?.id ?? "", // conservar el id
-                    },
-                  ],
+              setFormDataLabor((prev) => {
+                const first = prev.puestos?.[0];
+                const updatedFirst: Puesto = {
+                  id: first?.id ?? "", // si ya hay id, se conserva
+                  name: e.target.value,
                 };
+                const updated =
+                  Array.isArray(prev.puestos) && prev.puestos.length > 0
+                    ? [updatedFirst, ...prev.puestos.slice(1)]
+                    : [updatedFirst];
+                return { ...prev, puestos: updated };
               })
             }
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-600 dark:border-gray-800"
             disabled={isReadOnly}
+            required={!isReadOnly}
           />
         </div>
 
@@ -109,7 +114,14 @@ const FormDatosLaborales: React.FC<FormDatosLaboralesProps> = ({
           </label>
 
           <div className="mt-1 bg-gray-100 border border-gray-300 px-3 py-2 rounded-md dark:bg-gray-600 dark:border-gray-800">
-            {user?.jerarquia
+            +{" "}
+            {formDataLabor?.area
+              ? `${formDataLabor.area}${
+                  formDataLabor.jerarquiaId
+                    ? ` - (${formDataLabor.jerarquiaId})`
+                    : ""
+                }`
+              : user?.jerarquia
               ? `${user.jerarquia.area} - ${user.jerarquia.name}`
               : "Asignar un área desde organigrama"}
           </div>
@@ -131,6 +143,7 @@ const FormDatosLaborales: React.FC<FormDatosLaboralesProps> = ({
             }
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-600 dark:border-gray-800"
             disabled={isReadOnly}
+            required={!isReadOnly}
           />
         </div>
 
@@ -168,6 +181,7 @@ const FormDatosLaborales: React.FC<FormDatosLaboralesProps> = ({
             }
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-600 dark:border-gray-800"
             disabled={isReadOnly}
+            required={!isReadOnly}
           >
             <option value="">Seleccionar tipo de contrato</option>
             <option value="Relación de Dependencia">
@@ -193,6 +207,7 @@ const FormDatosLaborales: React.FC<FormDatosLaboralesProps> = ({
             }
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-600 dark:border-gray-800"
             disabled={isReadOnly}
+            required={!isReadOnly}
           >
             <option value="">Seleccionar estado</option>
             <option value="Periodo de Prueba">Periodo de Prueba</option>
