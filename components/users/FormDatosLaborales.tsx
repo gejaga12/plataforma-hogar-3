@@ -30,8 +30,6 @@ export interface FormDataLabor {
   puestos: Puesto[];
   area: string;
   jerarquiaId?: string;
-
-  // NUEVOS: “resto” de UserAdapted que NO están en CreateUserData
   zona?: { id: string; name: string };
   sucursalHogar?: { id: string; name: string };
   isActive?: boolean;
@@ -212,28 +210,29 @@ const FormDatosLaborales: React.FC<FormDatosLaboralesProps> = ({
             }
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-600 dark:border-gray-800"
             disabled={isReadOnly}
-            required={!isReadOnly}
           />
         </div>
 
         {/* Área */}
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-400">
-            Área
+            Área - Cargo
           </label>
 
-          <div className="mt-1 bg-gray-100 border border-gray-300 px-3 py-2 rounded-md dark:bg-gray-600 dark:border-gray-800">
-            +{" "}
-            {formDataLabor?.area
-              ? `${formDataLabor.area}${
-                  formDataLabor.jerarquiaId
-                    ? ` - (${formDataLabor.jerarquiaId})`
-                    : ""
-                }`
-              : user?.jerarquia
-              ? `${user.jerarquia.area} - ${user.jerarquia.name}`
-              : "Asignar un área desde organigrama"}
-          </div>
+          {(() => {
+            const area = (user?.jerarquia?.area ?? "").trim();
+            const cargo = (user?.jerarquia?.cargo ?? "").trim();
+
+            const label = area
+              ? `${area}${cargo ? ` - ${cargo}` : ""}`
+              : "Asignar un área desde organigrama";
+
+            return (
+              <div className="mt-1 bg-gray-100 border border-gray-300 px-3 py-2 rounded-md dark:bg-gray-600 dark:border-gray-800">
+                {label}
+              </div>
+            );
+          })()}
         </div>
 
         {/* Fecha de Ingreso */}

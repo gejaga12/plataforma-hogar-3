@@ -19,7 +19,7 @@ export interface CrearLaborDTO {
 
 export interface CrearPuestoDTO {
   name: string;
-  laborid: string;
+  laborId: string;
 }
 
 export class LaborService {
@@ -68,7 +68,7 @@ export class LaborService {
     try {
       const token = getAuthToken();
 
-      const response = await axios.post(`${BASE_URL}/labor/puesto`, data, {
+      const response = await axios.post(`${BASE_URL}/puesto`, data, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",

@@ -108,6 +108,7 @@ const UserModal: React.FC<UserModalProps> = ({
     if (mode === "create") {
       setFormData(initialFormData);
       setFormDataLabor(initialLabor);
+      setPhones([]);
       return;
     }
 
@@ -160,7 +161,7 @@ const UserModal: React.FC<UserModalProps> = ({
                   : { id: "", name: String(p) }
               )
             : [],
-          area: user.jerarquia?.area || "",
+          area: user.jerarquia?.cargo || "",
           jerarquiaId: user.jerarquia?.id || "",
 
           // NUEVOS mapeos desde UserAdapted:

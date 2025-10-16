@@ -24,31 +24,29 @@ import DeleteUSerModal from "./DeleteUserModal";
 import { PhoneForm, TelPayload, TelService } from "@/utils/api/apiTel";
 import ModalPortal from "../ui/ModalPortal";
 import { SucursalesService } from "@/utils/api/apiSucursales";
-import {
-  CrearLaborDTO,
-  LaborService,
-} from "@/utils/api/apiLabor";
+import { CrearLaborDTO, LaborService } from "@/utils/api/apiLabor";
 import { formatDateInput } from "@/utils/formatDate";
 
 export const buildLaborData = (form: FormDataLabor, userId: number) => {
-  const base = {
+  const toNum = (v: unknown) =>
+    v === undefined || v === null || v === "" || Number.isNaN(Number(v))
+      ? undefined
+      : Number(v);
+
+  return {
     userId,
-    cuil: form.cuil,
-    fechaIngreso: formatDateInput(form.fechaIngreso) ?? null,
+    cuil: toNum(form.cuil), // si no hay, queda undefined (NO null)
+    fechaIngreso: form.fechaIngreso
+      ? formatDateInput(form.fechaIngreso)
+      : undefined,
     fechaAlta: form.fechaAlta ? formatDateInput(form.fechaAlta) : undefined,
-    categoryArca: form.categoryArca,
-    antiguedad: form.antiguedad,
-    tipoDeContrato: form.tipoDeContrato,
-    horasTrabajo: form.horasTrabajo,
-    sueldo:
-      form.sueldo === undefined ||
-      form.sueldo === null ||
-      isNaN(Number(form.sueldo))
-        ? undefined
-        : Number(form.sueldo),
-    relacionLaboral: form.relacionLaboral,
+    categoryArca: form.categoryArca || undefined,
+    antiguedad: form.antiguedad || undefined,
+    tipoDeContrato: form.tipoDeContrato || undefined,
+    horasTrabajo: form.horasTrabajo || undefined,
+    sueldo: toNum(form.sueldo),
+    relacionLaboral: form.relacionLaboral || undefined,
   };
-  return base; // limpio
 };
 
 export const buildPuestoData = (form: FormDataLabor) => {
@@ -84,7 +82,7 @@ const UsersContent = () => {
 
   const { usuarios, loading, refetchUsuarios } = useAuth();
 
-  // console.log("usuarios:", usuarios);
+  console.log("usuarios:", usuarios);
 
   const userActual = usuarios?.find((u) => u.id === modalState.user?.id);
 
@@ -169,7 +167,7 @@ const UsersContent = () => {
 
   const crearPuestoMutation = useMutation({
     mutationFn: (args: { laborId: string; name: string }) =>
-      LaborService.crearPuesto({ laborid: args.laborId, name: args.name }),
+      LaborService.crearPuesto({ laborId: args.laborId, name: args.name }),
     onSuccess: async () => {
       toast.success("Puesto creado.");
       await refetchUsuarios();
@@ -222,6 +220,19 @@ const UsersContent = () => {
   //---------------------------------------
 
   //UPDATES
+  const actualizarUsuarioMutation = useMutation({
+    mutationFn: (args: { id: number; data: Partial<CreateUserData> }) =>
+      AuthService.editUsers(args.id, args.data),
+    onSuccess: async () => {
+      toast.success("Datos de usuario actualizados.");
+      await refetchUsuarios();
+    },
+    onError: (e: any) => {
+      toast.error(e?.message || "No se pudo actualizar los datos básicos.");
+      console.error("Error actualizar usuario:", e);
+    },
+  });
+
   const actualizarLaborMutation = useMutation({
     mutationFn: (args: { laborId: string; data: Partial<CrearLaborDTO> }) =>
       LaborService.actualizarLabor(args.laborId, args.data),
@@ -260,6 +271,13 @@ const UsersContent = () => {
     },
   });
 
+  const prune = <T extends Record<string, any>>(obj: T): Partial<T> =>
+    Object.fromEntries(
+      Object.entries(obj).filter(
+        ([, v]) => v !== undefined && v !== null && v !== ""
+      )
+    ) as Partial<T>;
+
   const handleSubmit = async (payload: {
     user: CreateUserData;
     labor?: FormDataLabor;
@@ -268,7 +286,6 @@ const UsersContent = () => {
     const { user, labor } = payload;
 
     if (modalState.mode === "create") {
-      // Tu flujo actual (user + phones)
       createMutation.mutate({ user, phones: payload.phones });
       return;
     }
@@ -293,77 +310,59 @@ const UsersContent = () => {
       const laborData = labor ? buildLaborData(labor, userId) : undefined;
       const puestoData = labor ? buildPuestoData(labor) : undefined;
 
+      const laborClean = laborData ? prune({ ...laborData }) : undefined;
+      if (laborClean) delete (laborClean as any).userId;
+
       // Detección de cambios reales en Labor
       const hasLaborChanges =
-        !!laborData &&
-        Object.keys(laborData).some((k) => (laborData as any)[k] !== undefined);
+        !!laborClean && Object.keys(laborClean).length > 0;
 
-      // Detección de cambios en Puesto
-      const hasPuestoInForm = !!puestoData?.name;
+      // ¿Hubo cambios en el puesto?
+      const hasPuestoInForm = !!puestoData?.name?.trim();
       const puestoChanged =
-        hasPuestoInForm && prevPuestoName !== puestoData!.name;
+        hasPuestoInForm && prevPuestoName !== puestoData!.name!.trim();
 
       try {
-        // ──────────────────────────────────────────
-        // 1) LABOR + PUESTO cuando NO hay laborId
-        // ──────────────────────────────────────────
         if (!prevLaborId) {
+          // No hay labor previa
           let laborIdForPuesto = "";
 
-          if (hasLaborChanges) {
-            // Crear labor con los datos provistos
-            const created = await crearLaborMutation.mutateAsync(laborData!);
-            laborIdForPuesto = String(created?.id ?? created?.labor?.id ?? "");
-          } else if (hasPuestoInForm) {
-            // No hay datos de labor pero sí queremos crear Puesto → crear una labor mínima
-            const minimalLabor = {
+          if (hasLaborChanges || hasPuestoInForm) {
+            // crear labor mínima solo con lo necesario
+            const minimal = prune({
               userId,
-              fechaIngreso: null,
-            } as CrearLaborDTO;
-            const created = await crearLaborMutation.mutateAsync(minimalLabor);
+              ...(laborClean || {}),
+            }) as CrearLaborDTO;
+
+            const created = await crearLaborMutation.mutateAsync(minimal);
             laborIdForPuesto = String(created?.id ?? created?.labor?.id ?? "");
           }
 
-          // Crear puesto solo si hay nombre y ya tenemos laborId
-          if (
-            hasPuestoInForm &&
-            laborData?.userId &&
-            (laborIdForPuesto || prevLaborId)
-          ) {
+          if (hasPuestoInForm && laborIdForPuesto) {
             await crearPuestoMutation.mutateAsync({
-              laborId: laborIdForPuesto || prevLaborId!,
-              name: puestoData!.name!,
+              laborId: laborIdForPuesto,
+              name: puestoData!.name!.trim(),
             });
           }
         } else {
-          // ────────────────────────────────────────
-          // 2) LABOR + PUESTO cuando SÍ hay laborId
-          // ────────────────────────────────────────
-
-          // a) Actualizar LABOR solo si hay cambios
+          // Sí hay labor previa
           if (hasLaborChanges) {
-            const { userId: _omit, ...partial } = laborData!;
-            if (Object.keys(partial).length > 0) {
-              await actualizarLaborMutation.mutateAsync({
-                laborId: prevLaborId,
-                data: partial,
-              });
-            }
+            await actualizarLaborMutation.mutateAsync({
+              laborId: prevLaborId,
+              data: laborClean as Partial<CrearLaborDTO>,
+            });
           }
 
-          // b) PUESTO independiente
           if (hasPuestoInForm) {
             if (!prevPuestoId) {
-              // No había puesto → crear
               await crearPuestoMutation.mutateAsync({
                 laborId: prevLaborId,
-                name: puestoData!.name!,
+                name: puestoData!.name!.trim(),
               });
             } else if (puestoChanged) {
-              // Había puesto y cambió el nombre → actualizar
               await actualizarPuestoMutation.mutateAsync({
                 puestoId: prevPuestoId,
-                name: puestoData!.name!,
+                name: puestoData!.name!.trim(),
               });
             }
           }
@@ -372,20 +371,22 @@ const UsersContent = () => {
         // ──────────────────────────────────────────
         // 3) USER básico (si corresponde)
         // ──────────────────────────────────────────
-        const userSection: Partial<CreateUserData> = {
-          ...(user.fullName !== undefined && {
-            fullName: user.fullName.trim(),
-          }),
-          ...(user.email !== undefined && { email: user.email.trim() }),
-          ...(user.address !== undefined && { address: user.address }),
-          ...(user.fechaNacimiento !== undefined && {
-            fechaNacimiento: user.fechaNacimiento,
-          }),
-          ...(user.roles !== undefined && { roles: user.roles }),
-          ...(user.password ? { password: user.password } : {}),
-        };
-        if (Object.keys(userSection).length) {
-          await AuthService.editUsers(userId, userSection);
+        const rolesClean = Array.isArray(user.roles) ? user.roles : [];
+
+        const userSection = prune<Partial<CreateUserData>>({
+          fullName: user.fullName?.trim(),
+          email: user.email?.trim(),
+          address: user.address,
+          fechaNacimiento: user.fechaNacimiento,
+          roles: rolesClean,
+          // si password viene vacío, NO lo mandamos
+          password: user.password?.trim(),
+        });
+        if (Object.keys(userSection).length > 0) {
+          await actualizarUsuarioMutation.mutateAsync({
+            id: userId,
+            data: userSection,
+          });
         }
 
         toast.success("Actualizado con éxito.");
@@ -399,7 +400,6 @@ const UsersContent = () => {
   };
 
   const debounced = useMemo(() => {
-    const id = setTimeout(() => {}, 0); // marcador
     return searchTerm.toLowerCase();
   }, [searchTerm]);
 
@@ -676,7 +676,8 @@ const UsersContent = () => {
               : crearLaborMutation.isPending ||
                 actualizarLaborMutation.isPending ||
                 crearPuestoMutation.isPending ||
-                actualizarPuestoMutation.isPending
+                actualizarPuestoMutation.isPending ||
+                actualizarUsuarioMutation.isPending
           }
         />
 

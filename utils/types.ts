@@ -39,7 +39,7 @@ export interface UserAdapted {
 //DATOS LABORALES
 export interface Jerarquia {
   id: string;
-  name: string;
+  cargo: string;
   area: string;
 }
 
