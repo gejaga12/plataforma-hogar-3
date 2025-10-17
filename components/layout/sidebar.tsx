@@ -223,6 +223,13 @@ const menuItems: MenuItem[] = [
     roles: ["Supervisor", "Admin"],
     isNew: true,
   },
+  {
+    id: "flujos",
+    label: "Flujos de ingresos",
+    icon: "Wrench",
+    href: "/flujos",
+    roles: ["Supervisor", "Admin"],
+  },
 
   // Gestión de Clientes y Ubicaciones
   {
@@ -253,13 +260,6 @@ const menuItems: MenuItem[] = [
     label: "Grupos",
     icon: "Users",
     href: "/grupos",
-    roles: ["Supervisor", "Admin"],
-  },
-  {
-    id: "servicios",
-    label: "Servicios",
-    icon: "Wrench",
-    href: "/servicios",
     roles: ["Supervisor", "Admin"],
   },
 
@@ -438,6 +438,7 @@ const menuCategories = [
       "ingreso-egreso",
       "horas-extras",
       "ingresos",
+      "flujos",
       "novedades",
     ],
   },
@@ -449,7 +450,6 @@ const menuCategories = [
       "sucursales-clientes",
       "depositos",
       "grupos",
-      "servicios",
       "sucursales",
       "zonas",
       "paises",

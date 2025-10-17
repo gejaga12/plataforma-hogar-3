@@ -170,17 +170,18 @@ export interface OperatorDTO {
 export interface OptionDTO {
   id: string;
   next: string; // id del nodo siguiente
-  Operator: OperatorDTO;
+  Operator?: OperatorDTO;
 }
 
-export type NodeType = "humano" | "sistema" | "bot"; // ajustá a tus valores
+export type NodeType = "humano" | "sistema" | "bot" | "end"; // ajustá a tus valores
 
 export interface NodeDTO {
   id: string;
+  name: string;
   type: NodeType;
-  SearchKey: string;
+  SearchKey?: string;
   Options: string[]; // IDs de options salientes desde este nodo
-  prompt: string;
+  prompt?: string;
   coordsGraph: CoordsGraph;
   EnterState: string[];
   authorized: string[];
@@ -191,50 +192,10 @@ export interface NodeDTO {
 
 export interface FlujoPayload {
   code: string;
+  type: string;
   nodes: NodeDTO[];
   options: OptionDTO[];
   StarterNode: string;
-}
-
-// Tipos mock para el sistema de ingreso
-export type EstadoPaso = "pendiente" | "en_curso" | "bloqueado" | "completo";
-
-export interface PasoIngreso {
-  id: string;
-  nombre: string;
-  area: string;
-  estado: EstadoPaso;
-  responsable: string;
-  fechaEstimada: string;
-  fechaReal?: string;
-  observaciones?: string;
-  adjuntos?: Archivo[];
-  dependeDe?: string[];
-  posicion: {
-    x: number;
-    y: number;
-  };
-}
-
-export interface Archivo {
-  id: string;
-  nombre: string;
-  url: string;
-  tipo: string;
-  tamaño: number;
-  fechaSubida: string;
-}
-
-export interface ProcesoIngreso {
-  id: string;
-  nombreIngresante: string;
-  puesto: string;
-  areaDestino: string;
-  fechaEstimadaIngreso: string;
-  estadoGeneral: "iniciado" | "en_progreso" | "completado" | "detenido";
-  pasos: PasoIngreso[];
-  createdAt: string;
-  updatedAt: string;
 }
 
 //----------------------------------------//
@@ -599,7 +560,6 @@ export interface AgendaEvent {
   relatedOrder?: string | number;
   status?: 'confirmed' | 'pending' | 'completed' | string;
 }
-
 
 export type AgendaPriorityEn = 'high' | 'medium' | 'low';
 

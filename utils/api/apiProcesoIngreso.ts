@@ -18,10 +18,17 @@ interface FlujoGetResponse {
 
 type UpdateFlujoPayload = Partial<FlujoPayload>;
 
-interface ProcessPayload {
+export interface ProcessPayload {
   usuario: string;
   fechaInicio: string;
   prioridad: string;
+  puesto: string;
+  areaDestino: string;
+  fechaEstimadaIngreso: string;
+  estadoGeneral: string;
+  pasos: string[];
+  createdAt: string;
+  updatedAt?: string;
 }
 
 export class ProcesoIngresoService {
@@ -39,15 +46,13 @@ export class ProcesoIngresoService {
 
       return response.data;
     } catch (err: any) {
-      const backendMsg =
-        err?.response?.data?.message ||
-        err?.response?.data?.error ||
-        err?.message ||
-        "Error desconocido";
+      const backendMsg = err?.response?.data?.message;
+      console.log("Error:", backendMsg);
       throw new Error(`No se pudo crear el flujo: ${backendMsg}`);
     }
   }
 
+  //get general
   static async listarFlujos(
     { limit = 10, offset = 0 }: ListarFlujosParams = {},
     signal?: AbortSignal
@@ -70,6 +75,25 @@ export class ProcesoIngresoService {
         err?.message ||
         "Error desconocido";
       throw new Error(`No se pudo obtener el listado de flujos: ${backendMsg}`);
+    }
+  }
+
+  //get para mostrar flujos segun type
+  static async listarFlujosType(type: string) {
+    const token = getAuthToken();
+
+    try {
+      const response = await axios.get(`${BASE_URL}/flujo/bytype/${type}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      return response.data;
+    } catch (error: any) {
+      const msg = error?.response?.data?.message;
+      console.log("Error:", msg);
+      throw new Error(msg);
     }
   }
 
@@ -152,6 +176,23 @@ export class ProcesoIngresoService {
     }
   }
 
+  static async listarProcesos(type: string, limit: number, offset: number) {
+    const token = getAuthToken();
+    try {
+      const response = await axios.get(`${BASE_URL}/process`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        params: { type, limit, offset },
+      });
+
+      return response.data;
+    } catch (error: any) {
+      const msg = error?.response?.data?.message;
+      throw new Error(msg);
+    }
+  }
+
   static async obtenerProceso(
     flowId: string,
     signal?: AbortSignal
@@ -163,7 +204,7 @@ export class ProcesoIngresoService {
         signal,
         headers: { Accept: "application/json" },
       });
-      return resp.data; // sin tipar
+      return resp.data;
     } catch (err: any) {
       const backendMsg =
         err?.response?.data?.message ||
