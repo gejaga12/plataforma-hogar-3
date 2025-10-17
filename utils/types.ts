@@ -140,7 +140,63 @@ export interface MenuItem {
 
 //----------------------------------------//
 
-// Tipos para el sistema de ingreso
+//PROCESO DE INGRESO Y FLUJO
+export type LogicalOp = "iota";
+export type CompOp =
+  | "equal"
+  | "not_equal"
+  | "gt"
+  | "gte"
+  | "lt"
+  | "lte"
+  | "includes";
+
+export interface CoordsGraph {
+  x: number;
+  y: number;
+}
+
+export interface CompareClause {
+  variable: string;
+  value: unknown;
+}
+
+export interface OperatorDTO {
+  logical: LogicalOp;
+  ops: CompOp[];
+  compare: CompareClause[];
+}
+
+export interface OptionDTO {
+  id: string;
+  next: string; // id del nodo siguiente
+  Operator: OperatorDTO;
+}
+
+export type NodeType = "humano" | "sistema" | "bot"; // ajustá a tus valores
+
+export interface NodeDTO {
+  id: string;
+  type: NodeType;
+  SearchKey: string;
+  Options: string[]; // IDs de options salientes desde este nodo
+  prompt: string;
+  coordsGraph: CoordsGraph;
+  EnterState: string[];
+  authorized: string[];
+  otid?: string | null;
+  userotid?: number | null;
+  timeout?: number | null; // segundos
+}
+
+export interface FlujoPayload {
+  code: string;
+  nodes: NodeDTO[];
+  options: OptionDTO[];
+  StarterNode: string;
+}
+
+// Tipos mock para el sistema de ingreso
 export type EstadoPaso = "pendiente" | "en_curso" | "bloqueado" | "completo";
 
 export interface PasoIngreso {
@@ -214,6 +270,9 @@ export interface CrearHoraExtra {
   horaFinal: string;
   razon: string;
   comentario?: string;
+  cliente?: Cliente;
+  tipo: TipoHoraExtra;
+  tipoAtencion?: TiposAtencion;
 }
 
 export interface HorasExtras extends CrearHoraExtra {
@@ -225,6 +284,20 @@ export interface HorasExtras extends CrearHoraExtra {
   state: EstadoHoraExtra;
   totalHoras: string;
   verificacion: Verificacion;
+}
+
+export enum TipoHoraExtra {
+  RMP = "rmp",
+  CORRECTIVO = "correctivo",
+  EVENTUAL = "eventual",
+  URGENCIA = "urgencia",
+  VIAJE = "viaje",
+  OTRO = "otro",
+}
+
+export enum TiposAtencion {
+  Presencial = "presencial",
+  Telefonica = "telefonica",
 }
 
 export enum EstadoHoraExtra {
@@ -241,8 +314,6 @@ export enum Verificacion {
 //----------------------------------------//
 
 // Interfaz para novedades
-;
-
 export interface Novedad {
   id: string;
   name: string;

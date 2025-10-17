@@ -8,6 +8,7 @@ import {
   CrearHoraExtra,
   MovimientoIngresoEgreso,
   Novedad,
+  TipoHoraExtra,
 } from "@/utils/types";
 import MovimientoModal from "../ingreso-egreso/MovimientoModal";
 import HoraExtraModal from "../horas-extras/HoraExtraModal";
@@ -157,6 +158,7 @@ export function DashboardHeader({
     horaInicio: "",
     horaFinal: "",
     razon: "",
+    tipo: TipoHoraExtra.URGENCIA,
   };
 
   return (
