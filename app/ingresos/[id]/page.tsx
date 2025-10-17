@@ -1,20 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { 
   ArrowLeft,
   Save,
-  UserPlus,
-  Calendar,
-  MapPin,
-  Building,
-  Wrench,
-  Clock,
   AlertTriangle,
-  CheckCircle,
-  Settings
 } from 'lucide-react';
 import { ProtectedLayout } from '@/components/layout/protected-layout';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
@@ -185,7 +176,6 @@ const uploadArchivo = async (procesoId: string, pasoId: string, file: File): Pro
 
 function IngresoDetalleContent() {
   const params = useParams();
-  const router = useRouter();
   const procesoId = params.id as string;
   const queryClient = useQueryClient();
 

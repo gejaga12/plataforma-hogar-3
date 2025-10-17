@@ -1,18 +1,11 @@
 import { ZonaService } from "@/utils/api/apiZonas";
 import { useAuth } from "@/hooks/useAuth";
-import { CreateUserData, Puesto, UserAdapted } from "@/utils/types";
+import { Puesto, UserAdapted } from "@/utils/types";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { FormDataLabor } from "./FormDatosLaborales";
 import { ApiRoles } from "@/utils/api/apiRoles";
-import { formatDateInput } from "@/utils/formatDate";
-import { AuthService } from "@/utils/api/apiAuth";
-import {
-  buildCrearLaborPayload,
-  CrearLaborDTO,
-  LaborService,
-} from "@/utils/api/apiLabor";
-import { PuestoService } from "@/utils/api/apiPuesto";
+import { AuthService, CreateUserData } from "@/utils/api/apiAuth";
 import toast from "react-hot-toast";
 import { LoadingSpinner } from "../ui/loading-spinner";
 import {
@@ -28,23 +21,49 @@ import {
 import { cn } from "@/utils/cn";
 import UserModal from "./UserModal";
 import DeleteUSerModal from "./DeleteUserModal";
-import {
-  PhoneForm,
-  PhoneType,
-  TelPayload,
-  TelService,
-} from "@/utils/api/apiTel";
+import { PhoneForm, TelPayload, TelService } from "@/utils/api/apiTel";
 import ModalPortal from "../ui/ModalPortal";
+import { SucursalesService } from "@/utils/api/apiSucursales";
+import { CrearLaborDTO, LaborService } from "@/utils/api/apiLabor";
+import { formatDateInput } from "@/utils/formatDate";
+
+export const buildLaborData = (form: FormDataLabor, userId: number) => {
+  const toNum = (v: unknown) =>
+    v === undefined || v === null || v === "" || Number.isNaN(Number(v))
+      ? undefined
+      : Number(v);
+
+  return {
+    userId,
+    cuil: toNum(form.cuil), // si no hay, queda undefined (NO null)
+    fechaIngreso: form.fechaIngreso
+      ? formatDateInput(form.fechaIngreso)
+      : undefined,
+    fechaAlta: form.fechaAlta ? formatDateInput(form.fechaAlta) : undefined,
+    categoryArca: form.categoryArca || undefined,
+    antiguedad: form.antiguedad || undefined,
+    tipoDeContrato: form.tipoDeContrato || undefined,
+    horasTrabajo: form.horasTrabajo || undefined,
+    sueldo: toNum(form.sueldo),
+    relacionLaboral: form.relacionLaboral || undefined,
+  };
+};
+
+export const buildPuestoData = (form: FormDataLabor) => {
+  const first = form.puestos?.[0];
+  const name = first?.name;
+  return name ? { name } : undefined;
+};
 
 const mapPhonesToPayload = (
   userId: number,
-  phones: PhoneForm[]
+  phones: PhoneForm[] = []
 ): TelPayload[] =>
   phones
     .map((p) => ({
+      userId,
       tel: (p.tel ?? "").replace(/\D/g, "").trim(),
       phoneType: p.phoneType,
-      userId,
     }))
     .filter((p) => p.tel !== "");
 
@@ -61,215 +80,184 @@ const UsersContent = () => {
     user?: UserAdapted;
   }>({ isOpen: false });
 
-  const [rolesDisponibles, setRolesDisponibles] = useState<
-    Record<string, string>
-  >({});
-
   const { usuarios, loading, refetchUsuarios } = useAuth();
+
+  console.log("usuarios:", usuarios);
 
   const userActual = usuarios?.find((u) => u.id === modalState.user?.id);
 
-  const { data: zonasResponse } = useQuery({
+  const { data: zonas = [] } = useQuery({
     queryKey: ["zonas"],
-    queryFn: () => ZonaService.allInfoZona(),
+    queryFn: ZonaService.allInfoZona,
+    select: (r) => r?.zonas ?? [],
+    staleTime: 5 * 60_000,
+    gcTime: 30 * 60_000,
+    refetchOnWindowFocus: false,
   });
 
-  const zonas = useMemo(() => zonasResponse?.zonas ?? [], [zonasResponse]);
+  const { data: rolesDisponibles = {} } = useQuery({
+    queryKey: ["roles-disponibles"],
+    queryFn: ApiRoles.listaRolesCreacion,
+    staleTime: Infinity,
+  });
 
-  const hasLaborData = (labor?: FormDataLabor): boolean => {
-    if (!labor) return false;
-
-    const campos = [
-      labor.cuil,
-      labor.fechaIngreso,
-      labor.fechaAlta,
-      labor.tipoDeContrato,
-      labor.relacionLaboral,
-      labor.categoryArca,
-      labor.antiguedad,
-      labor.horasTrabajo,
-      labor.sueldo,
-      labor.area,
-      labor.puestos?.[0],
-    ];
-
-    return campos.some((campo) => campo && campo !== "");
-  };
-
-  useEffect(() => {
-    const obtenerRoles = async () => {
-      try {
-        const roles = await ApiRoles.listaRolesCreacion();
-        setRolesDisponibles(roles);
-      } catch (e) {
-        console.error("Error al obtener los roles disponibles:", e);
-      }
-    };
-
-    obtenerRoles();
-  }, []);
-
+  //CREAR USUARIO CON DATOS BASICOS, LABOR Y PUESTO
   const createMutation = useMutation({
     mutationFn: async (payload: {
       user: CreateUserData;
-      labor?: FormDataLabor;
+      phones?: PhoneForm[];
     }) => {
-      const { user, labor } = payload;
+      const { user, phones } = payload;
 
+      // 1) Usuario (solo campos de CreateUserData)
       const userPayload = {
-        email: user.mail,
-        password: user.contrasena || "Abc123", // por defecto si no se carga
-        fullName: user.nombreCompleto,
+        email: user.email,
+        password: user.password || "Abc123",
+        fullName: user.fullName,
         roles: user.roles,
-        address: user.direccion ?? "",
-        puesto: user.puesto ?? "",
-        zona: user.zona?.id ?? "",
-        sucursalHogar: user.sucursalHogar ?? "",
+        address: user.address ?? "",
         fechaNacimiento: user.fechaNacimiento,
-        jerarquia: user.jerarquiaId ?? undefined,
+        telefonos: [],
       };
 
-      console.log("payload de usuario:", userPayload);
+      console.log("payload de usuario (CREATE):", userPayload);
+
       const newUser = await AuthService.registerUser(userPayload);
 
-      // 2) Teléfonos
-      const telefonos: PhoneForm[] = Array.isArray(user.telefono)
-        ? user.telefono
-        : [];
-      const telPayloads: TelPayload[] = mapPhonesToPayload(
-        newUser.id,
-        telefonos
-      );
+      if (typeof newUser?.id !== "number") {
+        throw new Error("El registro no devolvió un id de usuario válido.");
+      }
+      const userId: number = newUser.id;
+
+      // ✅ Tipamos explícitamente a TelPayload[]
+      const telPayloads = mapPhonesToPayload(userId, phones);
+
+      console.log("payload de telefonos (CREATE):", telPayloads);
 
       if (telPayloads.length) {
-        console.log("📤 [POST /tel] Enviando teléfonos:", telPayloads);
         await Promise.all(
           telPayloads.map((tp) => TelService.crearTelefono(tp))
         );
       }
 
-      // 👉 POST a /labor si hay datos cargados
-      if (hasLaborData(labor)) {
-        const laborDTO = buildCrearLaborPayload(labor!, newUser.id); // aseguramos que no sea undefined
-
-        console.log("📤 Payload de labor:", laborDTO);
-
-        const nuevaLabor = await LaborService.crearLabor(laborDTO);
-
-        if (
-          labor?.puestos &&
-          Array.isArray(labor.puestos) &&
-          labor.puestos[0] // hay al menos uno
-        ) {
-          const puestoPayload = {
-            name:
-              labor.puestos[0] && typeof labor.puestos[0] != "string"
-                ? labor.puestos[0]?.name
-                : "",
-            laborId: nuevaLabor.id,
-          };
-
-          console.log("📤 Payload de puesto:", puestoPayload);
-          await PuestoService.crearPuesto(puestoPayload);
-        }
-      }
       return newUser;
     },
     retry: false,
     onSuccess: async () => {
-      toast.success("Usuario creado con exito.");
+      toast.success("Usuario creado con éxito.");
       await refetchUsuarios();
       setModalState({ isOpen: false, mode: "create" });
     },
-
     onError: (e: any) => {
-      toast.error("Ocurrio un error al crear el usuario.");
+      toast.error("Ocurrió un error al crear el usuario.");
       console.log("Error:", e);
     },
   });
 
-  const editMutation = useMutation({
-    mutationFn: async ({
-      id,
-      laborId,
-      formData,
-      laborForm,
-    }: {
-      id: number;
-      laborId: string;
-      formData: CreateUserData;
-      laborForm?: FormDataLabor;
-    }) => {
-      //Payload para datos de usuario
-      const payload = {
-        email: formData.mail,
-        password: formData.contrasena || undefined,
-        fullName: formData.nombreCompleto,
-        roles: formData.roles,
-        address: formData.direccion,
-        puesto: formData.puesto,
-        zona: formData.zona?.id,
-        sucursalHogar: formData.sucursalHogar || undefined,
-        fechaNacimiento: formData.fechaNacimiento,
-      };
-      // console.log("📤 Enviando payload al PATCH", payload);
-      await AuthService.editUsers(id, payload);
-
-      const telefonos: PhoneForm[] = Array.isArray(formData.telefono)
-        ? formData.telefono
-        : [];
-
-      const telPayloads: TelPayload[] = mapPhonesToPayload(id, telefonos);
-
-      if (telPayloads.length) {
-        console.log("📤 [PATCH /tel] Actualizando teléfonos:", telPayloads);
-        await Promise.all(
-          telPayloads.map((tp) => TelService.editarTelefono(id, tp))
-        );
-      }
-
-      if (
-        laborForm &&
-        laborForm?.tipoDeContrato &&
-        laborForm?.relacionLaboral
-      ) {
-        //Payload para datos laborales
-        const laborPayload: Partial<CrearLaborDTO> = {
-          fechaIngreso: laborForm.fechaIngreso,
-          fechaAlta: laborForm.fechaAlta,
-          categoryArca: laborForm.categoryArca,
-          antiguedad: laborForm.antiguedad,
-          tipoDeContrato: laborForm.tipoDeContrato,
-          horasTrabajo: laborForm.horasTrabajo,
-          relacionLaboral: laborForm.relacionLaboral,
-          cuil: laborForm.cuil ? Number(laborForm.cuil) : undefined,
-          sueldo: laborForm.sueldo ? Number(laborForm.sueldo) : undefined,
-        };
-
-        // console.log("📤 Payload laboral:", laborPayload);
-        await LaborService.actualizarLabor(laborId, laborPayload);
-      }
-
-      const puesto = laborForm?.puestos?.[0] as Puesto;
-      const puestoId = puesto?.id;
-      const payloadPuesto = { laborId, name: puesto?.name };
-
-      console.log("📤 Payload puesto:", { ...payloadPuesto, puestoId });
-
-      await LaborService.actualizarPuesto(puestoId, payloadPuesto);
-    },
-
+  const crearLaborMutation = useMutation({
+    mutationFn: (data: CrearLaborDTO) => LaborService.crearLabor(data),
     onSuccess: async () => {
-      toast.success("Usuario actualizado correctamente");
+      toast.success("Datos laborales creados.");
       await refetchUsuarios();
-      setModalState({ isOpen: false, mode: "edit" });
     },
-    onError: (error: any) => {
-      console.error("❌ Error en edición:", error.message || error);
-      console.log(error.message || "Error al actualizar usuario");
+    onError: (e: any) => {
+      toast.error(e?.message || "No se pudo crear labor");
     },
   });
 
+  const crearPuestoMutation = useMutation({
+    mutationFn: (args: { laborId: string; name: string }) =>
+      LaborService.crearPuesto({ laborId: args.laborId, name: args.name }),
+    onSuccess: async () => {
+      toast.success("Puesto creado.");
+      await refetchUsuarios();
+    },
+    onError: (e: any) => {
+      toast.error(e?.message || "No se pudo crear el puesto");
+    },
+  });
+
+  //MUTATES DEDICADOS PARA ZONA Y SUCURSAL
+  const asignarZonaMutation = useMutation({
+    mutationFn: async (args: { zonaId: string; userId: number }) => {
+      const { zonaId, userId } = args;
+
+      console.group("[UsersContent] asignarZonaMutation");
+      console.log("Payload a enviar:", { zonaId, userId });
+      console.groupEnd();
+
+      return ZonaService.asignarZona(zonaId, userId);
+    },
+    onSuccess: async () => {
+      toast.success("Zona asignada con éxito.");
+      await refetchUsuarios();
+    },
+    onError: (e: any) => {
+      toast.error(e?.message || "No se pudo asignar la zona.");
+      console.log("Error asignarZona:", e);
+    },
+  });
+
+  const asignarSucursalMutation = useMutation({
+    mutationFn: async (args: { sucid: string; userid: number }) => {
+      const { sucid, userid } = args;
+
+      console.group("[UsersContent] asignarSucursalMutation");
+      console.log("Payload a enviar:", { sucid, userid });
+      console.groupEnd();
+
+      return SucursalesService.asignarSucursal(sucid, userid);
+    },
+    onSuccess: async () => {
+      toast.success("Sucursal asignada con éxito.");
+      await refetchUsuarios();
+    },
+    onError: (e: any) => {
+      toast.error(e?.message || "No se pudo asignar la zona.");
+      console.log("Error asignarZona:", e);
+    },
+  });
+  //---------------------------------------
+
+  //UPDATES
+  const actualizarUsuarioMutation = useMutation({
+    mutationFn: (args: { id: number; data: Partial<CreateUserData> }) =>
+      AuthService.editUsers(args.id, args.data),
+    onSuccess: async () => {
+      toast.success("Datos de usuario actualizados.");
+      await refetchUsuarios();
+    },
+    onError: (e: any) => {
+      toast.error(e?.message || "No se pudo actualizar los datos básicos.");
+      console.error("Error actualizar usuario:", e);
+    },
+  });
+
+  const actualizarLaborMutation = useMutation({
+    mutationFn: (args: { laborId: string; data: Partial<CrearLaborDTO> }) =>
+      LaborService.actualizarLabor(args.laborId, args.data),
+    onSuccess: async () => {
+      toast.success("Datos laborales actualizados.");
+      await refetchUsuarios();
+    },
+    onError: (e: any) => {
+      toast.error(e?.message || "No se pudo actualizar labor");
+    },
+  });
+
+  const actualizarPuestoMutation = useMutation({
+    mutationFn: (args: { puestoId: string; name: string }) =>
+      LaborService.actualizarPuesto(args.puestoId, { name: args.name }),
+    onSuccess: async () => {
+      toast.success("Puesto actualizado.");
+      await refetchUsuarios();
+    },
+    onError: (e: any) => {
+      toast.error(e?.message || "No se pudo actualizar el puesto");
+    },
+  });
+
+  //DELETE
   const deleteMutation = useMutation({
     mutationFn: (id: number) => AuthService.DeleteUSerModal(id),
     onSuccess: async () => {
@@ -283,47 +271,155 @@ const UsersContent = () => {
     },
   });
 
+  const prune = <T extends Record<string, any>>(obj: T): Partial<T> =>
+    Object.fromEntries(
+      Object.entries(obj).filter(
+        ([, v]) => v !== undefined && v !== null && v !== ""
+      )
+    ) as Partial<T>;
+
   const handleSubmit = async (payload: {
     user: CreateUserData;
     labor?: FormDataLabor;
+    phones?: PhoneForm[];
   }) => {
     const { user, labor } = payload;
 
     if (modalState.mode === "create") {
-      console.log("📤 Ejecutando createMutation");
-      createMutation.mutate({ user, labor });
+      createMutation.mutate({ user, phones: payload.phones });
       return;
     }
 
     if (modalState.mode === "edit" && modalState.user?.id) {
-      console.log("✏️ Ejecutando editMutation");
-      editMutation.mutate({
-        id: modalState.user.id,
-        laborId: modalState.user?.labor?.id ?? "",
-        formData: user,
-        laborForm: labor,
-      });
-      return;
+      const userId = modalState.user.id;
+
+      // Previos desde useAuth()
+      const prevLabor: any = (modalState.user as any)?.labor ?? null;
+      const prevLaborId: string | undefined = prevLabor?.id
+        ? String(prevLabor.id)
+        : undefined;
+      const prevPuesto = Array.isArray(prevLabor?.puestos)
+        ? prevLabor.puestos[0]
+        : undefined;
+      const prevPuestoId: string | undefined = prevPuesto?.id
+        ? String(prevPuesto.id)
+        : undefined;
+      const prevPuestoName = (prevPuesto?.name ?? "").trim();
+
+      // Payloads actuales (limpios)
+      const laborData = labor ? buildLaborData(labor, userId) : undefined;
+      const puestoData = labor ? buildPuestoData(labor) : undefined;
+
+      const laborClean = laborData ? prune({ ...laborData }) : undefined;
+      if (laborClean) delete (laborClean as any).userId;
+
+      // Detección de cambios reales en Labor
+      const hasLaborChanges =
+        !!laborClean && Object.keys(laborClean).length > 0;
+
+      // ¿Hubo cambios en el puesto?
+      const hasPuestoInForm = !!puestoData?.name?.trim();
+      const puestoChanged =
+        hasPuestoInForm && prevPuestoName !== puestoData!.name!.trim();
+
+      try {
+        if (!prevLaborId) {
+          // No hay labor previa
+          let laborIdForPuesto = "";
+
+          if (hasLaborChanges || hasPuestoInForm) {
+            // crear labor mínima solo con lo necesario
+            const minimal = prune({
+              userId,
+              ...(laborClean || {}),
+            }) as CrearLaborDTO;
+
+            const created = await crearLaborMutation.mutateAsync(minimal);
+            laborIdForPuesto = String(created?.id ?? created?.labor?.id ?? "");
+          }
+
+          if (hasPuestoInForm && laborIdForPuesto) {
+            await crearPuestoMutation.mutateAsync({
+              laborId: laborIdForPuesto,
+              name: puestoData!.name!.trim(),
+            });
+          }
+        } else {
+          // Sí hay labor previa
+          if (hasLaborChanges) {
+            await actualizarLaborMutation.mutateAsync({
+              laborId: prevLaborId,
+              data: laborClean as Partial<CrearLaborDTO>,
+            });
+          }
+
+          if (hasPuestoInForm) {
+            if (!prevPuestoId) {
+              await crearPuestoMutation.mutateAsync({
+                laborId: prevLaborId,
+                name: puestoData!.name!.trim(),
+              });
+            } else if (puestoChanged) {
+              await actualizarPuestoMutation.mutateAsync({
+                puestoId: prevPuestoId,
+                name: puestoData!.name!.trim(),
+              });
+            }
+          }
+        }
+
+        // ──────────────────────────────────────────
+        // 3) USER básico (si corresponde)
+        // ──────────────────────────────────────────
+        const rolesClean = Array.isArray(user.roles) ? user.roles : [];
+
+        const userSection = prune<Partial<CreateUserData>>({
+          fullName: user.fullName?.trim(),
+          email: user.email?.trim(),
+          address: user.address,
+          fechaNacimiento: user.fechaNacimiento,
+          roles: rolesClean,
+          // si password viene vacío, NO lo mandamos
+          password: user.password?.trim(),
+        });
+        if (Object.keys(userSection).length > 0) {
+          await actualizarUsuarioMutation.mutateAsync({
+            id: userId,
+            data: userSection,
+          });
+        }
+
+        toast.success("Actualizado con éxito.");
+        await refetchUsuarios();
+        setModalState({ isOpen: false, mode: "edit" });
+      } catch (e: any) {
+        console.error("[UsersContent] handleSubmit(edit) error:", e);
+        toast.error(e?.message || "Ocurrió un error al actualizar.");
+      }
     }
   };
 
-  const filteredUsers =
-    usuarios?.filter((user) => {
-      const search = searchTerm.toLowerCase();
-      const matchesSearch =
-        user.fullName?.toLowerCase().includes(search) ||
-        user.email?.toLowerCase().includes(search) || // ← protegido con ?
-        user.labor?.puestos?.some((puesto) =>
-          puesto?.name.toLowerCase().includes(search)
-        );
+  const debounced = useMemo(() => {
+    return searchTerm.toLowerCase();
+  }, [searchTerm]);
 
+  const filteredUsers = useMemo(() => {
+    if (!usuarios?.length) return [];
+    const search = debounced;
+    return usuarios.filter((user) => {
+      const matchesSearch =
+        (user.fullName ?? "").toLowerCase().includes(search) ||
+        (user.email ?? "").toLowerCase().includes(search) ||
+        (user.labor?.puestos ?? []).some((p) =>
+          (p?.name ?? "").toLowerCase().includes(search)
+        );
       const matchesStatus =
         !statusFilter ||
         (statusFilter === "activo" && user.isActive) ||
         (statusFilter === "inactivo" && !user.isActive);
-
       return matchesSearch && matchesStatus;
-    }) || [];
+    });
+  }, [usuarios, debounced, statusFilter]);
 
   const handleDeleteUser = (user: UserAdapted) => {
     setDeleteModal({ isOpen: true, user });
@@ -331,9 +427,26 @@ const UsersContent = () => {
 
   const confirmDelete = () => {
     if (deleteModal.user) {
-      deleteMutation.mutate(deleteModal.user.id);
+      deleteMutation.mutate(deleteModal.user.id!);
     }
   };
+
+  //HANDLES PARA ZONA Y SUCURSAL
+  const handleAssignZona = async (zonaId: string, userId: number) => {
+    if (!zonaId || !userId) return;
+    console.log("[UsersContent] handleAssignZona →", {
+      zonaId,
+      userId: String(userId),
+    });
+    await asignarZonaMutation.mutateAsync({ zonaId, userId });
+  };
+
+  const handleAssingSucursal = async (sucid: string, userid: number) => {
+    if (!sucid || !userid) return;
+
+    await asignarSucursalMutation.mutateAsync({ sucid, userid });
+  };
+  //---------------------------------------
 
   if (loading) {
     return (
@@ -555,10 +668,16 @@ const UsersContent = () => {
           rolesDisponibles={rolesDisponibles}
           zonas={zonas}
           onSubmit={handleSubmit}
+          onAssignZona={handleAssignZona}
+          onAssignSucursal={handleAssingSucursal}
           isloading={
-            modalState.mode === "edit"
-              ? editMutation.isPending
-              : createMutation.isPending
+            modalState.mode === "create"
+              ? createMutation.isPending
+              : crearLaborMutation.isPending ||
+                actualizarLaborMutation.isPending ||
+                crearPuestoMutation.isPending ||
+                actualizarPuestoMutation.isPending ||
+                actualizarUsuarioMutation.isPending
           }
         />
 

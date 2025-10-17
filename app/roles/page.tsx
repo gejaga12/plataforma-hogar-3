@@ -18,7 +18,7 @@ export interface RoleList extends Role {
 export interface CreateRoleData {
   id?: string | number;
   name: string;
-  permissions?: Permiso[]; // puedes cambiarlo a string[] si lo manejás como keys directamente
+  permissions?: Permiso[];
   users: string[];
 }
 
@@ -54,7 +54,7 @@ export default function RolesPage() {
     mutationFn: async (data: CreateRoleData) => {
       return await ApiRoles.crearRol({
         name: data.name,
-        permissions: data.permissions?.map((p) => p.key) || [], // aseguramos solo las keys
+        permissions: data.permissions?.map((p) => p.key) || [],
       });
     },
     onSuccess: () => {

@@ -2,25 +2,22 @@ import axios from "axios";
 import { BASE_URL } from "@/utils/baseURL";
 
 import { getAuthToken } from "@/utils/authToken";
-import { UserAdapted } from "@/utils/types";
+import { Role, UserAdapted } from "@/utils/types";
+import { FormDataLabor } from "@/components/users/FormDatosLaborales";
 
 export type UserLoginData = Pick<
   UserAdapted,
   "id" | "email" | "fullName" | "roles" | "photoURL"
 >;
 
-//types para PATCHs
-export interface EditUserPayload {
-  email: string;
+export type CreateUserData = {
   fullName: string;
-  address: string;
+  email: string;
+  password: string;
   fechaNacimiento: string;
-  roles: string[];
-  zona?: string;
-  sucursalHogar?: string;
-  password?: string;
-  puesto: string;
-}
+  address: string;
+  roles: string[]; // IDs de roles
+};
 
 export class AuthService {
   private static currentUser: UserLoginData | null = null;
@@ -69,17 +66,7 @@ export class AuthService {
     this.listeners.forEach((listener) => listener(null));
   }
 
-  static async registerUser(data: {
-    email: string;
-    password: string;
-    fullName: string;
-    roles: string[]; // IDs de los roles
-    address: string;
-    puesto: string;
-    sucursalHogar: string;
-    fechaNacimiento: string;
-    jerarquia?: string;
-  }): Promise<UserAdapted> {
+  static async registerUser(data: CreateUserData): Promise<UserAdapted> {
     const token = getAuthToken();
 
     try {
@@ -101,7 +88,6 @@ export class AuthService {
         address: resData.address || "",
         jerarquia: resData.jerarquia ?? null,
         sucursalHogar: resData.sucursalHogar ?? null,
-        // zona: resData.zona ?? null,
         createdAt: resData.createdAt ?? new Date().toISOString(),
         deletedAt: resData.deletedAt ?? null,
         fechaNacimiento: resData.fechaNacimiento,
@@ -170,7 +156,7 @@ export class AuthService {
   //PATCH para info de usuario
   static async editUsers(
     id: number,
-    data: EditUserPayload
+    data: Partial<CreateUserData>
   ): Promise<{ did: boolean }> {
     const token = getAuthToken();
 

@@ -1,5 +1,6 @@
 import React from "react";
-import { Puesto, UserAdapted } from "@/utils/types";
+import { Puesto, Sucursal, UserAdapted, Zona } from "@/utils/types";
+import { LoadingSpinner } from "../ui/loading-spinner";
 
 interface FormDatosLaboralesProps {
   formDataLabor: FormDataLabor;
@@ -7,47 +8,161 @@ interface FormDatosLaboralesProps {
   isReadOnly: boolean;
   mode: "create" | "edit" | "view";
   user: UserAdapted | undefined;
+  sucursales: Sucursal[];
+  zonas: Zona[];
+  isLoading: boolean;
+  onAssignZona: (zonaId: string, userId: number) => void | Promise<void>;
+  onAssignSucursal: (sucId: string, userId: number) => Promise<void> | void;
 }
 
 export type EstadoContractual = "Periodo de Prueba" | "Contratado" | undefined;
 
 export interface FormDataLabor {
-  cuil?: number;
-  fechaIngreso: string;
-  fechaAlta?: string;
-  categoryArca?: string;
-  antiguedad?: string;
   tipoDeContrato: string;
-  horasTrabajo?: string;
+  relacionLaboral?: EstadoContractual;
+  fechaIngreso: string;
+  fechaAlta: string;
+  cuil?: number;
+  categoryArca: string;
+  antiguedad: string;
+  horasTrabajo: string;
   sueldo?: number;
-  relacionLaboral: EstadoContractual;
-  area?: string;
-  puestos?: Puesto[];
+  puestos: Puesto[];
+  area: string;
   jerarquiaId?: string;
+  zona?: { id: string; name: string };
+  sucursalHogar?: { id: string; name: string };
+  isActive?: boolean;
+  notificaciones?: { mail: boolean; push: boolean };
+  photoURL?: string;
+  certificacionesTitulo?: string;
 }
 
 const FormDatosLaborales: React.FC<FormDatosLaboralesProps> = ({
-  formDataLabor,
   setFormDataLabor,
+  onAssignZona,
+  onAssignSucursal,
+  formDataLabor,
   isReadOnly,
   user,
+  sucursales,
+  zonas,
+  isLoading,
 }) => {
+  const userId = user?.id ?? 0;
+
   return (
     <div className="px-2 py-3 bg-gray-100 dark:bg-gray-700 rounded-lg">
       <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
         Datos laborales
       </h3>
-
       <div className="grid grid-cols-2 gap-6 px-1">
+        {/* Zona */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-400">
+            Zona{" "}
+            <span className="text-xs text-gray-500">
+              (se guarda al seleccionar)
+            </span>
+          </label>
+          {isLoading ? (
+            <LoadingSpinner size="sm" />
+          ) : isReadOnly ? (
+            <div className="px-3 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-300">
+              {formDataLabor.zona?.name || "Sin asignar"}
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <select
+                value={formDataLabor.zona?.id ?? ""}
+                onChange={async (e) => {
+                  const id = e.target.value;
+                  const zonaSeleccionada = zonas.find((z) => z.id === id);
+                  setFormDataLabor((prev) => ({
+                    ...prev,
+                    zona: zonaSeleccionada
+                      ? { id: zonaSeleccionada.id, name: zonaSeleccionada.name }
+                      : undefined,
+                  }));
+                  if (id && userId) {
+                    await onAssignZona(id, userId);
+                  }
+                }}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-800 dark:border-gray-800"
+                disabled={isReadOnly}
+              >
+                <option value="">Seleccionar zona</option>
+                {zonas.map((zona) => (
+                  <option key={zona.id} value={zona.id}>
+                    {zona.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+        </div>
+
+        {/* Sucursal */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-400">
+            Sucursal Hogar{" "}
+            <span className="text-xs text-gray-500">
+              (se guarda al seleccionar)
+            </span>
+          </label>
+          <div className="flex items-center gap-2">
+            <select
+              value={formDataLabor.sucursalHogar?.id ?? ""}
+              onChange={async (e) => {
+                const id = e.target.value;
+                const found = (sucursales || []).find((s) => s.id === id);
+                const name = found?.name ?? "";
+
+                // estado previo para rollback si falla
+                const prev = formDataLabor.sucursalHogar;
+
+                // optimistic UI
+                setFormDataLabor((prevState) => ({
+                  ...prevState,
+                  sucursalHogar: id ? { id, name } : undefined,
+                }));
+
+                try {
+                  if (id && userId) {
+                    await onAssignSucursal(id, userId);
+                  }
+                } catch (err) {
+                  // rollback si hubo error
+                  setFormDataLabor((prevState) => ({
+                    ...prevState,
+                    sucursalHogar: prev,
+                  }));
+                }
+              }}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-800 dark:border-gray-800"
+              disabled={isReadOnly || isLoading}
+            >
+              <option value="">Seleccionar sucursal</option>
+              {sucursales?.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
         {/* CUIL */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-400">
             CUIL *
           </label>
           <input
-            type="number"
+            type="text"
+            inputMode="numeric"
+            pattern="\d{11}"
             placeholder="cuil (11 dígitos)"
-            value={formDataLabor.cuil ?? ""}
+            value={formDataLabor.cuil ? String(formDataLabor.cuil) : ""}
             onChange={(e) => {
               const value = e.target.value;
 
@@ -66,6 +181,7 @@ const FormDatosLaborales: React.FC<FormDatosLaboralesProps> = ({
             }}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-600 dark:border-gray-800"
             disabled={isReadOnly}
+            required={!isReadOnly}
           />
           <p className="text-xs text-gray-500 mt-1">11 dígitos sin guiones.</p>
         </div>
@@ -77,24 +193,19 @@ const FormDatosLaborales: React.FC<FormDatosLaboralesProps> = ({
           </label>
           <input
             type="text"
-            value={
-              typeof formDataLabor.puestos?.[0] === "string"
-                ? formDataLabor.puestos[0]
-                : formDataLabor.puestos?.[0]?.name || ""
-            }
+            value={formDataLabor.puestos?.[0]?.name ?? ""}
             onChange={(e) =>
-              setFormDataLabor(({ puestos, ...prev }) => {
-                puestos = puestos as Puesto[];
-                return {
-                  ...prev,
-                  puestos: [
-                    {
-                      ...(typeof puestos?.[0] == "string" ? puestos?.[0] : {}),
-                      name: e.target.value,
-                      id: puestos?.[0]?.id ?? "", // conservar el id
-                    },
-                  ],
+              setFormDataLabor((prev) => {
+                const first = prev.puestos?.[0];
+                const updatedFirst: Puesto = {
+                  id: first?.id ?? "", // si ya hay id, se conserva
+                  name: e.target.value,
                 };
+                const updated =
+                  Array.isArray(prev.puestos) && prev.puestos.length > 0
+                    ? [updatedFirst, ...prev.puestos.slice(1)]
+                    : [updatedFirst];
+                return { ...prev, puestos: updated };
               })
             }
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-600 dark:border-gray-800"
@@ -105,14 +216,23 @@ const FormDatosLaborales: React.FC<FormDatosLaboralesProps> = ({
         {/* Área */}
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-400">
-            Área
+            Área - Cargo
           </label>
 
-          <div className="mt-1 bg-gray-100 border border-gray-300 px-3 py-2 rounded-md dark:bg-gray-600 dark:border-gray-800">
-            {user?.jerarquia
-              ? `${user.jerarquia.area} - ${user.jerarquia.name}`
-              : "Asignar un área desde organigrama"}
-          </div>
+          {(() => {
+            const area = (user?.jerarquia?.area ?? "").trim();
+            const cargo = (user?.jerarquia?.cargo ?? "").trim();
+
+            const label = area
+              ? `${area}${cargo ? ` - ${cargo}` : ""}`
+              : "Asignar un área desde organigrama";
+
+            return (
+              <div className="mt-1 bg-gray-100 border border-gray-300 px-3 py-2 rounded-md dark:bg-gray-600 dark:border-gray-800">
+                {label}
+              </div>
+            );
+          })()}
         </div>
 
         {/* Fecha de Ingreso */}
@@ -131,6 +251,7 @@ const FormDatosLaborales: React.FC<FormDatosLaboralesProps> = ({
             }
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-600 dark:border-gray-800"
             disabled={isReadOnly}
+            required={!isReadOnly}
           />
         </div>
 
@@ -168,6 +289,7 @@ const FormDatosLaborales: React.FC<FormDatosLaboralesProps> = ({
             }
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-600 dark:border-gray-800"
             disabled={isReadOnly}
+            required={!isReadOnly}
           >
             <option value="">Seleccionar tipo de contrato</option>
             <option value="Relación de Dependencia">
@@ -193,6 +315,7 @@ const FormDatosLaborales: React.FC<FormDatosLaboralesProps> = ({
             }
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-600 dark:border-gray-800"
             disabled={isReadOnly}
+            required={!isReadOnly}
           >
             <option value="">Seleccionar estado</option>
             <option value="Periodo de Prueba">Periodo de Prueba</option>

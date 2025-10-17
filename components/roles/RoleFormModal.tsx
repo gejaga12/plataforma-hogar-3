@@ -77,9 +77,9 @@ const RoleFormModal = ({
     try {
       console.log(formData);
       if (mode === "create") {
-        await createRole(formData);
+        createRole(formData);
       } else if (mode === "edit" && role) {
-        await updateRole(role.id, formData);
+        updateRole(role.id, formData);
       }
       onClose();
     } finally {
@@ -201,7 +201,9 @@ const RoleFormModal = ({
                   ) : (
                     <ul className="space-y-2">
                       {filteredUsuarios
-                        ?.filter((user) => formData.users.includes(String(user.id)))
+                        ?.filter((user) =>
+                          formData.users.includes(String(user.id))
+                        )
                         .map((user) => (
                           <li key={user.id} className="text-sm text-gray-900">
                             <span className="text-sm text-gray-700 dark:text-gray-300">

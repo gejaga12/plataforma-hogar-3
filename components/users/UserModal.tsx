@@ -1,34 +1,36 @@
-import { CreateUserData, UserAdapted, Zona } from "@/utils/types";
+import { UserAdapted, Zona } from "@/utils/types";
 import { X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import FormUsers from "./FormUsers";
 import { EstadoContractual, FormDataLabor } from "./FormDatosLaborales";
-import { formatDateInput, toDateInputValue } from "@/utils/formatDate";
+import { toDateInputValue } from "@/utils/formatDate";
 import { PhoneForm, PhoneType } from "@/utils/api/apiTel";
+import { CreateUserData } from "@/utils/api/apiAuth";
 
 interface UserModalProps {
   isOpen: boolean;
   onClose: () => void;
   user?: UserAdapted;
   mode: "create" | "edit" | "view";
-  onSubmit: (payload: { user: CreateUserData; labor?: FormDataLabor }) => void;
+  onSubmit: (payload: {
+    user: CreateUserData;
+    labor?: FormDataLabor;
+    phones?: PhoneForm[];
+  }) => void;
+  onAssignZona: (zonaId: string, userId: number) => Promise<void> | void;
+  onAssignSucursal: (sucId: string, userId: number) => Promise<void> | void;
   rolesDisponibles: Record<string, string>;
   isloading: boolean;
   zonas: Zona[];
 }
 
 const initialFormData: CreateUserData = {
-  nombreCompleto: "",
-  zona: undefined,
-  fechaNacimiento: "",
-  mail: "",
-  direccion: "",
+  fullName: "",
+  email: "",
   roles: [],
-  telefono: [],
-  notificaciones: { mail: true, push: true },
-  puesto: "",
-  sucursalHogar: "",
-  activo: true,
+  password: "",
+  address: "",
+  fechaNacimiento: "",
 };
 
 const initialLabor: FormDataLabor = {
@@ -43,19 +45,59 @@ const initialLabor: FormDataLabor = {
   sueldo: undefined,
   puestos: [],
   area: "",
+  zona: undefined,
+  sucursalHogar: undefined,
+  notificaciones: { mail: true, push: false },
+  photoURL: "",
+  certificacionesTitulo: "",
 };
 
 const UserModal: React.FC<UserModalProps> = ({
-  isOpen,
+  onSubmit,
   onClose,
+  onAssignZona,
+  onAssignSucursal,
+  isOpen,
   user,
   mode,
-  onSubmit,
   rolesDisponibles,
   isloading,
   zonas,
 }) => {
+  const visibleFields =
+    mode === "create"
+      ? ([
+          "fullName",
+          "email",
+          "password",
+          "telefono",
+          "fechaNacimiento",
+          "address",
+          "roles",
+        ] as const)
+      : // en edit/view, mostra todo (los del create + los demás que tu FormUsers soporte)
+        ([
+          "fullName",
+          "email",
+          "password",
+          "telefono",
+          "fechaNacimiento",
+          "address",
+          "roles",
+          "zona",
+          "jerarquia",
+          "sucursalHogar",
+          "isActive",
+          "notificaciones",
+          "photoURL",
+          "certificacionesTitulo",
+          "relacionLaboral",
+          "fechaIngreso",
+          "fechaAlta",
+        ] as const);
+
   const [formData, setFormData] = useState<CreateUserData>(initialFormData);
+  const [phones, setPhones] = useState<PhoneForm[]>([]);
 
   const [formDataLabor, setFormDataLabor] =
     useState<FormDataLabor>(initialLabor);
@@ -66,6 +108,7 @@ const UserModal: React.FC<UserModalProps> = ({
     if (mode === "create") {
       setFormData(initialFormData);
       setFormDataLabor(initialLabor);
+      setPhones([]);
       return;
     }
 
@@ -75,32 +118,28 @@ const UserModal: React.FC<UserModalProps> = ({
       )
         ? (user as any).phoneNumber.map((p: any) => ({
             tel: p?.tel ?? "",
-            phoneType: (p?.phoneType as PhoneType) ?? PhoneType.PRIMARY, // "principal" | "secundario" | "emergencia"
+            phoneType: (p?.phoneType as PhoneType) ?? PhoneType.PRIMARY,
           }))
-        : [];
+        : user.telefono ?? [];
 
-      // intentar encontrar la zona por nombre (en tu Adapted guardás el name)
-      const zonaObj = zonas?.find((z) => z.id === user.zona?.id);
+      setPhones(telefonosFromApi);
+
       const roleIds = (user.roles || []).map((r: any) =>
         typeof r === "string" ? r : r.id
       );
 
       setFormData({
-        nombreCompleto: user.fullName || "",
-        zona: zonaObj,
-        fechaNacimiento: toDateInputValue(user.fechaNacimiento),
-        mail: user.email || "",
-        direccion: user.address || "",
+        fullName: user.fullName || "",
+        email: user.email || "",
         roles: roleIds,
-        notificaciones: user.notificaciones || { mail: true, push: true },
-        sucursalHogar: user.sucursalHogar?.id ?? "",
-        activo: user.isActive ?? true,
-        telefono: telefonosFromApi,
-        puesto: user.labor?.puestos?.[0]?.name || "",
+        password: "", // vacío en edit/view
+        address: user.address || "",
+        fechaNacimiento: toDateInputValue(user.fechaNacimiento),
       });
 
       setFormDataLabor(() => {
         const laborDeUser = user.labor;
+        const suc = (user as any).sucursal ?? (user as any).sucursalHogar;
         const laborData: FormDataLabor = {
           cuil: laborDeUser?.cuil,
           fechaIngreso: toDateInputValue(laborDeUser?.fechaIngreso),
@@ -115,28 +154,47 @@ const UserModal: React.FC<UserModalProps> = ({
             laborDeUser?.sueldo != null
               ? Number(laborDeUser.sueldo)
               : undefined,
-          puestos: laborDeUser?.puestos,
-          area: user.jerarquia?.area || "",
+          puestos: Array.isArray(laborDeUser?.puestos)
+            ? laborDeUser.puestos.map((p: any) =>
+                typeof p === "object"
+                  ? { id: String(p.id ?? ""), name: String(p.name ?? "") }
+                  : { id: "", name: String(p) }
+              )
+            : [],
+          area: user.jerarquia?.cargo || "",
           jerarquiaId: user.jerarquia?.id || "",
+
+          // NUEVOS mapeos desde UserAdapted:
+          zona: user.zona
+            ? { id: user.zona.id, name: user.zona.name }
+            : undefined,
+          sucursalHogar: suc
+            ? { id: String(suc.id), name: String(suc.name) }
+            : undefined,
+          isActive: user.isActive,
+          notificaciones: user.notificaciones
+            ? { mail: user.notificaciones.mail, push: user.notificaciones.push }
+            : { mail: true, push: false },
+          photoURL: user.photoURL || "",
+          certificacionesTitulo: user.certificacionesTitulo || "",
         };
 
         return laborData;
       });
     }
-  }, [isOpen, mode]);
+  }, [isOpen, mode, user]);
 
-  const handleRoleChange = (id: string, checked: boolean) => {
-    setFormData((prev) => {
-      const roles = checked
-        ? [...prev.roles, id]
-        : prev.roles.filter((r) => r !== id);
-      return { ...prev, roles };
-    });
-  };
+  const handleRoleChange = useCallback((id: string, checked: boolean) => {
+    setFormData((prev) => ({
+      ...prev,
+      roles: checked ? [...prev.roles, id] : prev.roles.filter((r) => r !== id),
+    }));
+  }, []);
 
   if (!isOpen) return null;
 
   const isReadOnly = mode === "view";
+  const showOnlyRequired = mode === "create"; // 👈 clave
 
   return (
     <>
@@ -161,6 +219,23 @@ const UserModal: React.FC<UserModalProps> = ({
           <FormUsers
             handleSubmit={(e) => {
               e.preventDefault();
+
+              if (mode === "create") {
+                const userClean: CreateUserData = {
+                  ...formData,
+                  fullName: (formData.fullName ?? "").trim(),
+                  email: (formData.email ?? "").trim(),
+                  password: (formData.password ?? "").trim(),
+                  roles: Array.isArray(formData.roles) ? formData.roles : [],
+                  address: formData.address ?? "",
+                  fechaNacimiento: formData.fechaNacimiento ?? "",
+                };
+
+                onSubmit({ user: userClean, phones });
+                return;
+              }
+
+              //En edit/view, comportamiento actual
               onSubmit({ user: formData, labor: formDataLabor });
             }}
             formData={formData}
@@ -168,6 +243,8 @@ const UserModal: React.FC<UserModalProps> = ({
             setFormData={setFormData}
             isReadOnly={isReadOnly}
             onClose={onClose}
+            onAssignZona={onAssignZona}
+            onAssignSucursal={onAssignSucursal}
             isloading={isloading}
             mode={mode}
             rolesDisponibles={rolesDisponibles}
@@ -175,6 +252,10 @@ const UserModal: React.FC<UserModalProps> = ({
             formDataLabor={formDataLabor}
             setFormDataLabor={setFormDataLabor}
             user={user}
+            visibleFields={visibleFields}
+            showOnlyRequired={showOnlyRequired}
+            phones={phones}
+            onPhonesChange={setPhones}
           />
         </div>
       </div>

@@ -1,14 +1,18 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { X, Check } from "lucide-react";
-import { HorasExtras } from "@/utils/types";
-import { Loader } from "@googlemaps/js-api-loader";
+import { EstadoHoraExtra, HorasExtras } from "@/utils/types";
 import { getStateBadgeHoras } from "../ui/EstadosBadge";
 import { cn } from "@/utils/cn";
 import { capitalizeFirstLetter } from "@/utils/normalize";
 import ConfirmDeleteModal from "../ui/ConfirmDeleteModal";
-import { useGoogleMaps } from "@/hooks/useGoogleMaps";
+import {
+  formatForUser,
+  formatHourForUser,
+  getUserTimeZone,
+} from "@/utils/formatDate";
+import { GoogleMapBox } from "../ui/GoogleMapBox";
 
 interface HoraExtraDetalleModalProps {
   isOpen: boolean;
@@ -17,6 +21,27 @@ interface HoraExtraDetalleModalProps {
   onDecision: (id: string, approved: boolean) => void;
   isUpdating?: boolean;
 }
+
+const estadoLabel: Record<EstadoHoraExtra, string> = {
+  [EstadoHoraExtra.PENDIENTE]: "Pendiente",
+  [EstadoHoraExtra.APPROVED]: "Aprobado",
+  [EstadoHoraExtra.NOAPPROVED]: "Rechazado",
+};
+
+const stateUI: Record<EstadoHoraExtra, { container: string; ring: string }> = {
+  [EstadoHoraExtra.PENDIENTE]: {
+    container: "border-yellow-300 bg-yellow-50",
+    ring: "ring-1 ring-yellow-200/60",
+  },
+  [EstadoHoraExtra.APPROVED]: {
+    container: "border-green-300 bg-green-50",
+    ring: "ring-1 ring-green-200/60",
+  },
+  [EstadoHoraExtra.NOAPPROVED]: {
+    container: "border-red-300 bg-red-50",
+    ring: "ring-1 ring-red-200/60",
+  },
+};
 
 const HoraExtraDetalleModal = ({
   isOpen,
@@ -27,13 +52,11 @@ const HoraExtraDetalleModal = ({
 }: HoraExtraDetalleModalProps) => {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [accion, setAccion] = useState<"aprobar" | "rechazar" | null>(null);
-
-  const { isLoaded } = useGoogleMaps();
-
-  const mapContainerRef = useRef<HTMLDivElement | null>(null);
-  const mapRef = useRef<google.maps.Map | null>(null);
-  const markerRef = useRef<google.maps.Marker | null>(null);
-  const initializedRef = useRef(false);
+  const [showMap, setShowMap] = useState(false);
+  const [localHoraExtra, setLocalHoraExtra] = useState<HorasExtras | null>(
+    horaExtra
+  );
+  const tz = getUserTimeZone();
 
   const handleClick = (accionSeleccionada: "aprobar" | "rechazar") => {
     setAccion(accionSeleccionada);
@@ -41,10 +64,31 @@ const HoraExtraDetalleModal = ({
   };
 
   const handleConfirm = () => {
-    if (!accion) return;
-    onDecision?.(horaExtra?.id!, accion === "aprobar");
+    if (!accion || !horaExtra?.id) return;
+
+    const nextState =
+      accion === "aprobar"
+        ? EstadoHoraExtra.APPROVED
+        : EstadoHoraExtra.NOAPPROVED;
+
+    setLocalHoraExtra((prev) =>
+      prev
+        ? {
+            ...prev,
+            state: nextState, // <-- enum
+            autorizado:
+              accion === "aprobar" ? prev.autorizado || "—" : prev.autorizado,
+          }
+        : prev
+    );
+
+    onDecision?.(horaExtra.id, accion === "aprobar");
     setConfirmOpen(false);
   };
+
+  useEffect(() => {
+    setLocalHoraExtra(horaExtra);
+  }, [horaExtra?.id, horaExtra]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -55,89 +99,41 @@ const HoraExtraDetalleModal = ({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
 
+  useEffect(() => {
+    if (!isOpen) setShowMap(false);
+  }, [isOpen, horaExtra?.id]);
+
   const pos = useMemo(() => {
     const lat = horaExtra?.lan ?? -34.6037;
     const lng = horaExtra?.lng ?? -58.3816;
     return { lat, lng };
   }, [horaExtra?.lan, horaExtra?.lng]);
 
-  // 1) Inicializar el mapa UNA sola vez por apertura
-  useEffect(() => {
-    if (
-      !isOpen ||
-      !isLoaded ||
-      !mapContainerRef.current ||
-      initializedRef.current
-    )
-      return;
-
-    mapRef.current = new google.maps.Map(mapContainerRef.current, {
-      center: pos,
-      zoom: 14,
-      gestureHandling: "greedy",
-      disableDefaultUI: true,
-      clickableIcons: false,
-    });
-
-    markerRef.current = new google.maps.Marker({
-      position: pos,
-      map: mapRef.current,
-    });
-
-    initializedRef.current = true;
-
-    // Importante: forzar resize cuando el modal ya es visible
-    // (el mapa necesita medir el contenedor abierto)
-    requestAnimationFrame(() => {
-      if (mapRef.current) google.maps.event.trigger(mapRef.current, "resize");
-      if (mapRef.current) mapRef.current.setCenter(pos);
-    });
-
-    return () => {
-      // cleanup al desmontar el modal
-      if (markerRef.current) {
-        markerRef.current.setMap(null);
-        markerRef.current = null;
-      }
-      // Map no tiene destroy público; soltar referencias
-      mapRef.current = null;
-      initializedRef.current = false;
-    };
-  }, [isOpen, isLoaded, pos]);
-
-  // 2) Actualizar posición/zoom SIN recrear mapa/marker
-  useEffect(() => {
-    if (!isOpen) return;
-    const map = mapRef.current;
-    const marker = markerRef.current;
-    if (!map || !marker) return;
-
-    marker.setPosition(pos);
-
-    // Centrado suave si cambia la posición
-    const center = map.getCenter();
-    const clat = center?.lat();
-    const clng = center?.lng();
-    if (clat !== pos.lat || clng !== pos.lng) {
-      if (map.panTo) map.panTo(pos);
-      else map.setCenter(pos);
+  const uiClasses = useMemo(() => {
+    if (!horaExtra) {
+      return { container: "border-gray-200 bg-white", ring: "" };
     }
-  }, [isOpen, pos]);
+    return stateUI[horaExtra.state];
+  }, [horaExtra]);
 
   if (!isOpen || !horaExtra) return null;
 
-  const formatDateTime = (date: string) =>
-    new Date(date).toLocaleString("es-ES", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+  const hasCoords =
+    typeof horaExtra.lan === "number" &&
+    !Number.isNaN(horaExtra.lan) &&
+    typeof horaExtra.lng === "number" &&
+    !Number.isNaN(horaExtra.lng);
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+      <div
+        className={cn(
+          "rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto",
+          "border-2 shadow-sm transition-colors",
+          uiClasses.container,
+          uiClasses.ring
+        )}
+      >
         {/* Header */}
         <div className="p-6 border-b border-gray-200 flex justify-between items-center">
           <div className="flex gap-5 items-center">
@@ -147,10 +143,10 @@ const HoraExtraDetalleModal = ({
             <span
               className={cn(
                 "px-3 py-1 rounded-full text-xs font-medium",
-                getStateBadgeHoras(horaExtra?.state)
+                getStateBadgeHoras(horaExtra.state)
               )}
             >
-              {capitalizeFirstLetter(horaExtra?.state)}
+              {estadoLabel[horaExtra.state]}
             </span>
           </div>
 
@@ -166,6 +162,7 @@ const HoraExtraDetalleModal = ({
         <div className="p-6 space-y-6">
           {/* Grid de campos */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Solicitante */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Solicitante
@@ -177,6 +174,7 @@ const HoraExtraDetalleModal = ({
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-900"
               />
             </div>
+            {/* Razon */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Razón
@@ -188,6 +186,8 @@ const HoraExtraDetalleModal = ({
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-900"
               />
             </div>
+
+            {/* Comentario */}
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Comentario
@@ -199,17 +199,21 @@ const HoraExtraDetalleModal = ({
                 rows={2}
               />
             </div>
+
+            {/* Fecha solicitud */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Fecha de Solicitud
               </label>
               <input
                 type="text"
-                value={formatDateTime(horaExtra.fechaSolicitud)}
+                value={formatForUser(horaExtra.fechaSolicitud, tz)}
                 disabled
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-900"
               />
             </div>
+
+            {/* Total horas */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Total Horas
@@ -221,50 +225,103 @@ const HoraExtraDetalleModal = ({
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-900"
               />
             </div>
+
+            {/* Hora inicio */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Hora Inicio
               </label>
               <input
                 type="text"
-                value={formatDateTime(horaExtra.horaInicio)}
+                value={formatHourForUser(horaExtra.horaInicio, tz)}
                 disabled
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-900"
               />
             </div>
+
+            {/* Hora final */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Hora Final
               </label>
               <input
                 type="text"
-                value={formatDateTime(horaExtra.horaFinal)}
+                value={formatHourForUser(horaExtra.horaFinal, tz)}
                 disabled
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-900"
               />
             </div>
+
+            {/* Cliente */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Cliente
+              </label>
+              <input
+                type="text"
+                value={horaExtra.cliente?.name ?? "-"}
+                disabled
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-900"
+              />
+            </div>
+
+            {/* Tipo (NUEVO) */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Tipo
+              </label>
+              <input
+                type="text"
+                value={capitalizeFirstLetter(String(horaExtra.tipo))}
+                disabled
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-900"
+              />
+            </div>
+
+            {/* Tipo de Atención */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Tipo de atención
+              </label>
+              <input
+                type="text"
+                value={
+                  horaExtra.tipoAtencion
+                    ? capitalizeFirstLetter(String(horaExtra.tipoAtencion))
+                    : "-"
+                }
+                disabled
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-900"
+              />
+            </div>
+
+            {/* Estado */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Estado
               </label>
               <input
                 type="text"
-                value={horaExtra.state}
+                value={capitalizeFirstLetter(horaExtra.state)}
                 disabled
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-900"
               />
             </div>
+
+            {/* Verificacion */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Verificación
               </label>
               <input
                 type="text"
-                value={horaExtra.verificacion}
+                value={capitalizeFirstLetter(horaExtra.verificacion)}
                 disabled
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-900"
               />
             </div>
+
+            {/* Autorizado */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Autorizado
@@ -276,6 +333,8 @@ const HoraExtraDetalleModal = ({
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-900"
               />
             </div>
+
+            {/* Controlado */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Controlado
@@ -289,27 +348,53 @@ const HoraExtraDetalleModal = ({
             </div>
           </div>
 
-          {/* Placeholder Map */}
-          <div className="p-6">
-            <h3 className="text-md font-medium text-gray-700 mb-2">
-              Ubicación
-            </h3>
-            <div
-              ref={mapContainerRef}
-              className="w-full h-[350px] rounded-lg border bg-gray-100"
-            />
-            {/* Tip: si no hay coords reales, podés mostrar un aviso pequeño */}
-            {!(horaExtra.lan && horaExtra.lng) && (
-              <p className="text-xs text-gray-500 mt-2">
-                No hay coordenadas registradas; mostrando posición por defecto
-                (CABA).
-              </p>
+          {/* Mapa para ubicacion */}
+          <div className="px-1">
+            <button
+              type="button"
+              onClick={() => hasCoords && setShowMap((s) => !s)}
+              disabled={!hasCoords}
+              className={cn(
+                "text-sm underline underline-offset-4",
+                hasCoords
+                  ? "text-blue-600 hover:text-blue-800"
+                  : "text-gray-400 cursor-not-allowed"
+              )}
+              title={
+                hasCoords
+                  ? showMap
+                    ? "Ocultar ubicación"
+                    : "Ver ubicación"
+                  : "No hay coordenadas registradas"
+              }
+            >
+              {showMap ? "Ocultar ubicación" : "Ver ubicación"}
+            </button>
+
+            {showMap && hasCoords && (
+              <div className="mt-3">
+                <div className="w-full h-[350px] rounded-lg border overflow-hidden bg-gray-100">
+                  <GoogleMapBox
+                    lat={pos.lat}
+                    lng={pos.lng}
+                    zoom={14}
+                    smoothPan
+                    mapOptions={{}}
+                  />
+                </div>
+                {!hasCoords && (
+                  <p className="text-xs text-gray-500 mt-2">
+                    No hay coordenadas registradas; mostrando posición por
+                    defecto (CABA).
+                  </p>
+                )}
+              </div>
             )}
           </div>
 
           {/* Footer */}
           <div className="flex justify-end gap-3 p-6 border-t border-gray-200">
-            {horaExtra?.state === "pendiente" && (
+            {horaExtra?.state === EstadoHoraExtra.PENDIENTE && (
               <>
                 <button
                   onClick={() => handleClick("aprobar")}

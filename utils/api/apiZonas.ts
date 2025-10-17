@@ -31,6 +31,28 @@ export class ZonaService {
     return response.data;
   }
 
+  static async asignarZona(zonaId: string, userId: number): Promise<void> {
+    const token = getAuthToken();
+
+    try {
+      const response = await axios.put(
+        `${BASE_URL}/region/add/${zonaId}/user/${userId}`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      return response.data;
+    } catch (error: any) {
+      const msg = error?.response?.data?.message;
+      console.log("Error:", msg)
+      throw new Error(msg);
+    }
+  }
+
   static async getZonas(): Promise<Zona[]> {
     const token = getAuthToken();
 
@@ -41,7 +63,7 @@ export class ZonaService {
     });
 
     const respZonas = response.data;
-    
+
     return respZonas;
   }
 

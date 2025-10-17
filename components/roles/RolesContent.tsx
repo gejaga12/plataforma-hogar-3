@@ -1,17 +1,5 @@
 import { CreateRoleData, RoleList } from "@/app/roles/page";
-import {
-  ChevronDown,
-  ChevronUp,
-  Edit,
-  Eye,
-  Filter,
-  Plus,
-  Search,
-  Settings,
-  Shield,
-  Trash2,
-  Users,
-} from "lucide-react";
+import { Edit, Eye, Plus, Settings, Shield, Trash2, Users } from "lucide-react";
 import React from "react";
 import { LoadingSpinner } from "../ui/loading-spinner";
 import RoleFormModal from "./RoleFormModal";
@@ -69,10 +57,6 @@ const RolesContent = ({
 
   const confirmDelete = () => {
     if (deleteModal.role) deleteRole(deleteModal.role.id);
-  };
-
-  const getVistaLabel = (vistaId: string) => {
-    return availableViews?.find((v) => v.key === vistaId)?.label || vistaId;
   };
 
   const { data: availableViews, isLoading: isLoadingPermissions } = useQuery<
@@ -137,11 +121,11 @@ const RolesContent = ({
             </thead>
             <tbody className="bg-white divide-y divide-gray-200 dark:bg-gray-900">
               {roles.map((role) => (
-                // nombre del rol
                 <tr
                   key={role.id}
                   className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                 >
+                  {/* nombre */}
                   <td className="px-4 py-3">
                     <div className="flex items-center">
                       <Shield className="text-orange-500 mr-2" size={16} />
@@ -173,13 +157,6 @@ const RolesContent = ({
                       <span className="text-sm text-gray-900 dark:text-gray-400">
                         {role.permissions.length}
                       </span>
-                      {role.permissions.length > 0 && (
-                        <div className="ml-2 max-w-40 truncate">
-                          <span className="text-xs text-gray-500 dark:text-gray-400">
-                            {role.permissions.map(getVistaLabel).join(", ")}
-                          </span>
-                        </div>
-                      )}
                     </div>
                   </td>
                   {/* acciones */}
